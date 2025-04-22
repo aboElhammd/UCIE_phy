@@ -1,4 +1,5 @@
 //edited i github repo
+//antoher edit 
 module bit_synchronizer (
     input               i_clk,
     input               i_rst_n,
