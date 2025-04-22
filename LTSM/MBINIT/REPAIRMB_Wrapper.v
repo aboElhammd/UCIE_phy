@@ -30,7 +30,7 @@ wire MBINIT_REPAIRMB_Module_end;
 wire ValidOutDatat_Module;
 // wire Width_Degrade_en_Module;
 
-
+wire apply_repeater;
 // wire tx_msg_info_valid_repairmb_Module;
 
 wire [3:0] TX_SbMessage_ModulePartner;
@@ -55,6 +55,7 @@ REPAIRMB_Module REPAIRMB_Module_inst (
     // .i_Functional_Lanes_ModulePrtner(Functional_Lanes_out_rx),
     .i_Transmitter_initiated_Data_to_CLK_done(i_Transmitter_initiated_Data_to_CLK_done),
     .i_Transmitter_initiated_Data_to_CLK_Result(i_Transmitter_initiated_Data_to_CLK_Result),
+    .apply_repeater(apply_repeater),
     .o_TX_SbMessage(TX_SbMessage_Module),
     .o_Done_Repeater(Done_Repeater),
     .o_MBINIT_REPAIRMB_Module_end(MBINIT_REPAIRMB_Module_end),
@@ -84,7 +85,8 @@ REPAIRMB_Module_Partner REPAIRMB_Module_Partner_inst (
     .o_ValidOutDatat_REPAIRMB_Module_Partner(ValidOutDatat_ModulePartner),
     .o_TX_SbMessage(TX_SbMessage_ModulePartner),
     // .o_Width_Degrade_en(Width_Degrade_en_ModulePartner),
-    .o_Functional_Lanes(o_Functional_Lanes_out_rx)
+    .o_Functional_Lanes(o_Functional_Lanes_out_rx),
+    .apply_repeater(apply_repeater)
 );
 
 // Combinational output logic
