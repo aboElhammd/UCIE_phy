@@ -1,3 +1,9 @@
+/**************************************************************
+* File name: bit_synchronizer.v
+* Description: This module is a level_to_pulse_synchronizer.v
+* Date: 22/4/2025
+* author : sa3dany 
+**************************************************************/
 module level_to_pulse_synchronizer (
     input               i_clk,
     input               i_rst_n,
