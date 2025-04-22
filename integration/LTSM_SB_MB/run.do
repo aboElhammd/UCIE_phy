@@ -1,4 +1,3 @@
-vlib work
 vlog ./TB_LTSM_SB_MB.sv
 vlog ./LTSM_SB_MB.v 
 vlog ../../LTSM/MBINIT/*.v
