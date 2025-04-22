@@ -177,7 +177,7 @@ module MBINIT (
         // .i_Busy_SideBand(i_rx_busy),
         .i_falling_edge_busy(i_falling_edge_busy),
         .i_Clock_track_result_logged_RXSB(i_rx_msg_info), //from sideband
-        .i_Clock_track_result_logged_COMB(i_logged_clk_result), //from comparator i_logged_clk_result
+        .i_Clock_track_result_logged_COMB(3'b111), //from comparator i_logged_clk_result
         .o_train_error_req(train_error_req_repairclk),
         .o_MBINIT_REPAIRCLK_Pattern_En(o_MBINIT_REPAIRCLK_Pattern_En),
         .o_MBINIT_REPAIRCLK_end(MBINIT_REPAIRCLK_Module_end),
