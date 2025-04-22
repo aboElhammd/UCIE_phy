@@ -43,6 +43,78 @@ module LFSR_Transmitter #(
     reg [6:0] counter_lfsr;        // 7-bit counter (0 to 127)
     reg [5:0] counter_per_lane;    // 6-bit counter (0 to 63)
 
+/************************************************************************************************
+ * Edit by   : Saadany 
+ * Edit type : Creating state machine
+ * Date      : 23/4/2025
+************************************************************************************************/
+    /*----------------------------------------
+     * Registers
+    ----------------------------------------*/
+    reg [1:0] current_state;
+    reg [1:0] i_state_reg;
+    wire i_state_changed = (i_state_reg != i_state);
+    /*----------------------------------------
+     * FSM logic
+    ----------------------------------------*/
+    always @ (posedge i_clk or negedge i_rst_n) begin
+        if (~i_rst_n) begin
+            current_state <= IDLE;
+            i_state_reg   <= 2'b00;
+        end else begin
+            i_state_reg <= i_state;
+            case (current_state)
+                /*-----------------------------------------
+                 * IDLE state
+                -----------------------------------------*/
+                IDLE: begin
+                    if (i_state_changed && (i_state == 2'b01)) begin // just transititon upon changing the input
+                        current_state <= Clear_lfsr;
+                    end else if (i_state_changed && i_state == 2'b10) begin
+                        current_state <= PATTERN_LFSR;
+                    end else if (i_state_changed && i_state == 2'b11) begin
+                        current_state <= PER_LANE_IDE;
+                    end else begin
+                        current_state <= IDLE;
+                    end
+                end
+                /*-----------------------------------------
+                 * Clear_lfsr state
+                -----------------------------------------*/
+                Clear_lfsr: begin
+                    current_state <= IDLE;
+                end
+                /*-----------------------------------------
+                 * PATTERN_LFSR state
+                -----------------------------------------*/
+                PATTERN_LFSR: begin
+                    if (&counter_lfsr) begin // counter_lfsr = 7'd127
+                        current_state <= IDLE;
+                    end else begin
+                        current_state <= PATTERN_LFSR;
+                    end
+                end
+                /*-----------------------------------------
+                 * PER_LANE_IDE state
+                -----------------------------------------*/
+                PER_LANE_IDE: begin
+                    if (&counter_per_lane) begin // counter_per_lane = 6'd63
+                        current_state <= IDLE;
+                    end else begin
+                        current_state <= PER_LANE_IDE;
+                    end
+                end
+                /*-----------------------------------------
+                 * default
+                -----------------------------------------*/
+                default: begin
+                    current_state <= IDLE;
+                end
+            endcase
+        end
+    end
+  /************************************************************************************************/
+
     // Lane IDs with prepended and appended 1010
     localparam LANE_ID_0  = 16'b1010_00000000_1010;
     localparam LANE_ID_1  = 16'b1010_00000001_1010;
@@ -137,7 +209,7 @@ module LFSR_Transmitter #(
             o_lane_8 <= 0; o_lane_9 <= 0; o_lane_10 <= 0; o_lane_11 <= 0;
             o_lane_12 <= 0; o_lane_13 <= 0; o_lane_14 <= 0; o_lane_15 <= 0;
 
-            case (i_state)
+            case (current_state)
                 IDLE: begin
                     counter_lfsr <= 0;
                     counter_per_lane <= 0;
