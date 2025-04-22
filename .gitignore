@@ -1,1 +1,10 @@
 integration/LTSM_SB_MB/run.do
+integration/LTSM_SB_MB/UCIE_PHY_NO_RDI.mpf
+integration/LTSM_SB_MB/work/_vmake
+integration/LTSM_SB_MB/work/_lib1_0.qtl
+integration/LTSM_SB_MB/work/_lib1_0.qpg
+integration/LTSM_SB_MB/work/_lib1_0.qdb
+integration/LTSM_SB_MB/work/_lib.qdb
+integration/LTSM_SB_MB/work/_info
+integration/LTSM_SB_MB/vsim.wlf
+integration/LTSM_SB_MB/work/*
