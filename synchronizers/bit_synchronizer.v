@@ -2,7 +2,7 @@
 * File name: bit_synchronizer.v
 * Description: This module is a bit synchronizer.
 * Date: 22/4/2025
-* author : sa3dany abofeha 
+* author : sa3dany
 **************************************************/
 module bit_synchronizer (
     input               i_clk,

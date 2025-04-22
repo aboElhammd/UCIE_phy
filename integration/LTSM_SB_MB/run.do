@@ -26,7 +26,7 @@ vlog ../../SB_RTL/ANALOG_MODELLING/*.sv
 vlog ../../SB_RTL/SIDEBAND_TX/*.sv
 vlog ../../SB_RTL/SIDEBAND_RX/*.sv
 vlog ../../SB_RTL/SIDEBAND_TOP_WRAPPER/*.sv
-do run_uvm.do
+do wave.do
 run -all 
 
  
