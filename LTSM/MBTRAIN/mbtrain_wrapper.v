@@ -14,6 +14,7 @@ module mbtrain_wrapper (
 		//talking with point test block 
 		  	input        i_tx_point_test_ack  , i_rx_point_test_ack  ,
 		    input [15:0] i_tx_lanes_result    , i_rx_lanes_result,
+			input        i_tx_valid_result, ////////////////////////////// NEW: for calibration algorithm ////////////////////////////////
 	    //still doesn't have a source 
 		    input        i_valid_framing_error,
 		// communicating with ltsm (new)
