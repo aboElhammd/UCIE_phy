@@ -1,5 +1,8 @@
-//edited i github repo
-//antoher edit 
+/**************************************************
+* File name: bit_synchronizer.v
+* Description: This module is a bit synchronizer.
+* Date: 22/4/2025
+**************************************************/
 module bit_synchronizer (
     input               i_clk,
     input               i_rst_n,
