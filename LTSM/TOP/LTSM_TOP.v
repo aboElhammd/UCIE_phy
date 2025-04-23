@@ -23,6 +23,7 @@ module LTSM_TOP (
     // tx iniated data 2 clock point test related signals
     input                                        i_Transmitter_initiated_Data_to_CLK_done,   // from tx initiated after done test
     input       [15:0]                           i_Transmitter_initiated_Data_to_CLK_Result, // Results from tx initiated 
+    input                                        i_Transmitter_initiated_Data_to_CLK_valid_result,
     input                                        i_Receiver_initiated_Data_to_CLK_done,      // from rx initiated after done test
     input       [15:0]                           i_Receiver_initiated_Data_to_CLK_Result,    // Results from rx initiated  
     // clock pattern generator related signals 
@@ -278,6 +279,7 @@ mbtrain_wrapper MBTRAIN_inst (
     .i_tx_point_test_ack                        (i_Transmitter_initiated_Data_to_CLK_done),  
     .i_rx_point_test_ack                        (i_Receiver_initiated_Data_to_CLK_done),    
     .i_tx_lanes_result                          (i_Transmitter_initiated_Data_to_CLK_Result), 
+    .i_tx_valid_result                          (i_Transmitter_initiated_Data_to_CLK_valid_result),
     .i_rx_lanes_result                          (i_Receiver_initiated_Data_to_CLK_Result),  
     .i_valid_framing_error                      (i_valid_framing_error),   
     .i_phyretrain_resolved_state                (phyretrain_resolved_state),
