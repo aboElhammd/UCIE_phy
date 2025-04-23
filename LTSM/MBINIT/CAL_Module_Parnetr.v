@@ -35,6 +35,7 @@ module CAL_ModulePartner (
     input               rst_n,
     input               i_MBINIT_PARAM_end,
     input [3:0]         i_RX_SbMessage,
+    input               i_msg_valid,
     input               i_Busy_SideBand,
     input 				i_falling_edge_busy,	// 34an 23rf lma yege el rising edge bta3 el busy bit
 
@@ -87,7 +88,7 @@ always @(*) begin
         MBINIT_CAL_Check_Req: begin
         if (!i_MBINIT_PARAM_end) begin
             NS=IDLE;
-        end else if (i_RX_SbMessage == MBINIT_CAL_Done_req) begin
+        end else if (i_RX_SbMessage == MBINIT_CAL_Done_req && i_msg_valid) begin
                 NS = MBINIT_HANDLE_SENDEING;
             end else begin
                 NS = MBINIT_CAL_Check_Req;

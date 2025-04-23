@@ -70,6 +70,7 @@ CAL_ModulePartner cal_module_partner_inst (
     .rst_n(rst_n),
     .i_MBINIT_PARAM_end(i_MBINIT_PARAM_end),
     .i_RX_SbMessage(i_RX_SbMessage),
+    .i_msg_valid(i_msg_valid),
     .i_Busy_SideBand(o_ValidOutDatatCAL),
     .i_falling_edge_busy(i_falling_edge_busy),
     .o_TX_SbMessage(TX_SbMessage_ModulePartner),
