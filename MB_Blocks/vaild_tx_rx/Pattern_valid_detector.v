@@ -36,7 +36,7 @@ module Pattern_valid_detector (
     assign mode_select = {i_enable_cons, i_enable_128};  // Concatenate inputs
     
     // Separate combinational assignment for o_valid_frame_detect
-    assign o_valid_frame_detect = (RVLD_L == VALID_PATTERN);
+    assign o_valid_frame_detect = (RVLD_L != VALID_PATTERN && i_enable_detector)? 1'b0 : 1'b1;
     
     // Split RVLD_L into four 8-bit segments
     wire [7:0] segment0 = RVLD_L[7:0];    // Bits 0-7
@@ -179,13 +179,13 @@ module Pattern_valid_detector (
                 IDLE: begin  // State 11 as IDLE
                     consec_counter   <= 8'b0;
                     error_counter    <= 12'b0;
-                    detection_result <= 1'b0;
+                    detection_result <= 1'b1;
                 end
                 
                 default: begin
                     consec_counter   <= 8'b0;
                     error_counter    <= 12'b0;
-                    detection_result <= 1'b0;
+                    detection_result <= 1'b1;
                 end
             endcase
         end
