@@ -1,4 +1,4 @@
-`timescale 1ns/100ps
+`timescale 1ps/100fs
 module TB_LTSM_SB_MB;
 
 ///////////////////////////////////
@@ -14,6 +14,7 @@ localparam ERROR_LANE = 32'h00000810;
     * Module
 --------------------------------*/
 // Inputs
+logic                 i_ser_clk_4G;
 logic                 i_clk;      
 logic                 i_rst_n;
 logic                 i_clk_sb;   
@@ -58,6 +59,7 @@ logic                 o_serliazer_en_1;
 logic                 o_diff_or_quad_clk_1;
 logic  [3:0]          o_reciever_ref_volatge_1;
 logic  [3:0]          o_pi_step_1;
+logic                 o_serliazer_valid_en_1;
 /*--------------------------------
     * Module Partner
 --------------------------------*/
@@ -103,6 +105,7 @@ logic                 o_serliazer_en_2;
 logic                 o_diff_or_quad_clk_2;
 logic  [3:0]          o_reciever_ref_volatge_2;
 logic  [3:0]          o_pi_step_2;
+logic                 o_serliazer_valid_en_2;
 
 // Internal signals
 string sub_state_1, sub_state_2;
@@ -156,25 +159,26 @@ logic partner_CKN   [DELAY_CYCLES-1:0];
 logic partner_TRACK [DELAY_CYCLES-1:0];
 
 logic module_serliazer_en  [DELAY_CYCLES-1:0];
+logic module_serliazer_valid_en  [DELAY_CYCLES-1:0];
 logic partner_serliazer_en [DELAY_CYCLES-1:0];
-
+logic partner_serliazer_valid_en [DELAY_CYCLES-1:0];
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////// DUT INSTANTIATION /////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 LTSM_SB_MB LTSM_SB_MB_inst_1 (
     // Input Ports
-    .i_clk                     (i_clk),
+    .i_clk                     (i_ser_clk_4G),
     .i_clk_sb                  (i_clk_sb),
     .i_ckp                     (i_ckp_1),
     .i_ckn                     (i_ckn_1),
-    .i_CKP                     (partner_CKP   [DELAY_CYCLES-1]),
-    .i_CKN                     (partner_CKN   [DELAY_CYCLES-1]),
-    .i_TRACK                   (partner_TRACK [DELAY_CYCLES-1]),
+    .i_CKP                     (o_CKP_2),//partner_CKP   [DELAY_CYCLES-1]),
+    .i_CKN                     (o_CKN_2),//partner_CKN   [DELAY_CYCLES-1]),
+    .i_TRACK                   (o_TRACK_2),//partner_TRACK [DELAY_CYCLES-1]),
     .i_rst_n                   (i_rst_n),
     .i_lp_data                 (i_lp_data_1),
     .i_start_training_RDI      (i_start_training_RDI_1),
     .i_RVLD_L                  (partner_TVLD_L [DELAY_CYCLES-1]),
-    .i_deser_valid_val         (i_deser_valid_val_1),
+    .i_deser_valid_val         (module_serliazer_valid_en [DELAY_CYCLES-1]),
     .i_lfsr_rx_lane_0          (partner_tx_lane_0  [DELAY_CYCLES-1]),
     .i_lfsr_rx_lane_1          (partner_tx_lane_1  [DELAY_CYCLES-1]),
     .i_lfsr_rx_lane_2          (partner_tx_lane_2  [DELAY_CYCLES-1]),
@@ -222,45 +226,27 @@ LTSM_SB_MB LTSM_SB_MB_inst_1 (
     .o_clk_ser_en_sb           (o_clk_ser_en_sb_1),
     .o_SBCLK                   (o_SBCLK_1),
     .o_sb_fifo_data            (o_sb_fifo_data_1),
-    .o_serliazer_en            (o_serliazer_en_1),
+    .o_serliazer_data_en       (o_serliazer_en_1),
     .o_diff_or_quad_clk        (o_diff_or_quad_clk_1),
     .o_reciever_ref_volatge    (o_reciever_ref_volatge_1),
-    .o_pi_step                 (o_pi_step_1)
-);
-
-SB_TX_SERIALIZER SB_TX_SERIALIZER_inst_1( 
-    .i_pll_clk          (i_clk_sb),   
-    .i_rst_n            (i_rst_n),
-    .i_data_in  	    (o_sb_fifo_data_1),
-    .i_enable		    (o_clk_ser_en_sb_1),
-    .i_pack_finished    (o_pack_finished_sb_1),
-    .TXDATASB           (SB_SER_DATA_1)
-);
-
-SB_RX_DESER SB_RX_DESER_inst_1 (
-    .i_clk                  (o_SBCLK_2),               
-    .i_clk_pll              (i_clk_sb),
-    .i_rst_n                (i_rst_n),
-    .ser_data_in            (SB_SER_DATA_2),
-    .i_de_ser_done_sampled  (o_deser_done_sampled_sb_1),
-    .par_data_out           (i_deser_data_sb_1),
-    .de_ser_done            (i_deser_done_sb_1)
+    .o_pi_step                 (o_pi_step_1),
+    .o_serliazer_valid_en      (o_serliazer_valid_en_1)
 );
 
 LTSM_SB_MB LTSM_SB_MB_inst_2 (
     // Input Ports
-    .i_clk                     (i_clk),
+    .i_clk                     (i_ser_clk_4G),
     .i_clk_sb                  (i_clk_sb),
     .i_ckp                     (i_ckp_2),
     .i_ckn                     (i_ckn_2),
-    .i_CKP                     (module_CKP   [DELAY_CYCLES-1]),
-    .i_CKN                     (module_CKN   [DELAY_CYCLES-1]),
-    .i_TRACK                   (module_TRACK [DELAY_CYCLES-1]),
+    .i_CKP                     (o_CKP_1),//module_CKP   [DELAY_CYCLES-1]),
+    .i_CKN                     (o_CKN_1),//module_CKN   [DELAY_CYCLES-1]),
+    .i_TRACK                   (o_TRACK_1),//module_TRACK [DELAY_CYCLES-1]),
     .i_rst_n                   (i_rst_n),
     .i_lp_data                 (i_lp_data_2),
     .i_start_training_RDI      (i_start_training_RDI_2),
     .i_RVLD_L                  (module_TVLD_L [DELAY_CYCLES-1]),
-    .i_deser_valid_val         (i_deser_valid_val_2),
+    .i_deser_valid_val         (partner_serliazer_valid_en [DELAY_CYCLES-1]),
     .i_lfsr_rx_lane_0          (module_tx_lane_0  [DELAY_CYCLES-1] ),//& ERROR_LANE),
     .i_lfsr_rx_lane_1          (module_tx_lane_1  [DELAY_CYCLES-1] ),//& ERROR_LANE),
     .i_lfsr_rx_lane_2          (module_tx_lane_2  [DELAY_CYCLES-1] ),//& ERROR_LANE),
@@ -308,10 +294,33 @@ LTSM_SB_MB LTSM_SB_MB_inst_2 (
     .o_clk_ser_en_sb           (o_clk_ser_en_sb_2),
     .o_SBCLK                   (o_SBCLK_2),
     .o_sb_fifo_data            (o_sb_fifo_data_2),
-    .o_serliazer_en            (o_serliazer_en_2),
+    .o_serliazer_data_en       (o_serliazer_en_2),
     .o_diff_or_quad_clk        (o_diff_or_quad_clk_2),
     .o_reciever_ref_volatge    (o_reciever_ref_volatge_2),
-    .o_pi_step                 (o_pi_step_2)
+    .o_pi_step                 (o_pi_step_2),
+    .o_serliazer_valid_en      (o_serliazer_valid_en_2)
+);
+
+/******************************************************************************
+ * MAINBAND DATA SERIALIZERS
+/******************************************************************************/
+// MB_TX_SERIALIZER MB_TX_SERIALIZER_inst_1_1( 
+//     .CLK                (i_ser_clk_4G),
+//     .RST                (i_rst_n),
+//     .P_DATA             (o_lfsr_tx_lane_0_1),
+//     .SER_EN             (o_serliazer_en_1),
+//     .SER_OUT            (SB_SER_DATA_1)
+// );
+/******************************************************************************
+ * SIDEBAND DATA SERIALIZERS
+/******************************************************************************/
+SB_TX_SERIALIZER SB_TX_SERIALIZER_inst_1( 
+    .i_pll_clk          (i_clk_sb),   
+    .i_rst_n            (i_rst_n),
+    .i_data_in  	    (o_sb_fifo_data_1),
+    .i_enable		    (o_clk_ser_en_sb_1),
+    .i_pack_finished    (o_pack_finished_sb_1),
+    .TXDATASB           (SB_SER_DATA_1)
 );
 
 SB_TX_SERIALIZER SB_TX_SERIALIZER_inst_2( 
@@ -323,6 +332,19 @@ SB_TX_SERIALIZER SB_TX_SERIALIZER_inst_2(
     .TXDATASB           (SB_SER_DATA_2)
 );
 
+/******************************************************************************
+ * SIDEBAND DATA DESERIALIZERS
+/******************************************************************************/
+SB_RX_DESER SB_RX_DESER_inst_1 (
+    .i_clk                  (o_SBCLK_2),               
+    .i_clk_pll              (i_clk_sb),
+    .i_rst_n                (i_rst_n),
+    .ser_data_in            (SB_SER_DATA_2),
+    .i_de_ser_done_sampled  (o_deser_done_sampled_sb_1),
+    .par_data_out           (i_deser_data_sb_1),
+    .de_ser_done            (i_deser_done_sb_1)
+);
+
 SB_RX_DESER SB_RX_DESER_inst_2 (
     .i_clk                  (o_SBCLK_1),               
     .i_clk_pll              (i_clk_sb),
@@ -332,7 +354,12 @@ SB_RX_DESER SB_RX_DESER_inst_2 (
     .par_data_out           (i_deser_data_sb_2),
     .de_ser_done            (i_deser_done_sb_2)
 );
-
+// just for modelling
+clock_div_32 clock_div_32_inst_1 (
+    .i_clk             (i_ser_clk_4G),
+    .i_rst_n           (i_rst_n),
+    .o_div_clk         (i_clk)
+);   
 /**************************************************************************************************************************************************
 *************************************************************** STIMILUS GENERATION ***************************************************************
 **************************************************************************************************************************************************/
@@ -340,19 +367,20 @@ SB_RX_DESER SB_RX_DESER_inst_2 (
 //////// CLOCK GENERATION /////////
 ///////////////////////////////////
 
-initial begin
-    i_clk = 0;
-    forever #4 i_clk = ~i_clk;
-end
+ initial begin
+    i_ser_clk_4G = 0;
+    forever #125 i_ser_clk_4G = ~i_ser_clk_4G; // 0.25ns period = 4GHz
+ end
 
-assign i_ckp_1 = i_clk;
-assign i_ckp_2 = i_clk;
-assign i_ckn_1 = ! i_clk;
-assign i_ckn_2 = ! i_clk;
+
+assign i_ckp_1 = i_ser_clk_4G;
+assign i_ckp_2 = i_ser_clk_4G;
+assign i_ckn_1 = ~ i_ser_clk_4G;
+assign i_ckn_2 = ~ i_ser_clk_4G;
 
 initial begin
     i_clk_sb =  0;
-    forever #0.625 i_clk_sb = ~ i_clk_sb;
+    forever #625 i_clk_sb = ~ i_clk_sb; // 1.25ns period = 800MHz
 end
 
 ///////////////////////////////////
@@ -454,6 +482,7 @@ always @ (posedge i_clk or negedge i_rst_n) begin
             module_TRACK      [i] <= 0;
 
             module_serliazer_en  [i] <= 0;
+            module_serliazer_valid_en  [i] <= 0;
 
             partner_tx_lane_0  [i] <= 0;
             partner_tx_lane_1  [i] <= 0;
@@ -479,6 +508,7 @@ always @ (posedge i_clk or negedge i_rst_n) begin
             partner_TRACK      [i] <= 0;
 
             partner_serliazer_en [i] <= 0;
+            partner_serliazer_valid_en [i] <= 0;
         end
     end else begin
         for (int i = DELAY_CYCLES-1; i > 0; i = i - 1) begin
@@ -506,6 +536,7 @@ always @ (posedge i_clk or negedge i_rst_n) begin
             module_TRACK      [i] <= module_TRACK [i-1];
 
             module_serliazer_en [i] <= module_serliazer_en [i-1];
+            module_serliazer_valid_en  [i] <= module_serliazer_valid_en [i-1];
 
             partner_tx_lane_0  [i] <= partner_tx_lane_0  [i-1];
             partner_tx_lane_1  [i] <= partner_tx_lane_1  [i-1];
@@ -531,6 +562,7 @@ always @ (posedge i_clk or negedge i_rst_n) begin
             partner_TRACK      [i] <= partner_TRACK [i-1];
 
             partner_serliazer_en [i] <= partner_serliazer_en [i-1];
+            partner_serliazer_valid_en [i] <= partner_serliazer_valid_en [i-1];
         end 
             module_tx_lane_0  [0] <= o_lfsr_tx_lane_0_1;
             module_tx_lane_1  [0] <= o_lfsr_tx_lane_1_1;
@@ -556,6 +588,7 @@ always @ (posedge i_clk or negedge i_rst_n) begin
             module_TRACK      [0] <= o_TRACK_1;
 
             module_serliazer_en [0] <= o_serliazer_en_2;
+            module_serliazer_valid_en [0] <= o_serliazer_valid_en_2;
 
             partner_tx_lane_0  [0] <= o_lfsr_tx_lane_0_2;
             partner_tx_lane_1  [0] <= o_lfsr_tx_lane_1_2;
@@ -581,6 +614,7 @@ always @ (posedge i_clk or negedge i_rst_n) begin
             partner_TRACK      [0] <= o_TRACK_2;
 
             partner_serliazer_en [0] <= o_serliazer_en_1;
+            partner_serliazer_valid_en [0] <= o_serliazer_valid_en_1;
     end
 end
 
@@ -717,8 +751,8 @@ end
 
 // module 
 always @ (*) begin
+if (!LTSM_SB_MB_inst_1.tx_d2c_pt_en && !LTSM_SB_MB_inst_1.rx_d2c_pt_en) begin
 i_rx_msg_no_string_1 = "UNKNOWN"; // Default case
-
 case (CS_top_1)
     SBINIT: begin
         case (LTSM_SB_MB_inst_1.LTSM_TOP_inst.i_decoded_SB_msg)
@@ -917,10 +951,11 @@ case (CS_top_1)
     end
 endcase
 end
+end
 
 always @ (*) begin
+if (!LTSM_SB_MB_inst_1.tx_d2c_pt_en && !LTSM_SB_MB_inst_1.rx_d2c_pt_en) begin
 o_tx_msg_no_string_1 = "UNKNOWN"; // Default case
-
 case (CS_top_1)
     SBINIT: begin
         case (LTSM_SB_MB_inst_1.LTSM_TOP_inst.o_encoded_SB_msg)
@@ -1119,11 +1154,12 @@ case (CS_top_1)
     end
 endcase
 end
+end
 
 // partner
 always @ (*) begin
+if (!LTSM_SB_MB_inst_2.tx_d2c_pt_en && !LTSM_SB_MB_inst_2.rx_d2c_pt_en) begin
 i_rx_msg_no_string_2 = "UNKNOWN"; // Default case
-
 case (CS_top_2)
     SBINIT: begin
         case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.i_decoded_SB_msg)
@@ -1322,207 +1358,209 @@ case (CS_top_2)
     end
 endcase
 end
+end
 
 always @ (*) begin
+if (!LTSM_SB_MB_inst_2.tx_d2c_pt_en && !LTSM_SB_MB_inst_2.rx_d2c_pt_en) begin
 o_tx_msg_no_string_2 = "UNKNOWN"; // Default case
-
-case (CS_top_2)
-    SBINIT: begin
-        case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-            3: o_tx_msg_no_string_2 = "SBINIT_OUT_OF_RESET_MSG";
-            1: o_tx_msg_no_string_2 = "SBINIT_DONE_REQ_MSG";
-            2: o_tx_msg_no_string_2 = "SBINIT_DONE_RESP_MSG";
-        endcase
-    end
-    MBINIT: begin
-        case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_tx_sub_state)
-            PARAM: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "PARAM_CONFIG_REQ";
-                    2: o_tx_msg_no_string_2 = "PARAM_CONFIG_RESP";
-                    3: o_tx_msg_no_string_2 = "PARAM_SBFE_REQ";
-                    4: o_tx_msg_no_string_2 = "PARAM_SBFE_RESP";
-                endcase
-            end
-            CAL: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "CAL_DONE_REQ";
-                    2: o_tx_msg_no_string_2 = "CAL_DONE_RESP";
-                endcase
-            end
-            REPAIRCLK: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "REPAIRCLK_INIT_REQ";
-                    2: o_tx_msg_no_string_2 = "REPAIRCLK_INIT_RESP";
-                    3: o_tx_msg_no_string_2 = "REPAIRCLK_RESULT_REQ";
-                    4: o_tx_msg_no_string_2 = "REPAIRCLK_RESULT_RESP";
-                    5: o_tx_msg_no_string_2 = "REPAIRCLK_DONE_REQ";
-                    6: o_tx_msg_no_string_2 = "REPAIRCLK_DONE_RESP";
-                endcase
-            end
-            REPAIRVAL: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "REPAIRVAL_INIT_REQ";
-                    2: o_tx_msg_no_string_2 = "REPAIRVAL_INIT_RESP";
-                    3: o_tx_msg_no_string_2 = "REPAIRVAL_RESULT_REQ";
-                    4: o_tx_msg_no_string_2 = "REPAIRVAL_RESULT_RESP";
-                    5: o_tx_msg_no_string_2 = "REPAIRVAL_DONE_REQ";
-                    6: o_tx_msg_no_string_2 = "REPAIRVAL_DONE_RESP"; 
-                endcase
-            end
-            REVERSALMB: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "REVERSALMB_INIT_REQ";
-                    2: o_tx_msg_no_string_2 = "REVERSALMB_INIT_RESP";
-                    3: o_tx_msg_no_string_2 = "REVERSALMB_CLEAR_ERROR_REQ";
-                    4: o_tx_msg_no_string_2 = "REVERSALMB_CLEAR_ERROR_RESP";
-                    5: o_tx_msg_no_string_2 = "REVERSALMB_RESULT_REQ";
-                    6: o_tx_msg_no_string_2 = "REVERSALMB_RESULT_RESP";
-                    7: o_tx_msg_no_string_2 = "REVERSALMB_DONE_REQ";
-                    8: o_tx_msg_no_string_2 = "REVERSALMB_DONE_RESP";
-                endcase
-            end
-            REPAIRMB: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "REPAIRMB_START_REQ";
-                    2: o_tx_msg_no_string_2 = "REPAIRMB_START_RESP";
-                    3: o_tx_msg_no_string_2 = "REPAIRMB_END_REQ";
-                    4: o_tx_msg_no_string_2 = "REPAIRMB_END_RESP";
-                    5: o_tx_msg_no_string_2 = "REPAIRMB_APPLY_DEGRADE_REQ";
-                    6: o_tx_msg_no_string_2 = "REPAIRMB_APPLY_DEGRADE_RESP";
-                endcase
-            end
-        endcase
-    end
-    MBTRAIN: begin
-        case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_tx_sub_state)
-            VALVREF: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "VALVREF_START_REQ";
-                    2: o_tx_msg_no_string_2 = "VALVREF_START_RESP";
-                    3: o_tx_msg_no_string_2 = "VALVREF_END_REQ";
-                    4: o_tx_msg_no_string_2 = "VALVREF_END_RESP";
-                endcase
-            end
-            DATAVREF: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "DATAVREF_START_REQ";
-                    2: o_tx_msg_no_string_2 = "DATAVREF_START_RESP";
-                    3: o_tx_msg_no_string_2 = "DATAVREF_END_REQ";
-                    4: o_tx_msg_no_string_2 = "DATAVREF_END_RESP";
-                endcase
-            end
-            SPEEDIDLE: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "SPEEDIDLE_DONE_REQ";
-                    2: o_tx_msg_no_string_2 = "SPEEDIDLE_DONE_RESP";
-                endcase
-            end
-            TXSELFCAL: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "TXSELFCAL_DONE_REQ";
-                    2: o_tx_msg_no_string_2 = "TXSELFCAL_DONE_RESP";
-                endcase
-            end
-            RXCLKCAL: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "RXCLKCAL_START_REQ";
-                    2: o_tx_msg_no_string_2 = "RXCLKCAL_START_RESP";
-                    3: o_tx_msg_no_string_2 = "RXCLKCAL_DONE_REQ";
-                    4: o_tx_msg_no_string_2 = "RXCLKCAL_DONE_RESP";
-                endcase
-            end
-            VALTRAINCENTER: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "VALTRAINCENTER_START_REQ";
-                    2: o_tx_msg_no_string_2 = "VALTRAINCENTER_START_RESP";
-                    3: o_tx_msg_no_string_2 = "VALTRAINCENTER_DONE_REQ";
-                    4: o_tx_msg_no_string_2 = "VALTRAINCENTER_DONE_RESP";
-                endcase
-            end
-            VALTRAINVREF: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "VALTRAINVREF_START_REQ";
-                    2: o_tx_msg_no_string_2 = "VALTRAINVREF_START_RESP";
-                    3: o_tx_msg_no_string_2 = "VALTRAINVREF_DONE_REQ";
-                    4: o_tx_msg_no_string_2 = "VALTRAINVREF_DONE_RESP";
-                endcase
-            end
-            DATATRAINCENTER1: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "DATATRAINCENTER1_START_REQ";
-                    2: o_tx_msg_no_string_2 = "DATATRAINCENTER1_START_RESP";
-                    3: o_tx_msg_no_string_2 = "DATATRAINCENTER1_END_REQ";
-                    4: o_tx_msg_no_string_2 = "DATATRAINCENTER1_END_RESP";
-                endcase
-            end
-            DATATRAINVREF: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "DATATRAINVREF_START_REQ";
-                    2: o_tx_msg_no_string_2 = "DATATRAINVREF_START_RESP";
-                    3: o_tx_msg_no_string_2 = "DATATRAINVREF_END_REQ";
-                    4: o_tx_msg_no_string_2 = "DATATRAINVREF_END_RESP";
-                endcase
-            end
-            RXDESKEW: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "RXDESKEW_START_REQ";
-                    2: o_tx_msg_no_string_2 = "RXDESKEW_START_RESP";
-                    3: o_tx_msg_no_string_2 = "RXDESKEW_END_REQ";
-                    4: o_tx_msg_no_string_2 = "RXDESKEW_END_RESP";
-                endcase
-            end
-            DATATRAINCENTER2: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "DATATRAINCENTER2_START_REQ";
-                    2: o_tx_msg_no_string_2 = "DATATRAINCENTER2_START_RESP";
-                    3: o_tx_msg_no_string_2 = "DATATRAINCENTER2_END_REQ";
-                    4: o_tx_msg_no_string_2 = "DATATRAINCENTER2_END_RESP";
-                endcase
-            end
-            LINKSPEED: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "LINKSPEED_START_REQ";
-                    2: o_tx_msg_no_string_2 = "LINKSPEED_START_RESP";
-                    3: o_tx_msg_no_string_2 = "LINKSPEED_ERROR_REQ";
-                    4: o_tx_msg_no_string_2 = "LINKSPEED_ERROR_RESP";
-                    5: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_REPAIR_REQ";
-                    6: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_REPAIR_RESP";
-                    7: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_SPEED_DEGRADE_REQ";
-                    8: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_SPEED_DEGRADE_RESP";
-                    9: o_tx_msg_no_string_2 = "LINKSPEED_DONE_REQ";
-                    10: o_tx_msg_no_string_2 = "LINKSPEED_DONE_RESP";
-                    11: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_PHY_RETRAIN_REQ";
-                    12: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_PHY_RETRAIN_RESP";
-                endcase
-            end
-            REPAIR: begin
-                case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-                    1: o_tx_msg_no_string_2 = "REPAIR_INIT_REQ";
-                    2: o_tx_msg_no_string_2 = "REPAIR_INIT_RESP";
-                    3: o_tx_msg_no_string_2 = "REPAIR_APPLY_REPAIR_REQ";
-                    4: o_tx_msg_no_string_2 = "REPAIR_APPLY_REPAIR_RESP";
-                    5: o_tx_msg_no_string_2 = "REPAIR_END_REQ";
-                    6: o_tx_msg_no_string_2 = "REPAIR_END_RESP";
-                    7: o_tx_msg_no_string_2 = "REPAIR_APPLY_DEGRADE_REQ";
-                    8: o_tx_msg_no_string_2 = "REPAIR_APPLY_DEGRADE_RESP";
-                endcase
-            end
-        endcase
-    end
-    TRAINERROR_HS: begin
-        case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-            15: o_tx_msg_no_string_2 = "TRAINERROR_REQ";
-            14: o_tx_msg_no_string_2 = "TRAINERROR_RESP";
-        endcase
-    end
-    PHYRETRAIN: begin
-        case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
-            1: o_tx_msg_no_string_2 = "PHYRETRAIN_START_REQ";
-            2: o_tx_msg_no_string_2 = "PHYRETRAIN_START_RESP";
-        endcase
-    end
-endcase
+    case (CS_top_2)
+        SBINIT: begin
+            case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                3: o_tx_msg_no_string_2 = "SBINIT_OUT_OF_RESET_MSG";
+                1: o_tx_msg_no_string_2 = "SBINIT_DONE_REQ_MSG";
+                2: o_tx_msg_no_string_2 = "SBINIT_DONE_RESP_MSG";
+            endcase
+        end
+        MBINIT: begin
+            case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_tx_sub_state)
+                PARAM: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "PARAM_CONFIG_REQ";
+                        2: o_tx_msg_no_string_2 = "PARAM_CONFIG_RESP";
+                        3: o_tx_msg_no_string_2 = "PARAM_SBFE_REQ";
+                        4: o_tx_msg_no_string_2 = "PARAM_SBFE_RESP";
+                    endcase
+                end
+                CAL: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "CAL_DONE_REQ";
+                        2: o_tx_msg_no_string_2 = "CAL_DONE_RESP";
+                    endcase
+                end
+                REPAIRCLK: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "REPAIRCLK_INIT_REQ";
+                        2: o_tx_msg_no_string_2 = "REPAIRCLK_INIT_RESP";
+                        3: o_tx_msg_no_string_2 = "REPAIRCLK_RESULT_REQ";
+                        4: o_tx_msg_no_string_2 = "REPAIRCLK_RESULT_RESP";
+                        5: o_tx_msg_no_string_2 = "REPAIRCLK_DONE_REQ";
+                        6: o_tx_msg_no_string_2 = "REPAIRCLK_DONE_RESP";
+                    endcase
+                end
+                REPAIRVAL: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "REPAIRVAL_INIT_REQ";
+                        2: o_tx_msg_no_string_2 = "REPAIRVAL_INIT_RESP";
+                        3: o_tx_msg_no_string_2 = "REPAIRVAL_RESULT_REQ";
+                        4: o_tx_msg_no_string_2 = "REPAIRVAL_RESULT_RESP";
+                        5: o_tx_msg_no_string_2 = "REPAIRVAL_DONE_REQ";
+                        6: o_tx_msg_no_string_2 = "REPAIRVAL_DONE_RESP"; 
+                    endcase
+                end
+                REVERSALMB: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "REVERSALMB_INIT_REQ";
+                        2: o_tx_msg_no_string_2 = "REVERSALMB_INIT_RESP";
+                        3: o_tx_msg_no_string_2 = "REVERSALMB_CLEAR_ERROR_REQ";
+                        4: o_tx_msg_no_string_2 = "REVERSALMB_CLEAR_ERROR_RESP";
+                        5: o_tx_msg_no_string_2 = "REVERSALMB_RESULT_REQ";
+                        6: o_tx_msg_no_string_2 = "REVERSALMB_RESULT_RESP";
+                        7: o_tx_msg_no_string_2 = "REVERSALMB_DONE_REQ";
+                        8: o_tx_msg_no_string_2 = "REVERSALMB_DONE_RESP";
+                    endcase
+                end
+                REPAIRMB: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "REPAIRMB_START_REQ";
+                        2: o_tx_msg_no_string_2 = "REPAIRMB_START_RESP";
+                        3: o_tx_msg_no_string_2 = "REPAIRMB_END_REQ";
+                        4: o_tx_msg_no_string_2 = "REPAIRMB_END_RESP";
+                        5: o_tx_msg_no_string_2 = "REPAIRMB_APPLY_DEGRADE_REQ";
+                        6: o_tx_msg_no_string_2 = "REPAIRMB_APPLY_DEGRADE_RESP";
+                    endcase
+                end
+            endcase
+        end
+        MBTRAIN: begin
+            case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_tx_sub_state)
+                VALVREF: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "VALVREF_START_REQ";
+                        2: o_tx_msg_no_string_2 = "VALVREF_START_RESP";
+                        3: o_tx_msg_no_string_2 = "VALVREF_END_REQ";
+                        4: o_tx_msg_no_string_2 = "VALVREF_END_RESP";
+                    endcase
+                end
+                DATAVREF: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "DATAVREF_START_REQ";
+                        2: o_tx_msg_no_string_2 = "DATAVREF_START_RESP";
+                        3: o_tx_msg_no_string_2 = "DATAVREF_END_REQ";
+                        4: o_tx_msg_no_string_2 = "DATAVREF_END_RESP";
+                    endcase
+                end
+                SPEEDIDLE: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "SPEEDIDLE_DONE_REQ";
+                        2: o_tx_msg_no_string_2 = "SPEEDIDLE_DONE_RESP";
+                    endcase
+                end
+                TXSELFCAL: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "TXSELFCAL_DONE_REQ";
+                        2: o_tx_msg_no_string_2 = "TXSELFCAL_DONE_RESP";
+                    endcase
+                end
+                RXCLKCAL: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "RXCLKCAL_START_REQ";
+                        2: o_tx_msg_no_string_2 = "RXCLKCAL_START_RESP";
+                        3: o_tx_msg_no_string_2 = "RXCLKCAL_DONE_REQ";
+                        4: o_tx_msg_no_string_2 = "RXCLKCAL_DONE_RESP";
+                    endcase
+                end
+                VALTRAINCENTER: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "VALTRAINCENTER_START_REQ";
+                        2: o_tx_msg_no_string_2 = "VALTRAINCENTER_START_RESP";
+                        3: o_tx_msg_no_string_2 = "VALTRAINCENTER_DONE_REQ";
+                        4: o_tx_msg_no_string_2 = "VALTRAINCENTER_DONE_RESP";
+                    endcase
+                end
+                VALTRAINVREF: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "VALTRAINVREF_START_REQ";
+                        2: o_tx_msg_no_string_2 = "VALTRAINVREF_START_RESP";
+                        3: o_tx_msg_no_string_2 = "VALTRAINVREF_DONE_REQ";
+                        4: o_tx_msg_no_string_2 = "VALTRAINVREF_DONE_RESP";
+                    endcase
+                end
+                DATATRAINCENTER1: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "DATATRAINCENTER1_START_REQ";
+                        2: o_tx_msg_no_string_2 = "DATATRAINCENTER1_START_RESP";
+                        3: o_tx_msg_no_string_2 = "DATATRAINCENTER1_END_REQ";
+                        4: o_tx_msg_no_string_2 = "DATATRAINCENTER1_END_RESP";
+                    endcase
+                end
+                DATATRAINVREF: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "DATATRAINVREF_START_REQ";
+                        2: o_tx_msg_no_string_2 = "DATATRAINVREF_START_RESP";
+                        3: o_tx_msg_no_string_2 = "DATATRAINVREF_END_REQ";
+                        4: o_tx_msg_no_string_2 = "DATATRAINVREF_END_RESP";
+                    endcase
+                end
+                RXDESKEW: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "RXDESKEW_START_REQ";
+                        2: o_tx_msg_no_string_2 = "RXDESKEW_START_RESP";
+                        3: o_tx_msg_no_string_2 = "RXDESKEW_END_REQ";
+                        4: o_tx_msg_no_string_2 = "RXDESKEW_END_RESP";
+                    endcase
+                end
+                DATATRAINCENTER2: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "DATATRAINCENTER2_START_REQ";
+                        2: o_tx_msg_no_string_2 = "DATATRAINCENTER2_START_RESP";
+                        3: o_tx_msg_no_string_2 = "DATATRAINCENTER2_END_REQ";
+                        4: o_tx_msg_no_string_2 = "DATATRAINCENTER2_END_RESP";
+                    endcase
+                end
+                LINKSPEED: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "LINKSPEED_START_REQ";
+                        2: o_tx_msg_no_string_2 = "LINKSPEED_START_RESP";
+                        3: o_tx_msg_no_string_2 = "LINKSPEED_ERROR_REQ";
+                        4: o_tx_msg_no_string_2 = "LINKSPEED_ERROR_RESP";
+                        5: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_REPAIR_REQ";
+                        6: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_REPAIR_RESP";
+                        7: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_SPEED_DEGRADE_REQ";
+                        8: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_SPEED_DEGRADE_RESP";
+                        9: o_tx_msg_no_string_2 = "LINKSPEED_DONE_REQ";
+                        10: o_tx_msg_no_string_2 = "LINKSPEED_DONE_RESP";
+                        11: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_PHY_RETRAIN_REQ";
+                        12: o_tx_msg_no_string_2 = "LINKSPEED_EXIT_TO_PHY_RETRAIN_RESP";
+                    endcase
+                end
+                REPAIR: begin
+                    case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                        1: o_tx_msg_no_string_2 = "REPAIR_INIT_REQ";
+                        2: o_tx_msg_no_string_2 = "REPAIR_INIT_RESP";
+                        3: o_tx_msg_no_string_2 = "REPAIR_APPLY_REPAIR_REQ";
+                        4: o_tx_msg_no_string_2 = "REPAIR_APPLY_REPAIR_RESP";
+                        5: o_tx_msg_no_string_2 = "REPAIR_END_REQ";
+                        6: o_tx_msg_no_string_2 = "REPAIR_END_RESP";
+                        7: o_tx_msg_no_string_2 = "REPAIR_APPLY_DEGRADE_REQ";
+                        8: o_tx_msg_no_string_2 = "REPAIR_APPLY_DEGRADE_RESP";
+                    endcase
+                end
+            endcase
+        end
+        TRAINERROR_HS: begin
+            case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                15: o_tx_msg_no_string_2 = "TRAINERROR_REQ";
+                14: o_tx_msg_no_string_2 = "TRAINERROR_RESP";
+            endcase
+        end
+        PHYRETRAIN: begin
+            case (LTSM_SB_MB_inst_2.LTSM_TOP_inst.o_encoded_SB_msg)
+                1: o_tx_msg_no_string_2 = "PHYRETRAIN_START_REQ";
+                2: o_tx_msg_no_string_2 = "PHYRETRAIN_START_RESP";
+            endcase
+        end
+    endcase
+end
 end
 
 always @ (*) begin
