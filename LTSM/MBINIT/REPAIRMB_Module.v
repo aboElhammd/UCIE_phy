@@ -7,7 +7,7 @@ module REPAIRMB_Module (
     input                   i_falling_edge_busy,
     input                   i_msg_valid,
     input                   i_Start_Repeater, // from module partner
-    // input [1:0]             i_Functional_Lanes_ModulePrtner, // from module partner when asked to initiated data to clk
+    input                   apply_repeater, //from module partner to know that we need to apply repeater // do not send end req
     input                   i_Transmitter_initiated_Data_to_CLK_done,
     input [15:0]            i_Transmitter_initiated_Data_to_CLK_Result,
     output reg [3:0]        o_TX_SbMessage,
@@ -25,14 +25,14 @@ module REPAIRMB_Module (
 
 reg [3:0] CS, NS;   // CS current state, NS next state
 
-reg  start_setup;
+reg  start_setup,valid_done,Go_to_done; // Default value
 wire done_setup;
 
 wire [1:0] w_Functional_Lanes;  // Functional lanes from REG
 
 Functional_Lane_Setup Functional_Lane_Setup_inst (
-    .CLK(CLK),
-    .rst_n(rst_n),
+    .CLK,
+    .rst_n,
     .start_setup(start_setup),
     .i_Transmitter_initiated_Data_to_CLK_Result(i_Transmitter_initiated_Data_to_CLK_Result),
     .done_setup(done_setup),
@@ -95,8 +95,8 @@ always @(*) begin
         REPAIRMB_HANDLE_VALID: begin
             if (~MBINIT_REVERSALMB_end) NS = IDLE;
             else if ((i_RX_SbMessage == MBINIT_REPAIRMB_start_resp && i_msg_valid) || i_Start_Repeater) NS = REPAIRMB_INITIATED_DATA_CLOCK;
-            else if (i_RX_SbMessage == MBINIT_REPAIRMB_apply_degrade_resp && i_msg_valid) NS = REPAIRMB_CHECK_BUSY_END_REQ;
-
+            else if (i_RX_SbMessage == MBINIT_REPAIRMB_apply_degrade_resp && (w_Functional_Lanes ==2'b11 || valid_done || Go_to_done ) && ~ apply_repeater  && i_msg_valid) NS = REPAIRMB_CHECK_BUSY_END_REQ;
+            else if (i_RX_SbMessage == MBINIT_REPAIRMB_apply_degrade_resp && (w_Functional_Lanes ==2'b10 ||w_Functional_Lanes ==2'b01|| valid_done) && ~ apply_repeater  && i_msg_valid) NS = REPAIRMB_INITIATED_DATA_CLOCK;
             else if (i_RX_SbMessage == MBINIT_REPAIRMB_end_resp && i_msg_valid) NS = REPAIRMB_DONE;
         end
         REPAIRMB_INITIATED_DATA_CLOCK: begin
@@ -146,8 +146,8 @@ always @(posedge CLK or negedge rst_n) begin
         start_setup                                 <= 0;
         o_Done_Repeater                             <= 0;
         o_msg_info_repairmb                         <= 0;
-
-
+        valid_done                                  <= 0;
+        Go_to_done                                  <= 0; // Default value
     end else begin
         // Default values
         o_TX_SbMessage                              <= 4'b0000;
@@ -160,14 +160,14 @@ always @(posedge CLK or negedge rst_n) begin
         o_Done_Repeater                             <= 0;
         o_msg_info_repairmb                         <= 0;
 
-
-
-
-
-
-
-
-
+    if (i_Start_Repeater) begin
+        valid_done <=1;  
+    end
+    if (i_RX_SbMessage == MBINIT_REPAIRMB_apply_degrade_resp && 
+            (w_Functional_Lanes == 2'b10 || w_Functional_Lanes == 2'b01 || valid_done) && 
+            ~apply_repeater && i_msg_valid) begin
+            Go_to_done <= 1;
+    end
         case (NS)
             REPAIRMB_START_REQ: begin
                 o_ValidOutDatat_REPAIRMB_Module <= 1'b1;
@@ -198,8 +198,8 @@ always @(posedge CLK or negedge rst_n) begin
             REPAIRMB_END_REQ: begin
                 o_ValidOutDatat_REPAIRMB_Module <= 1'b1;
                 o_TX_SbMessage <= MBINIT_REPAIRMB_end_req;
-
-
+                valid_done <= 0;
+                Go_to_done <= 0;
             end
             REPAIRMB_DONE: begin
                 o_MBINIT_REPAIRMB_Module_end <= 1;
@@ -219,3 +219,4 @@ always @(posedge CLK or negedge rst_n) begin
     end
 end
 endmodule
+

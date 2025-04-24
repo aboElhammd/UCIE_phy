@@ -8,13 +8,14 @@ module REPAIRMB_Module_Partner (
     input                 i_msg_valid,
     input [1:0]           i_Functional_Lanes, // from rx side band in msginfo
     input                 i_Done_Repeater, // from module REPAIRMB_Module(tx)
-
+    // input                 i_Transmitter_initiated_Data_to_CLK_done,
+    input                 i_Transmitter_initiated_Data_to_CLK_en,
     output reg            o_Start_Repeater, // to module REPAIRMB_Module(tx)
     output                o_train_error,
     output reg            o_MBINIT_REPAIRMB_Module_Partner_end,
     output reg            o_ValidOutDatat_REPAIRMB_Module_Partner,
     output reg [3:0]      o_TX_SbMessage,
-
+    output reg            apply_repeater, //send to the module to know that it need to apply repeater do not send any end req
     // output                o_Width_Degrade_en,
     output reg [1:0]      o_Functional_Lanes //to width degrade module 
 
@@ -28,16 +29,17 @@ reg  i_second_check;
 // reg  prepare_the_seconed_check;
 wire o_done_check;
 wire o_go_to_repeat;
-wire o_go_to_train_error;
 wire o_continue;
+reg [1:0] check_i_msg_info;
 
-
+reg continue; // to module REPAIRMB_Module(tx) to apply the repeater
 CHECKER_REPAIRMB_Module_Partner CHECKER_REPAIRMB_Module_Partner_inst (
     .CLK(CLK),
     .rst_n(rst_n),
     .i_start_check(i_start_check),
     .i_second_check(i_second_check),
     .i_Functional_Lanes(i_Functional_Lanes),
+    .i_Transmitter_initiated_Data_to_CLK_en(i_Transmitter_initiated_Data_to_CLK_en),
     .o_done_check(o_done_check),
     .o_go_to_repeat(o_go_to_repeat),
     .o_go_to_train_error(o_train_error),
@@ -109,17 +111,17 @@ always @(*) begin
         end
         REPAIRMB_HANDLE_VALID: begin
             if (~MBINIT_REVERSALMB_end) NS = IDLE;
-            else if (i_RX_SbMessage == MBINIT_REPAIRMB_apply_degrade_req && i_msg_valid) NS = REPAIRMB_CHECK_WIDTH_DEGRADE;
-            else if (i_RX_SbMessage == MBINIT_REPAIRMB_end_req && i_msg_valid) NS = REPAIRMB_CHECK_BUSY_END_RESP;
-
+            else if (i_RX_SbMessage == MBINIT_REPAIRMB_apply_degrade_req && i_msg_valid && ~ i_Transmitter_initiated_Data_to_CLK_en) NS = REPAIRMB_CHECK_WIDTH_DEGRADE;
+            else if (i_RX_SbMessage == MBINIT_REPAIRMB_end_req && continue && i_msg_valid) NS = REPAIRMB_CHECK_BUSY_END_RESP;
+            else if (apply_repeater) NS = REPAIRMB_APPLY_REAPEAT;
         end
         REPAIRMB_CHECK_WIDTH_DEGRADE: begin
             if (~MBINIT_REVERSALMB_end) NS = IDLE;
             else if (o_done_check) begin
-            if (o_go_to_repeat) NS = REPAIRMB_APPLY_REAPEAT;
-            else if (o_continue) NS = REPAIRMB_CHECK_BUSY_DEGRADE_RESP;
-            else if (o_go_to_train_error) NS = IDLE;
-
+                NS = REPAIRMB_CHECK_BUSY_DEGRADE_RESP;
+            // if (o_go_to_repeat) NS = REPAIRMB_APPLY_REAPEAT;
+            // else if (o_continue) NS = REPAIRMB_CHECK_BUSY_DEGRADE_RESP;
+            if (o_train_error) NS = IDLE;
             end
         end
         REPAIRMB_APPLY_REAPEAT: begin
@@ -171,8 +173,8 @@ always @(posedge CLK or negedge rst_n) begin
         o_Functional_Lanes                          <= 2'b11;
         o_Start_Repeater                            <= 0;
         i_start_check                               <= 0;
-
-
+        continue                                    <= 0;
+        apply_repeater                              <= 0;
     end else begin
         // Default values
         o_TX_SbMessage                              <= 4'b0000;
@@ -181,30 +183,29 @@ always @(posedge CLK or negedge rst_n) begin
         o_Start_Repeater                            <= 0;
         i_start_check                               <= 0;
 
-
-
-
-
-
-
-
-
-
+        // if (CS == REPAIRMB_CHECK_WIDTH_DEGRADE) begin
+        //     if (o_done_check) begin
+        //         if (o_go_to_repeat) begin
+        //             o_Start_Repeater <= 1'b1;
+        //             o_Functional_Lanes <= i_Functional_Lanes; // for setup the rx width
+        //         end 
+        //     end
+        // end
+        
         if (CS == REPAIRMB_CHECK_WIDTH_DEGRADE) begin
             if (o_done_check) begin
                 if (o_go_to_repeat) begin
-                    o_Start_Repeater <= 1'b1;
                     o_Functional_Lanes <= i_Functional_Lanes; // for setup the rx width
-
-
+                    apply_repeater <= 1'b1;
+                    continue <= 0;
                 end 
-
-
-
-
+                else if (o_continue) begin 
+                    continue <= 1'b1;
+                    apply_repeater <= 0;
+                end
             end
         end
-
+            
         case (NS)
             REPAIRMB_START_RESP: begin
                 o_ValidOutDatat_REPAIRMB_Module_Partner <= 1'b1;
@@ -215,7 +216,7 @@ always @(posedge CLK or negedge rst_n) begin
             end
             REPAIRMB_APPLY_REAPEAT: begin
                 o_Start_Repeater <= 1'b1;
-
+                apply_repeater <= 0;
             end
             REPAIRMB_DEGRADE_RESP: begin
                 o_ValidOutDatat_REPAIRMB_Module_Partner <= 1'b1;
@@ -224,8 +225,8 @@ always @(posedge CLK or negedge rst_n) begin
             REPAIRMB_END_RESP: begin
                 o_ValidOutDatat_REPAIRMB_Module_Partner <= 1'b1;
                 o_TX_SbMessage <= MBINIT_REPAIRMB_end_resp;
-
-
+                continue <= 0;
+                i_second_check <= 0;
             end
             REPAIRMB_DONE: begin
                 o_MBINIT_REPAIRMB_Module_Partner_end <= 1;
@@ -249,4 +250,5 @@ always @(posedge CLK or negedge rst_n) begin
         i_second_check <=1;        
     end
 end
+
 endmodule //REPAIRMB_Module_Partner

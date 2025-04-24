@@ -6,6 +6,7 @@ module CHECKER_REPAIRMB_Module_Partner (
     input               i_start_check,
     input               i_second_check,
     input  [1:0]        i_Functional_Lanes,
+    input               i_Transmitter_initiated_Data_to_CLK_en,
     output reg          o_done_check,
     output reg          o_go_to_repeat, 
     output reg          o_go_to_train_error,
@@ -41,7 +42,7 @@ module CHECKER_REPAIRMB_Module_Partner (
                     o_go_to_repeat <= 0;
                     o_continue <= 1;
                 end
-            end else begin
+            end else if (~i_Transmitter_initiated_Data_to_CLK_en) begin
                 case (i_Functional_Lanes)
                     3'b000: begin
                         o_go_to_train_error <= 1;
@@ -65,7 +66,7 @@ module CHECKER_REPAIRMB_Module_Partner (
             o_done_check <= 0;
             o_go_to_repeat <= 0;
             o_go_to_train_error <= 0;
-            o_continue <= 0;
+            //o_continue <= 0;
         end
     end
 endmodule
