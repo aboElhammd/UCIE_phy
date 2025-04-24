@@ -122,7 +122,7 @@ assign LAST_SENT_MSG_WAS_APPLY_DEGRADE_REQ 			= i_state == MBINIT && i_msg_no ==
 assign STATE_TRANSITIONED 							= i_state != state_reg;
 assign SUB_STATE_TRANSITIONED 						= i_sub_state == sub_state_reg;
 assign RESET_MSG_SUBCODE_COUNTER 					= SB_OUT_OF_RESET_MSG ||  (STATE_TRANSITIONED && i_state != PHYRETRAIN && i_state != MBTRAIN);
-assign INCREMENT_MSG_SUBCODE_COUNTER 				= REQ && !LAST_SENT_MSG_WAS_APPLY_DEGRADE_REQ && i_state != TRAINERROR;
+assign INCREMENT_MSG_SUBCODE_COUNTER 				= REQ && i_state != TRAINERROR;
 assign TX_OR_RX_INT_D_TO_C_RESULTS_RESP  			= i_tx_point_sweep_test_en && (i_tx_point_sweep_test == TX_INIT_POINT_TEST || i_tx_point_sweep_test == RX_INIT_SWEEP_TEST) && i_msg_no == 6;
 assign REQ_REQ_CNTR_INCR 							= REQ && i_state != SBINIT && SUB_STATE_TRANSITIONED && !LAST_SENT_MSG_WAS_APPLY_DEGRADE_REQ;
 
@@ -289,14 +289,18 @@ always @(posedge i_clk or negedge i_rst_n) begin
 			else if (INCREMENT_MSG_SUBCODE_COUNTER) begin
 				// Increment in test mode edge: restore saved code if required
 				if (i_tx_point_sweep_test_en_reg && i_state == MBINIT) begin
-					msg_sub_code <= msg_sub_code_reg + 3;
+					if (LAST_SENT_MSG_WAS_APPLY_DEGRADE_REQ) begin
+						msg_sub_code <= msg_sub_code_reg;
+					end
+					else begin
+						msg_sub_code <= msg_sub_code_reg + 3;
+					end
 				end else if (i_tx_point_sweep_test_en_reg && i_state == MBTRAIN && msg_sub_code_reg == 8'h0E) begin 
 					msg_sub_code <= msg_sub_code_reg + 2;
 				end else if (i_tx_point_sweep_test_en_reg && i_state == MBTRAIN && msg_sub_code_reg == 8'h15) begin
 					msg_sub_code <= msg_sub_code_reg + 4;
 				end else if (i_tx_point_sweep_test_en_reg) begin
 					msg_sub_code <= msg_sub_code_reg + 1;
-					//msg_sub_code_saved_before_tests <= 0;
 				end
 
 				// Action based on current state
@@ -313,8 +317,12 @@ always @(posedge i_clk or negedge i_rst_n) begin
 								msg_sub_code     <= 8'h14;
 								msg_sub_code_reg <= 8'h14;
 							end
-							else if (msg_sub_code == 8'h14)
-								msg_sub_code <= 8'h13;
+							else if (msg_sub_code == 8'h14) begin
+								if (i_msg_no == 5)
+									msg_sub_code <= 8'h14;
+								else if (i_msg_no == 3)
+									msg_sub_code <= 8'h13;
+							end
 							else if (msg_sub_code == 8'h0F) begin
 								if (i_msg_no == 3)
 									msg_sub_code <= 8'h0E;
