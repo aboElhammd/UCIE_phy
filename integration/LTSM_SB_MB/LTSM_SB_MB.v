@@ -777,33 +777,61 @@ Lane_To_Byte_Demapping #(
 //     .o_Clock_track_result_logged    (clk_logged_results) 
 // );
 // Instantiate the Clock Mode Generator
-UCIe_Clock_Mode_Generator clock_gen (
-    .i_clk1                 (i_ckp),
-    .i_clk2                 (i_ckn),
+// UCIe_Clock_Mode_Generator clock_gen (
+//     .i_clk1                 (i_ckp),
+//     .i_clk2                 (i_ckn),
+//     .i_sys_clk             (dig_clk),
+//     .i_rst_n                (i_rst_n),
+//     .i_valid                (1'b0), 
+//     .i_mode                 (1'b1), // 1h: free running clock , 0h: strobe mode
+//     .i_state_indicator      (ltsm_clk_tx_pattern_en),
+//     .CKP                    (o_CKP),
+//     .CKN                    (o_CKN),
+//     .Track                  (o_TRACK),
+//     .o_done                 (clk_tx_pattern_done),
+//     .enable_detector_CKP    (w_enable_detector_CKP),
+//     .enable_detector_CKN    (w_enable_detector_CKN),
+//     .enable_detector_Track  (w_enable_detector_Track)
+// );
+
+// // Instantiate the Clock Pattern Detector
+// UCIe_Clock_Pattern_Detector clock_det (
+//     .i_clk                          (dig_clk),
+//     .i_rst_n                        (i_rst_n),
+//     .RCKP_L                         (i_CKP),                  
+//     .RCKN_L                         (i_CKN),                   
+//     .RTRK_L                         (i_TRACK),                
+//     .enable_detector_CKP            (w_enable_detector_CKP),
+//     .enable_detector_CKN            (w_enable_detector_CKN),
+//     .enable_detector_Track          (w_enable_detector_Track),
+//     .clear_out                      (ltsm_clear_clk_results),  // Propagate clear_out
+//     .o_Clock_track_result_logged    (clk_logged_results)
+//);
+
+clock_generator clock_generator_inst (
+    .i_local_ckp            (i_ckp), // half rate clock
+    .i_local_ckn            (i_ckn),
+    .i_sys_clk              (dig_clk),
     .i_rst_n                (i_rst_n),
-    .i_valid                (1'b0), 
-    .i_mode                 (1'b1), // 1h: free running clock , 0h: strobe mode
-    .i_state_indicator      (ltsm_clk_tx_pattern_en),
-    .CKP                    (o_CKP),
-    .CKN                    (o_CKN),
-    .Track                  (o_TRACK),
-    .o_done                 (clk_tx_pattern_done),
-    .enable_detector_CKP    (w_enable_detector_CKP),
-    .enable_detector_CKN    (w_enable_detector_CKN),
-    .enable_detector_Track  (w_enable_detector_Track)
+    .i_rst_ckp_n            (i_rst_n),
+    .i_start_clk_training   (ltsm_clk_tx_pattern_en),
+    .o_CKP                  (o_CKP),
+    .o_CKN                  (o_CKN),
+    .o_TRACK                (o_TRACK),
+    .o_done                 (clk_tx_pattern_done)
 );
 
-// Instantiate the Clock Pattern Detector
-UCIe_Clock_Pattern_Detector clock_det (
-    .i_clk                          (dig_clk),
+clock_detector clock_detector_inst (
+    .i_dig_clk                      (dig_clk),
+    .i_local_ckp                    (i_clk), // should be pll clock
+    .i_local_ckn                    (~i_clk),   
     .i_rst_n                        (i_rst_n),
-    .RCKP_L                         (i_CKP),                  
-    .RCKN_L                         (i_CKN),                   
-    .RTRK_L                         (i_TRACK),                
-    .enable_detector_CKP            (w_enable_detector_CKP),
-    .enable_detector_CKN            (w_enable_detector_CKN),
-    .enable_detector_Track          (w_enable_detector_Track),
-    .clear_out                      (ltsm_clear_clk_results),  // Propagate clear_out
+    .i_rst_ckp_n                    (i_rst_n),   
+    .i_rst_ckn_n                    (i_rst_n), 
+    .i_RCKP                         (i_CKP),  
+    .i_RCKN                         (i_CKN),
+    .i_RTRK                         (i_TRACK),
+    .i_clear_results                (ltsm_clear_clk_results),
     .o_Clock_track_result_logged    (clk_logged_results)
 );
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
