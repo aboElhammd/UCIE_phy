@@ -360,6 +360,16 @@ clock_div_32 clock_div_32_inst_1 (
     .i_rst_n           (i_rst_n),
     .o_div_clk         (i_clk)
 );   
+
+// clock divider by 2
+reg clk_div_2;
+always @ (posedge i_ser_clk_4G or negedge i_rst_n) begin
+    if (~i_rst_n) begin
+        clk_div_2 <= 0;
+    end else begin
+        clk_div_2 <= ~clk_div_2;
+    end
+end
 /**************************************************************************************************************************************************
 *************************************************************** STIMILUS GENERATION ***************************************************************
 **************************************************************************************************************************************************/
@@ -373,10 +383,10 @@ clock_div_32 clock_div_32_inst_1 (
  end
 
 
-assign i_ckp_1 = i_ser_clk_4G;
-assign i_ckp_2 = i_ser_clk_4G;
-assign i_ckn_1 = ~ i_ser_clk_4G;
-assign i_ckn_2 = ~ i_ser_clk_4G;
+assign i_ckp_1 = clk_div_2;
+assign i_ckp_2 = clk_div_2;
+assign i_ckn_1 = ~ clk_div_2;
+assign i_ckn_2 = ~ clk_div_2;
 
 initial begin
     i_clk_sb =  0;
