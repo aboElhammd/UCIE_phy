@@ -8,7 +8,7 @@ module clock_generator (
     output                          o_CKP,
     output                          o_CKN,
     output                          o_TRACK,
-    output                          o_done
+    output  reg                     o_done
 );
 /********************************************************************************
 * Internal wires and registers
@@ -17,6 +17,7 @@ reg [6:0] iteration_counter;
 reg [4:0] gating_counter;
 reg CS,NS;
 reg EN;
+reg start_traning_reg;
 /********************************************************************************
 * FSM States
 ********************************************************************************/
@@ -28,15 +29,17 @@ localparam TRAIN_STATE  = 1'b1;
 assign o_CKP   = (CS == NORMAL_STATE)? i_local_ckp : (i_local_ckp & EN);
 assign o_CKN   = (CS == NORMAL_STATE)? i_local_ckn : (i_local_ckn & EN);
 assign o_TRACK = o_CKP;
-assign o_done  = (&iteration_counter);
+//assign o_done  = (&iteration_counter);
 /********************************************************************************
 * State memory
 ********************************************************************************/
 always @ (posedge i_sys_clk or negedge i_rst_n) begin
     if (~i_rst_n) begin
         CS <= NORMAL_STATE;
+        start_traning_reg <= 0;
     end else begin
         CS <= NS;
+        start_traning_reg <= i_start_clk_training;
     end
 end
 /********************************************************************************
@@ -45,7 +48,7 @@ end
 always @ (*) begin
     case(CS)
         NORMAL_STATE: begin
-            NS = (i_start_clk_training)? TRAIN_STATE : NORMAL_STATE;
+            NS = (i_start_clk_training && ~ start_traning_reg)? TRAIN_STATE : NORMAL_STATE;
         end
 
         TRAIN_STATE: begin
@@ -60,6 +63,7 @@ always @ (posedge i_local_ckp or negedge i_rst_ckp_n) begin
     if (~i_rst_ckp_n) begin
         gating_counter <= 5'b00000;
         iteration_counter <= 7'b0000000;
+        o_done <= 0;
         EN <= 1'b0;
     end else begin
         if (CS == TRAIN_STATE) begin
@@ -81,10 +85,12 @@ always @ (posedge i_local_ckp or negedge i_rst_ckp_n) begin
             if (gating_counter == 23) begin
                 iteration_counter <= iteration_counter + 1;
             end
+            
         end else begin
             gating_counter <= 5'b00000;
             iteration_counter <= 7'b0000000;
         end
+        o_done <= (&iteration_counter)? 1 : (~i_start_clk_training && start_traning_reg)? 0 : o_done;
     end
 end
 endmodule
