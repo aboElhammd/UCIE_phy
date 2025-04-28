@@ -19,6 +19,7 @@ module mbtrain_wrapper (
 		    input        i_valid_framing_error,
 		// communicating with ltsm (new)
 			input [1:0]  i_phyretrain_resolved_state,
+			input 	     i_coming_from_L1,
 		//inputs from mbinit (new)
 			input [2:0] i_highest_common_speed,
 			input       i_first_8_tx_lanes_are_functional_mbinit , i_second_8_tx_lanes_are_functional_mbinit,
@@ -356,6 +357,7 @@ mbtrain_controller mbtrain_controller_inst(
 	    	.i_en(i_en), 
 	    //input signal from phyretrain after resolving 
 		    .i_phyretrain_resolved_state(i_phyretrain_resolved_state), 
+			.i_coming_from_L1(i_coming_from_L1),
 	    //input signal from mbinit 
 		    .i_highest_common_speed(i_highest_common_speed),
 		    .i_first_8_tx_lanes_are_functional_mbinit(i_first_8_tx_lanes_are_functional_mbinit)  ,

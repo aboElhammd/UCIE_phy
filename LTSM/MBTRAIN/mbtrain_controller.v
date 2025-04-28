@@ -21,6 +21,7 @@ module mbtrain_controller (
 	    input  i_valvref_ack             ,i_data_vref_ack        , i_speed_idle_ack             , i_tx_self_cal_ack   ,
 		input  i_rx_clk_cal_ack          ,i_val_train_center_ack , i_val_train_vref_ack         , i_data_train_center_1_ack   ,
 		input  i_data_train_vref_ack     ,i_rx_deskew_ack        , i_data_train_center_2_ack    , i_link_speed_ack ,i_repair_ack ,
+		input  i_coming_from_L1,
     //outputs 
 	    //enable for each substate 
 	    output reg  o_valvref_en            ,o_data_vref_en        , o_speed_idle_en             , o_tx_self_cal_en   ,
@@ -101,12 +102,15 @@ always @(*) begin
     case (cs)
         IDLE:begin
         	if(i_en) begin
-        		case (i_phyretrain_resolved_state)
-        			2'b00:ns=VALVREF;
-        			2'b01:ns=TXSELFCAL;
-        			2'b10:ns=REPAIR;
-        			2'b11:ns=SPEED_IDLE;
-        		endcase
+        		if(i_coming_from_L1) 
+        			ns=SPEED_IDLE;
+        		else 
+	        		case (i_phyretrain_resolved_state)
+	        			2'b00:ns=VALVREF;
+	        			2'b01:ns=TXSELFCAL;
+	        			2'b10:ns=REPAIR;
+	        			2'b11:ns=SPEED_IDLE;
+	        		endcase
         	end else begin
         		ns=IDLE;
         	end
@@ -527,7 +531,7 @@ always @(posedge clk or negedge rst_n) begin : proc_o_curret_operating_speed
 		o_curret_operating_speed <= 0;
 	end else if (cs==IDLE && ns == VALVREF)begin
 		o_curret_operating_speed <= i_highest_common_speed;
-	end else if ( (cs == LINKSPEED || cs==IDLE) && ns==SPEED_IDLE) begin
+	end else if ( (cs == LINKSPEED || cs==IDLE) && ns==SPEED_IDLE && ~i_coming_from_L1) begin
 		o_curret_operating_speed<= o_curret_operating_speed-1;
 	end 
 end
