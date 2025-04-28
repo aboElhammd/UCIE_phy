@@ -107,6 +107,7 @@ reg  state_timeout; // this flag is set if we stayed in a state more than 8ms ex
 reg  start_reset_counter; // when traning triggers occur, start counting
 reg  clear_resolved_state; // to PHYRETRAIN so that it reset the o_resolved_state when the LTSM goes back to RESET state 
 wire falling_edge_busy;
+reg go_to_speedidle; // from LTSM to MBTRAIN.speedidle upon exit from L1 state
 
 /**************************************************
 * MBINIT Internal signals
@@ -283,6 +284,7 @@ mbtrain_wrapper MBTRAIN_inst (
     .i_rx_lanes_result                          (i_Receiver_initiated_Data_to_CLK_Result),  
     .i_valid_framing_error                      (i_valid_framing_error),   
     .i_phyretrain_resolved_state                (phyretrain_resolved_state),
+    .i_coming_from_L1                           (go_to_speedidle),
     .i_highest_common_speed                     (MBINIT_highest_common_speed),
     .i_first_8_tx_lanes_are_functional_mbinit   (MBINIT_tx_Functional_Lanes_out[0]),
     .i_second_8_tx_lanes_are_functional_mbinit  (MBINIT_tx_Functional_Lanes_out[1]),
@@ -618,6 +620,7 @@ always @ (posedge i_clk or negedge i_rst_n) begin
         TRAINERROR_EN   <= 0;
         PHYRETRAIN_EN   <= 0;
         o_pl_trainerror <= 0;
+        go_to_speedidle <= 0;
         clear_resolved_state   <= 0;
     end else begin
         SBINIT_EN       <= 0;
@@ -702,6 +705,14 @@ always @ (posedge i_clk or negedge i_rst_n) begin
         end
         clear_resolved_state <= (NS == RESET)? 1:0; // because this resolved state goes to MBTRAIN block to go to either TXSELFCAL , SPEEDIDLE , REPAIR or start
         // from first state VALVREF as normal so, resolved state register should be cleared each time traning starts from the begining
+        /*-----------------------------------------------------------------------
+        * L1 -> MBTRAIN.SPEEDIDLE related logic
+        -----------------------------------------------------------------------*/
+        if (CS == L1_L2 && NS == MBTRAIN) begin
+            go_to_speedidle <= 1;
+        end else if (MBTRAIN_DONE) begin
+            go_to_speedidle <= 0;
+        end
     end
 end 
 
