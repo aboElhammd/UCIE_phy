@@ -125,7 +125,7 @@ always @(*) begin
         end
         REVERSALMB_INIT_REQ: begin
             if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REVERSALMB_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REVERSALMB_HANDLE_VALID;
         end
         REVERSALMB_HANDLE_VALID: begin
             if (~i_REPAIRVAL_end) NS = IDLE;
@@ -142,7 +142,7 @@ always @(*) begin
         
         REVERSALMB_CLEAR_ERROR_REQ: begin
             if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REVERSALMB_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REVERSALMB_HANDLE_VALID;
         end
 
         REVERSALMB_LANEID_PATTER: begin
@@ -157,7 +157,7 @@ always @(*) begin
         
         REVERSALMB_RESULT_REQ: begin
             if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REVERSALMB_HANDLE_VALID;     
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REVERSALMB_HANDLE_VALID;     
         end
 
         REVERSALMB_CHECK_RESULT: begin
@@ -177,7 +177,7 @@ always @(*) begin
 
         REVERSALMB_DONE_REQ: begin
             if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REVERSALMB_HANDLE_VALID; 
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REVERSALMB_HANDLE_VALID; 
         end
 
         REVERSALMB_DONE: begin

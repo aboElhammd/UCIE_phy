@@ -108,7 +108,7 @@ always @(*) begin
         end
         REPAIRVAL_INIT_REQ: begin
             if (~i_REPAIRCLK_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REPAIRVAL_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REPAIRVAL_HANDLE_VALID;
         end
         REPAIRVAL_HANDLE_VALID: begin
             if (~i_REPAIRCLK_end) NS = IDLE;
@@ -126,7 +126,7 @@ always @(*) begin
         end
         REPAIRVAL_RESULT_REQ: begin
             if (~i_REPAIRCLK_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REPAIRVAL_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REPAIRVAL_HANDLE_VALID;
         end
         REPAIRVAL_CHECK_RESULT: begin
             if (~i_REPAIRCLK_end || ~i_VAL_Result_logged) 
@@ -140,7 +140,7 @@ always @(*) begin
         end
         REPAIRVAL_DONE_REQ: begin
             if (~i_REPAIRCLK_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REPAIRVAL_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REPAIRVAL_HANDLE_VALID;
         end
         REPAIRVAL_DONE: begin
             if (~i_REPAIRCLK_end) NS = IDLE;

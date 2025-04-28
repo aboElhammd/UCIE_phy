@@ -92,7 +92,7 @@ always @(*) begin
         MBINIT_CAL_REQ: begin
             if (!i_MBINIT_PARAM_end) begin
                 NS = IDLE;
-            end else if (i_falling_edge_busy) begin
+            end else if (i_falling_edge_busy && ~i_Busy_SideBand) begin
                 NS = MBINIT_HANDLE_VALID;
             end else begin
                 NS = MBINIT_CAL_REQ;

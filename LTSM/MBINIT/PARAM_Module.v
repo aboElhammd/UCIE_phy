@@ -98,7 +98,7 @@ always @(*) begin
         end
         PARAM_REQ: begin
             if (~i_MBINIT_Start_en) NS = IDLE;
-            else if (i_falling_edge_busy) NS = PARAM_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = PARAM_HANDLE_VALID;
         end
         PARAM_HANDLE_VALID: begin
             if (~i_MBINIT_Start_en) NS = IDLE;

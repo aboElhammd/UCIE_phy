@@ -124,7 +124,7 @@ always @(*) begin
         end
         REPAIRCLK_RESULT_REQ: begin
             if (~i_MBINIT_CAL_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REPAIRCLK_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REPAIRCLK_HANDLE_VALID;
         end
         REPAIRCLK_CHECK_RESULT: begin
             if (~i_MBINIT_CAL_end || i_Clock_track_result_logged != 3'b111) 
@@ -138,7 +138,7 @@ always @(*) begin
         end
         REPAIRCLK_DONE_REQ: begin
             if (~i_MBINIT_CAL_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REPAIRCLK_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REPAIRCLK_HANDLE_VALID;
         end
         REPAIRCLK_DONE: begin
             if (~i_MBINIT_CAL_end) NS = IDLE;

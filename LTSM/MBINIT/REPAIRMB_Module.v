@@ -90,7 +90,7 @@ always @(*) begin
         end
         REPAIRMB_START_REQ: begin
             if (~MBINIT_REVERSALMB_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REPAIRMB_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REPAIRMB_HANDLE_VALID;
         end
         REPAIRMB_HANDLE_VALID: begin
             if (~MBINIT_REVERSALMB_end) NS = IDLE;
@@ -114,7 +114,7 @@ always @(*) begin
         end
         REPAIRMB_DEGRADE_REQ: begin
             if (~MBINIT_REVERSALMB_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REPAIRMB_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REPAIRMB_HANDLE_VALID;
         end
         REPAIRMB_CHECK_BUSY_END_REQ: begin
             if (~MBINIT_REVERSALMB_end) NS = IDLE;
@@ -122,7 +122,7 @@ always @(*) begin
         end
         REPAIRMB_END_REQ: begin
             if (~MBINIT_REVERSALMB_end) NS = IDLE;
-            else if (i_falling_edge_busy) NS = REPAIRMB_HANDLE_VALID;
+            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REPAIRMB_HANDLE_VALID;
         end
         REPAIRMB_DONE: begin
             if (~MBINIT_REVERSALMB_end) NS = IDLE;
