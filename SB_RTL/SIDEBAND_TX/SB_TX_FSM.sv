@@ -39,6 +39,7 @@ reg o_data_encoder_enable_next;
 reg o_header_frame_enable_next;
 reg o_data_frame_enable_next;
 reg o_start_pattern_done_next;
+reg [1:0] go_to_idle_counter;
 
 
 /*------------------------------------------------------------------------------
@@ -110,12 +111,30 @@ always @(*) begin
         end 
 
         END_MESSAGE: begin
-            ns = IDLE;
+            if (&go_to_idle_counter) begin
+                ns = IDLE;
+            end else begin
+                 ns = END_MESSAGE;
+            end
         end 
 
         default: ns = IDLE;
     endcase
 end
+
+
+/*------------------------------------------------------------------------------
+-- go to idle counter   
+------------------------------------------------------------------------------*/
+always @(posedge i_clk or negedge i_rst_n) begin 
+    if (~i_rst_n) begin
+        go_to_idle_counter <= 2'b00;
+    end else if (cs == HEADER_FRAME && ns == END_MESSAGE) begin
+        go_to_idle_counter <= 2'b00;
+    end else begin
+        go_to_idle_counter <= go_to_idle_counter + 1;
+    end
+end 
 
 
 /*------------------------------------------------------------------------------
