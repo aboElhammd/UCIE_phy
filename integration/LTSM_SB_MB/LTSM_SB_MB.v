@@ -5,14 +5,12 @@ module LTSM_SB_MB #(
     * INPUTS
     *************************************************************************/
     // clocks and resets 
-    input                       i_clk,      // main pll clock
-    input                       i_clk_sb,   // sideband clock (800 MHz)
-    input                       i_ckp,      // module local CKP 
-    input                       i_ckn,      // module local CKN
-    input                       i_CKP,      // Received CKP
-    input                       i_CKN,      // Received CKN
-    input                       i_TRACK,    // Received TRACK
-    input                       i_rst_n,  
+    input                       i_pll_mb_clk,      // main pll clock
+    input                       i_pll_sb_clk,      // sideband clock (800 MHz)
+    input                       i_rst_n, 
+    input                       i_RCKP,      // Received CKP
+    input                       i_RCKN,      // Received CKN
+    input                       i_RTRACK,    // Received TRACK
     // RDI 
     input       [8*63:0]        i_lp_data, 
     input                       i_start_training_RDI,
@@ -247,11 +245,15 @@ wire valid_frame_detect;
 * CLOCK CONTROL related signals
 ****************************************/
 wire clk_tx_pattern_done;
-wire [2:0] clk_logged_results;
-wire w_enable_detector_CKP;
-wire w_enable_detector_CKN;
-wire w_enable_detector_Track;
 wire dig_clk ;
+wire clk_result_ckp;
+wire clk_result_ckn;
+wire clk_result_trk;
+//wire [2:0] clk_logged_results;
+// wire w_enable_detector_CKP;
+// wire w_enable_detector_CKN;
+// wire w_enable_detector_Track;
+
 /****************************************
 * SYNCHRONIZERS related signals
 ****************************************/
@@ -264,6 +266,11 @@ wire sync_sb_fifo_empty;
 wire sync_sb_time_out;
 wire sync_sb_stop_cnt;
 wire sync_sb_busy;
+wire sync_sb_rst_n;
+wire sync_mb_rst_n;
+wire sync_mb_pll_rst_n;
+wire sync_sb_pll_rst_n;
+wire clock_local_ckp;
 /****************************************
 * RDI related signals
 ****************************************/
@@ -277,7 +284,7 @@ wire sb_rx_rdi_msg;
 ****************************************/
 LTSM_TOP LTSM_TOP_inst (
     .i_clk                                                          (dig_clk),
-    .i_rst_n                                                        (i_rst_n),
+    .i_rst_n                                                        (sync_mb_rst_n),
     /*------------------------------------------------------------------------------------------------------------
      * RDI signals
     ------------------------------------------------------------------------------------------------------------*/
@@ -347,7 +354,7 @@ LTSM_TOP LTSM_TOP_inst (
     /*------------------------------------------------------------------------------------------------------------
      * CLOCK PATTERN DETECTOR signals
     ------------------------------------------------------------------------------------------------------------*/
-    .i_logged_clk_result                                            (clk_logged_results),
+    .i_logged_clk_result                                            ({clk_result_ckp,clk_result_ckn,clk_result_trk}),
     .o_MBINIT_clear_clk_detection                                   (ltsm_clear_clk_results),
     /*------------------------------------------------------------------------------------------------------------
      * VALID CONTROLLER signals
@@ -380,9 +387,9 @@ LTSM_TOP LTSM_TOP_inst (
 * SIDEBAND
 ****************************************/
 SB_TOP_WRAPPER SB_inst (
-    .i_clk                      (i_clk_sb),
+    .i_clk                      (i_pll_sb_clk),
     .i_divided_clk              (sb_divided_clk),
-    .i_rst_n                    (i_rst_n),
+    .i_rst_n                    (sync_sb_rst_n),
     .i_start_pattern_req        (sync_sb_start_pattern_req), 
     .i_rdi_msg                  ('b0), // to be edited
     .i_data_valid               (sb_tx_data_valid),
@@ -430,7 +437,7 @@ SB_TOP_WRAPPER SB_inst (
 ****************************************/
 tx_initiated_point_test_wrapper tx_d2c_pt_inst (
     .clk                                (dig_clk),    
-    .rst_n                              (i_rst_n),  
+    .rst_n                              (sync_mb_rst_n),  
     /*------------------------------------------------------------------------------------------------------------
      * LTSM signals
     ------------------------------------------------------------------------------------------------------------*/
@@ -475,7 +482,7 @@ tx_initiated_point_test_wrapper tx_d2c_pt_inst (
 ****************************************/
 rx_initiated_point_test_wrapper rx_d2c_pt_inst (
     .i_clk                              (dig_clk),
-    .i_rst_n                            (i_rst_n),
+    .i_rst_n                            (sync_mb_rst_n),
     /*------------------------------------------------------------------------------------------------------------
      * LTSM signals
     ------------------------------------------------------------------------------------------------------------*/
@@ -517,7 +524,7 @@ LFSR_Transmitter #(
     .WIDTH (SER_WIDTH) 
 ) LFSR_TX_inst (
     .i_clk                            (dig_clk),                      
-    .i_rst_n                          (i_rst_n),                   
+    .i_rst_n                          (sync_mb_rst_n),                   
     .i_state                          (mainband_pattern_generator_cw),                    
     .i_enable_scrambeling_pattern     (1'b0), // should be: pl_trdy & lp_valid & lp_irdy
     .i_functional_tx_lanes            (ltsm_functional_tx_lanes),      
@@ -564,7 +571,7 @@ LFSR_Receiver #(
     .WIDTH (SER_WIDTH) 
 ) LFSR_RX_inst (
     .i_clk                            (dig_clk),
-    .i_rst_n                          (i_rst_n),
+    .i_rst_n                          (sync_mb_rst_n),
     .i_state                          (mainband_pattern_comparator_cw),
     .i_functional_rx_lanes            (ltsm_functional_rx_lanes),
     .i_enable_Descrambeling_pattern   (1'b0), // should be i_deser_valid_data & mapper_demapper_en
@@ -627,7 +634,7 @@ pattern_comparator #(
     .WIDTH (SER_WIDTH)
 ) PATTERN_COMP_inst (
     .i_clk                            (dig_clk),
-    .i_rst_n                          (i_rst_n),
+    .i_rst_n                          (sync_mb_rst_n),
     .i_Type_comp                      (1'b1), // 0h: aggregate comparison , 1h: per lane comparison
     .i_enable_buffer                  (i_deser_valid_data),
     .i_state                          (mainband_pattern_comparator_cw),
@@ -674,7 +681,7 @@ pattern_comparator #(
 ****************************************/
 Valtrain_Controller VALTRAIN_CTRL_inst (
     .i_clk                 (dig_clk),
-    .i_rst_n               (i_rst_n),
+    .i_rst_n               (sync_mb_rst_n),
     .Valid_pattern_enable  (val_pattern_en_rx_d2c_pt | val_pattern_en_tx_d2c_pt | ltsm_val_pattern_en),
     .valid_frame_enable    (o_serliazer_data_en), 
     .o_TVLD_L              (o_TVLD_L), 
@@ -686,7 +693,7 @@ Valtrain_Controller VALTRAIN_CTRL_inst (
 ****************************************/
 Pattern_valid_detector PATTERN_VALID_DET_inst (
     .i_clk               (dig_clk),
-    .i_rst_n             (i_rst_n),
+    .i_rst_n             (sync_mb_rst_n),
     .RVLD_L              (i_RVLD_L),
     .error_threshold     (12'h001),
     .i_enable_cons       (ltsm_valid_consec_detect & ~(val_comparison_en_rx_d2c_pt | val_comparison_en_tx_d2c_pt)), // ltsm_valid_consec_detect: ayman mkhliha dayman b 1'b1 so i made & ~(val_comparison_en_rx_d2c_pt | val_comparison_en_tx_d2c_pt)
@@ -704,7 +711,7 @@ Byte_To_lane_mapping #(
     .NUM_LANES   (16)          
 ) MAPPER_inst (
     .i_clk                  (dig_clk),
-    .i_rst_n                (i_rst_n),
+    .i_rst_n                (sync_mb_rst_n),
     .i_in_data              (i_lp_data),
     .enable_mapper          (mapper_demapper_en),
     .i_functional_tx_lanes  (ltsm_functional_tx_lanes),
@@ -734,7 +741,7 @@ Lane_To_Byte_Demapping #(
     .NUM_LANES   (16)          
 ) DEMAPPER_inst (
     .i_clk                  (dig_clk),
-    .i_rst_n                (i_rst_n),
+    .i_rst_n                (sync_mb_rst_n),
     .i_lane_0               (o_lfsr_rx_bypass_0),
     .i_lane_1               (o_lfsr_rx_bypass_1),
     .i_lane_2               (o_lfsr_rx_bypass_2),
@@ -758,82 +765,47 @@ Lane_To_Byte_Demapping #(
 /****************************************
 * CLOCK GEN/COMP WRAPPER
 ****************************************/
-// UCIe_Clock_System_Wrapper uci_clk_system_wrapper_inst1 (
-//     .i_sys_clk                      (dig_clk),
-//     .i_clk1                         (i_ckp), // local ckp
-//     .i_clk2                         (i_ckn), // local ckn
-//     .i_CKP                          (i_CKP), // global ckp (from lanes)
-//     .i_CKN                          (i_CKN), // global ckn (from lanes)
-//     .i_TRACK                        (i_TRACK),
-//     .i_rst_n                        (i_rst_n),
-//     .i_valid                        (i_deser_valid_val), 
-//     .i_mode                         (ltsm_final_clk_mode), 
-//     .i_state_indicator              (ltsm_clk_tx_pattern_en), 
-//     .clear_out                      (ltsm_clear_clk_results),
-//     .o_CKP                          (o_CKP),
-//     .o_CKN                          (o_CKN),
-//     .o_Track                        (o_TRACK),
-//     .o_done                         (clk_tx_pattern_done),
-//     .o_Clock_track_result_logged    (clk_logged_results) 
-// );
-// Instantiate the Clock Mode Generator
-// UCIe_Clock_Mode_Generator clock_gen (
-//     .i_clk1                 (i_ckp),
-//     .i_clk2                 (i_ckn),
-//     .i_sys_clk             (dig_clk),
-//     .i_rst_n                (i_rst_n),
-//     .i_valid                (1'b0), 
-//     .i_mode                 (1'b1), // 1h: free running clock , 0h: strobe mode
-//     .i_state_indicator      (ltsm_clk_tx_pattern_en),
-//     .CKP                    (o_CKP),
-//     .CKN                    (o_CKN),
-//     .Track                  (o_TRACK),
-//     .o_done                 (clk_tx_pattern_done),
-//     .enable_detector_CKP    (w_enable_detector_CKP),
-//     .enable_detector_CKN    (w_enable_detector_CKN),
-//     .enable_detector_Track  (w_enable_detector_Track)
-// );
-
-// // Instantiate the Clock Pattern Detector
-// UCIe_Clock_Pattern_Detector clock_det (
-//     .i_clk                          (dig_clk),
-//     .i_rst_n                        (i_rst_n),
-//     .RCKP_L                         (i_CKP),                  
-//     .RCKN_L                         (i_CKN),                   
-//     .RTRK_L                         (i_TRACK),                
-//     .enable_detector_CKP            (w_enable_detector_CKP),
-//     .enable_detector_CKN            (w_enable_detector_CKN),
-//     .enable_detector_Track          (w_enable_detector_Track),
-//     .clear_out                      (ltsm_clear_clk_results),  // Propagate clear_out
-//     .o_Clock_track_result_logged    (clk_logged_results)
-//);
-
 clock_generator clock_generator_inst (
-    .i_local_ckp            (i_ckp), // half rate clock
-    .i_local_ckn            (i_ckn),
-    .i_sys_clk              (dig_clk),
-    .i_rst_n                (i_rst_n),
-    .i_rst_ckp_n            (i_rst_n),
+    .i_dig_clk              (dig_clk),
+    .i_rst_n                (sync_mb_rst_n),
+    .i_local_ckp            (clock_local_ckp), // half rate clock
+    .i_local_ckn            (~clock_local_ckp),
+    .i_pll_clk              (i_pll_mb_clk),
     .i_start_clk_training   (ltsm_clk_tx_pattern_en),
+    .i_ltsm_in_reset        (~|sb_tx_state),
     .o_CKP                  (o_CKP),
     .o_CKN                  (o_CKN),
     .o_TRACK                (o_TRACK),
     .o_done                 (clk_tx_pattern_done)
 );
-
-clock_detector clock_detector_inst (
+clock_detector clock_detector_ckp_inst (
     .i_dig_clk                      (dig_clk),
-    .i_local_ckp                    (i_clk), // should be pll clock
-    .i_local_ckn                    (~i_clk),   
-    .i_rst_n                        (i_rst_n),
-    .i_rst_ckp_n                    (i_rst_n),   
-    .i_rst_ckn_n                    (i_rst_n), 
-    .i_RCKP                         (i_CKP),  
-    .i_RCKN                         (i_CKN),
-    .i_RTRK                         (i_TRACK),
+    .i_half_pll_clk                 (clock_local_ckp),
+    .i_rst_n                        (sync_mb_rst_n),
+    .i_RCLK                         (i_RCKP),
+    .i_start_clk_training           (ltsm_clk_tx_pattern_en),
     .i_clear_results                (ltsm_clear_clk_results),
-    .o_Clock_track_result_logged    (clk_logged_results)
+    .o_result                       (clk_result_ckp)
 );
+clock_detector clock_detector_ckn_inst (
+    .i_dig_clk                      (dig_clk),
+    .i_half_pll_clk                 (~clock_local_ckp),
+    .i_rst_n                        (sync_mb_rst_n),
+    .i_RCLK                         (i_RCKN),
+    .i_start_clk_training           (ltsm_clk_tx_pattern_en),
+    .i_clear_results                (ltsm_clear_clk_results),
+    .o_result                       (clk_result_ckn)
+);
+clock_detector clock_detector_trk_inst (
+    .i_dig_clk                      (dig_clk),
+    .i_half_pll_clk                 (clock_local_ckp),
+    .i_rst_n                        (sync_mb_rst_n),
+    .i_RCLK                         (i_RTRACK),
+    .i_start_clk_training           (ltsm_clk_tx_pattern_en),
+    .i_clear_results                (ltsm_clear_clk_results),
+    .o_result                       (clk_result_trk)
+);
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////// CLOCK DIVIDERS ///////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -841,18 +813,26 @@ clock_detector clock_detector_inst (
 * SIDEBAND CLOCK DIVIDER
 ****************************************/
 Clock_Divider_by_8 sb_clk_div_inst (
-    .i_pll_clk      (i_clk_sb),
-    .i_rst_n        (i_rst_n),
+    .i_pll_clk      (i_pll_sb_clk),
+    .i_rst_n        (sync_sb_pll_rst_n),
     .o_divided_clk  (sb_divided_clk)
 );
 /****************************************
 * MAINBAND CLOCK DIVIDER
 ****************************************/
 clock_div_32 clock_div_32_inst_1 (
-    .i_clk             (i_clk),
-    .i_rst_n           (i_rst_n),
+    .i_clk             (i_pll_mb_clk),
+    .i_rst_n           (sync_mb_pll_rst_n),
     .o_div_clk         (dig_clk)
 );  
+/****************************************
+* LOCAL CKP/CKN CLOCK DIVIDER
+****************************************/
+clock_div_2 clock_div_2_inst (
+    .i_clk             (i_pll_mb_clk),
+    .i_rst_n           (sync_mb_rst_n),
+    .o_div_clk         (clock_local_ckp)
+);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////// SYNCHRONIZERS ///////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -862,22 +842,24 @@ clock_div_32 clock_div_32_inst_1 (
 pulse_synchronizer SBINIT_start_pattern_req_sync_inst (
     .i_slow_clock       (sb_divided_clk),
     .i_fast_clock       (dig_clk),
-    .i_rst_n            (i_rst_n),
+    .i_slow_rst_n       (sync_sb_rst_n),
+    .i_fast_rst_n       (sync_mb_rst_n),
     .i_fast_pulse       (sb_start_pattern_req),
     .o_slow_pulse       (sync_sb_start_pattern_req)
 );
 
-level_to_pulse_synchronizer sb_tx_msg_valid_sync_inst (
-    .i_clk          (sb_divided_clk),
-    .i_rst_n        (i_rst_n),
-    .i_level_data   (sb_tx_msg_valid), // level signal
-    .o_pulse_data   (sync_sb_tx_msg_valid)
+bit_synchronizer sb_tx_msg_valid_sync_inst (
+    .i_clk      (sb_divided_clk),
+    .i_rst_n    (sync_sb_rst_n),
+    .i_data_in  (sb_tx_msg_valid),
+    .o_data_out (sync_sb_tx_msg_valid)
 );
 
 pulse_synchronizer stop_timeout_count_sync_inst (
     .i_slow_clock       (sb_divided_clk),
     .i_fast_clock       (dig_clk),
-    .i_rst_n            (i_rst_n),
+    .i_slow_rst_n       (sync_sb_rst_n),
+    .i_fast_rst_n       (sync_mb_rst_n),
     .i_fast_pulse       (sb_stop_cnt),
     .o_slow_pulse       (sync_sb_stop_cnt)
 );
@@ -886,49 +868,86 @@ pulse_synchronizer stop_timeout_count_sync_inst (
 ****************************************/
 bit_synchronizer SBINIT_start_pattern_done_sync_inst (
     .i_clk      (dig_clk),
-    .i_rst_n    (i_rst_n),
+    .i_rst_n    (sync_mb_rst_n),
     .i_data_in  (sb_start_pattern_done),
     .o_data_out (sync_sb_start_pattern_done)
 );
 
 bit_synchronizer SB_start_training_sync_inst (
     .i_clk      (dig_clk),
-    .i_rst_n    (i_rst_n),
+    .i_rst_n    (sync_mb_rst_n),
     .i_data_in  (sb_rx_start_training),
     .o_data_out (sync_sb_rx_start_training)
 );
 
 bit_synchronizer SB_fifo_empty_sync_inst (
     .i_clk      (dig_clk),
-    .i_rst_n    (i_rst_n),
+    .i_rst_n    (sync_mb_rst_n),
     .i_data_in  (sb_fifo_empty),
     .o_data_out (sync_sb_fifo_empty)
 );
 
 bit_synchronizer SB_timeout_sync_inst (
     .i_clk      (dig_clk),
-    .i_rst_n    (i_rst_n),
+    .i_rst_n    (sync_mb_rst_n),
     .i_data_in  (sb_time_out),
     .o_data_out (sync_sb_time_out)
 );
 
 bit_synchronizer SB_busy_sync_inst (
     .i_clk      (dig_clk),
-    .i_rst_n    (i_rst_n),
+    .i_rst_n    (sync_mb_rst_n),
     .i_data_in  (sb_busy),
     .o_data_out (sync_sb_busy)
 );
 
 bit_synchronizer SB_rx_msg_valid_sync_inst (
     .i_clk      (dig_clk),
-    .i_rst_n    (i_rst_n),
+    .i_rst_n    (sync_mb_rst_n),
     .i_data_in  (sb_rx_msg_valid),
     .o_data_out (sync_sb_rx_msg_valid)
 );
-
-
-
-
+/****************************************
+* RESET SYNCHRONIZERS
+****************************************/
+// Mainband (dig clock)
+bit_synchronizer bit_synchronizer_mainband_digclk (
+    .i_clk      (dig_clk), // all mainband resets synchronized with the slowest clock (pll_clk/32)
+    .i_rst_n    (i_rst_n),
+    .i_data_in  (1'b1),
+    .o_data_out (sync_mb_rst_n)
+);
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+ /* the synchronizer below used to just synchronize the reset for the dig_clk generator block which //
+   is the clock_div_32 since all other blocks resets is synchronized with this dig_clk so how can   //
+   we synchronize the reset with dig_clk if the dig_clk generator is not working yet ? .. so the    //
+   generator of the dig clock should be reseted synchronosly with the pll_clk                       //
+   -----------------------------------------------------------------------------------------------  //
+ * after generating the dig clock while the reset is already deasserted many clock cycles earlier   //
+   the 1'b1 in the reset synchronizer can now propagate and de-asserts reset in all other blocks    //
+   working with dig_clk */                                                                          //
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+// Mainband (pll clock)
+bit_synchronizer bit_synchronizer_mainband_pllclk (
+    .i_clk      (i_pll_mb_clk), // all mainband resets synchronized with the slowest clock (pll_clk/32)
+    .i_rst_n    (i_rst_n),
+    .i_data_in  (1'b1),
+    .o_data_out (sync_mb_pll_rst_n)
+);
+// Sideband 
+bit_synchronizer bit_synchronizer_sideband (
+    .i_clk      (sb_divided_clk), 
+    .i_rst_n    (i_rst_n),
+    .i_data_in  (1'b1),
+    .o_data_out (sync_sb_rst_n)
+);
+// Sideband (pll clock) ... this reset used only in sideband clock divider for the same reason above
+bit_synchronizer bit_synchronizer_sideband_pllclk (
+    .i_clk      (i_pll_sb_clk), 
+    .i_rst_n    (i_rst_n),
+    .i_data_in  (1'b1),
+    .o_data_out (sync_sb_pll_rst_n)
+);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////// ORing ///////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
