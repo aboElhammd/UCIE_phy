@@ -174,6 +174,9 @@ module pattern_comparator #(
         end else if (enable_pattern_comparitor) begin
             case (i_state)
                 IDLE: begin
+                    for (i = 0; i < 16; i = i + 1) begin
+                        lane_success_count[i] <= 0; // Explicit reset for lane_success_count
+                    end
                     if (i_Type_comp) begin
                         for (i = 0; i < 16; i = i + 1) begin
                             if (o_per_lane_error_reg[i] == 0) begin
@@ -214,42 +217,33 @@ module pattern_comparator #(
                 end
 
                 PER_LANE_IDE: begin
-                    for (i = 0; i < 16; i = i + 1) begin
+                    if (i_enable_buffer) begin
+                        for (i = 0; i < 16; i = i + 1) begin
 
-                        if (!lane_mismatch_part_2[i]) begin
-                            lane_success_count[i] <= 0;
-                        end else if (lane_success_count[i] == 15) begin
-                            if (lane_mismatch_part_1[i]) begin
-                                lane_success_count[i] <= 16;
-                            end else begin
+                            if (!lane_mismatch_part_2[i]) begin
                                 lane_success_count[i] <= 0;
+                            end else if (lane_success_count[i] == 15) begin
+                                if (lane_mismatch_part_1[i]) begin
+                                    lane_success_count[i] <= 16;
+                                end else begin
+                                    lane_success_count[i] <= 0;
+                                end
+                            end else if (!lane_mismatch_part_1[i] && lane_mismatch_part_2[i]) begin
+                                lane_success_count[i] <= 1;
+                            end else begin
+                                lane_success_count[i] <= lane_success_count[i] + 
+                                                        (lane_mismatch_part_1[i] & lane_mismatch_part_2[i]);
                             end
-                        end else if (!lane_mismatch_part_1[i] && lane_mismatch_part_2[i]) begin
-                            lane_success_count[i] <= 1;
-                        end else begin
-                            lane_success_count[i] <= lane_success_count[i] + 
-                                                    (lane_mismatch_part_1[i] & lane_mismatch_part_2[i]);
+                            if (lane_success_count[i] >= 16 ) begin 
+                                DONE_PATTERN[i]<=1;
+                            end
+                            if (DONE_PATTERN[i]) begin
+                                o_per_lane_error_reg[i]<=1;
+                            end else begin 
+                                o_per_lane_error_reg[i]<=0;   
+                            end
                         end
-                        if (lane_success_count[i] >= 16 ) begin 
-                            DONE_PATTERN[i]<=1;
-                        end
-                        if (DONE_PATTERN[i]) begin
-                            o_per_lane_error_reg[i]<=1;
-                        end else begin 
-                            o_per_lane_error_reg[i]<=0;   
-                        end
-                        // end else begin
-                        //     o_per_lane_error_reg[i] <=0;
-                        // end
-
-                        // o_per_lane_error_reg[i] <=  ((lane_success_count[i] >= 16) ? 1 : 0);
-
-                        // // Latch o_per_lane_error_reg[i] once it becomes 1
-                        // if (o_per_lane_error_reg[i] == 1) begin
-                        //     o_per_lane_error_reg[i] <= 1; // Hold at 1, no further checks
-                        // end 
                     end
-                    // o_error_counter <= o_error_counter + comb_bit_count; // Commented as per original
                 end
 
                 default: begin
