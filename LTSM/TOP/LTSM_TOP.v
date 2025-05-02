@@ -108,6 +108,7 @@ reg  start_reset_counter; // when traning triggers occur, start counting
 reg  clear_resolved_state; // to PHYRETRAIN so that it reset the o_resolved_state when the LTSM goes back to RESET state 
 wire falling_edge_busy;
 reg go_to_speedidle; // from LTSM to MBTRAIN.speedidle upon exit from L1 state
+reg partner_req_trainerror; // register when remote partner req trainerror so that RX_TRAINERROR_HS block can send responce
 
 /**************************************************
 * MBINIT Internal signals
@@ -324,7 +325,8 @@ TRAINERROR_HS_WRAPPER #(SB_MSG_WIDTH) TRAINERROR_inst (
     .i_rx_msg_valid             (i_rx_msg_valid),
     .i_SB_Busy                  (i_busy),
     .i_falling_edge_busy        (falling_edge_busy),
-	.i_decoded_SB_msg           (i_decoded_SB_msg),
+    .i_partner_req_trainerror   (partner_req_trainerror), // Edit since if the partner requsted trainerror and the LTSM_TOP knows and enabled TRAINERROR_HS block,
+	.i_decoded_SB_msg           (i_decoded_SB_msg),       // the RX block will not send the responce since it didnt see the i_rx_msg_valid so the LTSM should direct it
 	.o_encoded_SB_msg           (encoded_SB_msg_TRAINERROR),
     .o_tx_msg_valid             (msg_valid_TRAINERROR),
 	.o_TRAINERROR_HS_end        (TRAINERROR_DONE)
@@ -386,7 +388,8 @@ localparam L1_L2                = 11;
 assign o_tx_state = CS;
 assign o_mapper_demapper_en = (CS == ACTIVE)? 1:0;
 wire counter_reset_flag     = (reset_counter == COUNT_4ms+1)? 1:0;
-wire trainerror_condition   = (i_time_out || i_decoded_SB_msg == 15 || i_start_training_DVSEC || state_timeout || i_lp_linkerror); // if (i_time_out) --> module iniates trainerror, if (i_decoded_SB_msg == 14) --> partner iniates trainerror, if bit [10] on DVSEC is set in any state rather than reset go to trainerror
+wire trainerror_req_sampled = (&i_decoded_SB_msg & i_rx_msg_valid);
+wire trainerror_condition   = (i_time_out || trainerror_req_sampled || i_start_training_DVSEC || state_timeout || i_lp_linkerror); // if (i_time_out) --> module iniates trainerror, if (i_decoded_SB_msg == 14) --> partner iniates trainerror, if bit [10] on DVSEC is set in any state rather than reset go to trainerror
 wire reset_state_timeout_counter  = (CS == RESET || CS == FINISH_RESET || CS == ACTIVE || CS == L1_L2 || CS == TRAINERROR || CS == TRAINERROR_HS || CS != NS); // reset the counter if state is transitioning (CS!=NS) or if we are in the stated states dont count
 assign o_falling_edge_busy = falling_edge_busy;
 
@@ -622,6 +625,7 @@ always @ (posedge i_clk or negedge i_rst_n) begin
         o_pl_trainerror <= 0;
         go_to_speedidle <= 0;
         clear_resolved_state   <= 0;
+        partner_req_trainerror <= 0;
     end else begin
         SBINIT_EN       <= 0;
         MBINIT_EN       <= 0;
@@ -694,7 +698,7 @@ always @ (posedge i_clk or negedge i_rst_n) begin
             start_reset_counter <= 1;
         else if (reset_counter == COUNT_4ms+1) 
             start_reset_counter <= 0;
-        
+        partner_req_trainerror <= (trainerror_req_sampled)? 1 : (msg_valid_TRAINERROR)? 0 : partner_req_trainerror;
         /*-----------------------------------------------------------------------
         * PHYRETRAIN related logic
         -----------------------------------------------------------------------*/
