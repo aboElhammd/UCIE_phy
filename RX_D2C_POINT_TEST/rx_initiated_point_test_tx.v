@@ -244,8 +244,9 @@ always @(posedge i_clk or negedge i_rst_n) begin
             o_sb_comparison_mode    <= 0; // per lane
             o_clock_phase           <= 0; // eye center
             o_sb_burst_count        <= (i_datavref_or_valvref == 0)? 1 : 0; // data --> 4k , valid --> 1k (128 iteration x 8 bits)
-            o_tx_data_valid         <= 1;
         end
+
+        o_tx_data_valid <= (send_start_req)? 1 : (~o_valid_tx)? 0 : o_tx_data_valid;
 
         if (send_lfsr_clear_req_and_reset_generator) begin
             o_encoded_SB_msg_tx     <= LFSR_CLR_ERROR_REQ;
