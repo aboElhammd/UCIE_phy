@@ -75,7 +75,26 @@ reg [WIDTH-1:0] temp_Data_by_4, temp_Data_by_5, temp_Data_by_6, temp_Data_by_7;
 reg [WIDTH-1:0] temp_Data_by_8, temp_Data_by_9, temp_Data_by_10, temp_Data_by_11;
 reg [WIDTH-1:0] temp_Data_by_12, temp_Data_by_13, temp_Data_by_14, temp_Data_by_15;
 
-// Function to compute the next LFSR state
+
+wire [22:0] seed_0;
+wire [22:0] seed_1;
+wire [22:0] seed_2;
+wire [22:0] seed_3;
+wire [22:0] seed_4;
+wire [22:0] seed_5;
+wire [22:0] seed_6;
+wire [22:0] seed_7;
+
+assign seed_0 = 23'h1DBFBC;
+assign seed_1 = 23'h0607BB;
+assign seed_2 = 23'h1EC760;
+assign seed_3 = 23'h18C0DB;
+assign seed_4 = 23'h010F12;
+assign seed_5 = 23'h19CFC9;
+assign seed_6 = 23'h0277CE;
+assign seed_7 = 23'h1BB807;
+
+// Function to compute the next LFSR state (unchanged)
 function [31:0] next_lfsr_state;
     input [22:0] current_state;
     reg [31:0] next_state;
@@ -86,8 +105,8 @@ function [31:0] next_lfsr_state;
         next_state[3]  = current_state[2] ^ current_state[5] ^ current_state[6] ^ current_state[11] ^ current_state[13] ^ current_state[17] ^ current_state[20] ^ current_state[21] ^ current_state[22];
         next_state[4]  = current_state[0] ^ current_state[2] ^ current_state[3] ^ current_state[5] ^ current_state[6] ^ current_state[7] ^ current_state[8] ^ current_state[12] ^ current_state[14] ^ current_state[16] ^ current_state[18] ^ current_state[22];
         next_state[5]  = current_state[0] ^ current_state[1] ^ current_state[2] ^ current_state[3] ^ current_state[4] ^ current_state[5] ^ current_state[6] ^ current_state[7] ^ current_state[9] ^ current_state[13] ^ current_state[15] ^ current_state[16] ^ current_state[17] ^ current_state[19] ^ current_state[21];
-        next_state[6]  = current_state[1] ^ current_state[2] ^ current_state[3] ^ current_state[4] ^ current_state[5] ^ current_state[6] ^ current_state[7] ^ current_state[8] ^ current_state[10] ^ current_state[14] ^ current_state[16] ^ current_state[17] ^ current_state[18] ^ current_state[20] ^ current_state[22];
-        next_state[7]  = current_state[0] ^ current_state[3] ^ current_state[4] ^ current_state[6] ^ current_state[7] ^ current_state[9] ^ current_state[11] ^ current_state[15] ^ current_state[16] ^ current_state[17] ^ current_state[18] ^ current_state[19];
+        next_state[6]  = current_state[1] ^  current_state[2] ^ current_state[3] ^ current_state[4] ^ current_state[5] ^ current_state[6] ^ current_state[7] ^ current_state[8] ^ current_state[10] ^ current_state[14] ^ current_state[16] ^ current_state[17] ^ current_state[18] ^ current_state[20] ^ current_state[22];            next_state[7]  = current_state[0] ^ current_state[3] ^ current_state[4] ^ current_state[6] ^ current_state[7] ^ current_state[9] ^ current_state[11] ^ current_state[15] ^ current_state[16] ^ current_state[17] ^ current_state[18] ^ current_state[19];            
+        next_state[7]  = current_state[0] ^ current_state[3] ^current_state[4]  ^current_state[6]  ^current_state[7]  ^current_state[9]  ^current_state[11]  ^current_state[15]  ^current_state[16]  ^current_state[17]  ^current_state[18]  ^current_state[19]  ;
         next_state[8]  = current_state[1] ^ current_state[4] ^ current_state[5] ^ current_state[7] ^ current_state[8] ^ current_state[10] ^ current_state[12] ^ current_state[16] ^ current_state[17] ^ current_state[18] ^ current_state[19] ^ current_state[20];
         next_state[9]  = current_state[2] ^ current_state[5] ^ current_state[6] ^ current_state[8] ^ current_state[9] ^ current_state[11] ^ current_state[13] ^ current_state[17] ^ current_state[18] ^ current_state[19] ^ current_state[20] ^ current_state[21];
         next_state[10] = current_state[3] ^ current_state[6] ^ current_state[7] ^ current_state[9] ^ current_state[10] ^ current_state[12] ^ current_state[14] ^ current_state[18] ^ current_state[19] ^ current_state[20] ^ current_state[21] ^ current_state[22];
@@ -103,15 +122,15 @@ function [31:0] next_lfsr_state;
         next_state[20] = current_state[0] ^ current_state[1] ^ current_state[4] ^ current_state[5] ^ current_state[6] ^ current_state[8] ^ current_state[10] ^ current_state[13] ^ current_state[14] ^ current_state[16] ^ current_state[17] ^ current_state[18] ^ current_state[20];
         next_state[21] = current_state[1] ^ current_state[2] ^ current_state[5] ^ current_state[6] ^ current_state[7] ^ current_state[9] ^ current_state[11] ^ current_state[14] ^ current_state[15] ^ current_state[17] ^ current_state[18] ^ current_state[19] ^ current_state[21];
         next_state[22] = current_state[2] ^ current_state[3] ^ current_state[6] ^ current_state[7] ^ current_state[8] ^ current_state[10] ^ current_state[12] ^ current_state[15] ^ current_state[16] ^ current_state[18] ^ current_state[19] ^ current_state[20] ^ current_state[22];
-        next_state[23] = current_state[0] ^ current_state[2] ^ current_state[3] ^ current_state[4] ^ current_state[5] ^ current_state[7] ^ current_state[9] ^ current_state[11] ^ current_state[13] ^ current_state[17] ^ current_state[19] ^ current_state[20];
-        next_state[24] = current_state[1] ^ current_state[3] ^ current_state[4] ^ current_state[5] ^ current_state[6] ^ current_state[8] ^ current_state[10] ^ current_state[12] ^ current_state[14] ^ current_state[18] ^ current_state[20] ^ current_state[21];
-        next_state[25] = current_state[2] ^ current_state[4] ^ current_state[5] ^ current_state[6] ^ current_state[7] ^ current_state[9] ^ current_state[11] ^ current_state[13] ^ current_state[15] ^ current_state[19] ^ current_state[21] ^ current_state[22];
-        next_state[26] = current_state[0] ^ current_state[2] ^ current_state[3] ^ current_state[6] ^ current_state[7] ^ current_state[10] ^ current_state[12] ^ current_state[14] ^ current_state[20] ^ current_state[21] ^ current_state[22];
-        next_state[27] = current_state[0] ^ current_state[1] ^ current_state[2] ^ current_state[3] ^ current_state[4] ^ current_state[5] ^ current_state[7] ^ current_state[11] ^ current_state[13] ^ current_state[15] ^ current_state[16] ^ current_state[22];
-        next_state[28] = current_state[0] ^ current_state[1] ^ current_state[3] ^ current_state[4] ^ current_state[6] ^ current_state[12] ^ current_state[14] ^ current_state[17] ^ current_state[21];
-        next_state[29] = current_state[1] ^ current_state[2] ^ current_state[4] ^ current_state[5] ^ current_state[7] ^ current_state[13] ^ current_state[15] ^ current_state[18] ^ current_state[22];
-        next_state[30] = current_state[0] ^ current_state[3] ^ current_state[6] ^ current_state[14] ^ current_state[19] ^ current_state[21];
-        next_state[31] = current_state[1] ^ current_state[4] ^ current_state[7] ^ current_state[15] ^ current_state[20] ^ current_state[22];
+        next_state[23] = next_state[0] ^ next_state[2] ^ next_state[3] ^ next_state[4] ^ next_state[5] ^ next_state[7] ^ next_state[9] ^ next_state[11] ^ next_state[13] ^ next_state[17] ^ next_state[19] ^ next_state[20];
+        next_state[24] = next_state[1] ^ next_state[3] ^ next_state[4] ^ next_state[5] ^ next_state[6] ^ next_state[8] ^ next_state[10] ^ next_state[12] ^ next_state[14] ^ next_state[18] ^ next_state[20] ^ next_state[21];
+        next_state[25] = next_state[2] ^ next_state[4] ^ next_state[5] ^ next_state[6] ^ next_state[7] ^ next_state[9] ^ next_state[11] ^ next_state[13] ^ next_state[15] ^ next_state[19] ^ next_state[21] ^ next_state[22];
+        next_state[26] = next_state[0] ^ next_state[2] ^ next_state[3] ^ next_state[6] ^ next_state[7] ^ next_state[10] ^ next_state[12] ^ next_state[14] ^ next_state[20] ^ next_state[21] ^ next_state[22];
+        next_state[27] = next_state[0] ^ next_state[1] ^ next_state[2] ^ next_state[3] ^ next_state[4] ^ next_state[5] ^ next_state[7] ^ next_state[11] ^ next_state[13] ^ next_state[15] ^ next_state[16] ^ next_state[22];
+        next_state[28] = next_state[0] ^ next_state[1] ^ next_state[3] ^ next_state[4] ^ next_state[6] ^ next_state[12] ^ next_state[14] ^ next_state[17] ^ next_state[21];
+        next_state[29] = next_state[1] ^ next_state[2] ^ next_state[4] ^ next_state[5] ^ next_state[7] ^ next_state[13] ^ next_state[15] ^ next_state[18] ^ next_state[22];
+        next_state[30] = next_state[0] ^ next_state[3] ^ next_state[6] ^ next_state[14] ^ next_state[19] ^ next_state[21];
+        next_state[31] = next_state[1] ^ next_state[4] ^ next_state[7] ^ next_state[15] ^ next_state[20] ^ next_state[22];
         next_lfsr_state = next_state;
     end
 endfunction
@@ -130,9 +149,479 @@ always @(posedge i_clk or negedge i_rst_n) begin
         rx_lfsr_lane_0  <= 23'h1DBFBC; rx_lfsr_lane_1  <= 23'h0607BB; rx_lfsr_lane_2  <= 23'h1EC760; rx_lfsr_lane_3  <= 23'h18C0DB;
         rx_lfsr_lane_4  <= 23'h010F12; rx_lfsr_lane_5  <= 23'h19CFC9; rx_lfsr_lane_6  <= 23'h0277CE; rx_lfsr_lane_7  <= 23'h1BB807;
 
-        o_lane_0_23 <= 0; o_lane_1_23 <= 0; o_lane_2_23 <= 0; o_lane_3_23 <= 0;
-        o_lane_4_23 <= 0; o_lane_5_23 <= 0; o_lane_6_23 <= 0; o_lane_7_23 <= 0;
-        enable_pattern_comparitor<=0;
+        enable_pattern_comparitor <= 0;
+
+        //--------------------------- lane 0 -----------------------------------//
+            o_lane_0_23[8] <= seed_0[22] ^ seed_0[20] ^ seed_0[15] ^ 
+                              seed_0[7]  ^ seed_0[4]  ^ seed_0[1];
+
+            o_lane_0_23[7] <= seed_0[21] ^ seed_0[19] ^ seed_0[14] ^ 
+                              seed_0[6]  ^ seed_0[3]  ^ seed_0[0];
+
+            o_lane_0_23[6] <= seed_0[20] ^ seed_0[18] ^ seed_0[13] ^ 
+                              seed_0[5]  ^ seed_0[2]  ^ seed_0[22] ^ seed_0[20] ^
+                              seed_0[15] ^ seed_0[7]  ^  seed_0[4] ^ 
+                              seed_0[1];
+
+            o_lane_0_23[5] <= seed_0[19] ^ seed_0[17] ^ seed_0[12] ^ seed_0[4]  ^ 
+                              seed_0[1]  ^ seed_0[21] ^ seed_0[19] ^ seed_0[14] ^
+                              seed_0[6]  ^  seed_0[3] ^ seed_0[0];
+            o_lane_0_23[4] <= seed_0[18] ^ seed_0[16] ^ seed_0[11] ^ 
+                              seed_0[3]  ^ seed_0[0]  ^ seed_0[20] ^ seed_0[18] ^
+                              seed_0[13] ^ seed_0[5]  ^ seed_0[2]  ^ seed_0[22] ^
+                              seed_0[20] ^ seed_0[15] ^ seed_0[7]  ^
+                              seed_0[4]  ^ seed_0[1];
+
+            o_lane_0_23[3] <= seed_0[17] ^ seed_0[15] ^ seed_0[10] ^ seed_0[0]  ^
+                              seed_0[2]  ^ seed_0[22] ^ seed_0[20] ^ seed_0[15] ^ 
+                              seed_0[7]  ^ seed_0[4]  ^ seed_0[1]  ^ seed_0[19] ^
+                              seed_0[17] ^ seed_0[12] ^ seed_0[4]  ^ seed_0[1]  ^ 
+                              seed_0[21] ^ seed_0[19] ^ seed_0[14] ^ seed_0[6]  ^
+                              seed_0[3]  ;
+
+            o_lane_0_23[2] <= seed_0[16] ^ seed_0[14] ^ seed_0[9]  ^ seed_0[1]  ^
+                              seed_0[21] ^ seed_0[19] ^ seed_0[14] ^ seed_0[6]  ^
+                              seed_0[3]  ^ seed_0[0]  ^ seed_0[18] ^ seed_0[16] ^ 
+                              seed_0[11] ^ seed_0[3]  ^ seed_0[0]  ^ seed_0[20] ^
+                              seed_0[18] ^ seed_0[13] ^ seed_0[5]  ^ seed_0[2]  ^
+                              seed_0[22] ^ seed_0[20] ^ seed_0[15] ^ seed_0[7]  ^
+                              seed_0[4]  ^ seed_0[1] ;
+            o_lane_0_23[1] <= seed_0[15] ^ seed_0[13] ^ seed_0[8]  ^  seed_0[0] ^
+                              seed_0[0]  ^ seed_0[20] ^ seed_0[18] ^ seed_0[13] ^
+                              seed_0[5]  ^ seed_0[2]  ^ seed_0[22] ^ seed_0[20] ^ 
+                              seed_0[15] ^ seed_0[7]  ^ seed_0[4]  ^ seed_0[1]  ^
+                              seed_0[17] ^ seed_0[15] ^ seed_0[10] ^ seed_0[2]  ^  
+                              seed_0[22] ^ seed_0[20] ^ seed_0[15] ^ seed_0[7]  ^ 
+                              seed_0[4]  ^ seed_0[1]  ^ seed_0[19] ^ seed_0[17] ^ 
+                              seed_0[12] ^ seed_0[4]  ^ seed_0[1]  ^ seed_0[21] ^
+                              seed_0[19] ^ seed_0[14] ^ seed_0[6]  ^ seed_0[3]  ;
+                              
+            o_lane_0_23[0] <= seed_0[14] ^ seed_0[12] ^ seed_0[7]  ^ seed_0[22] ^
+                              seed_0[20] ^ seed_0[15] ^ seed_0[7]  ^ seed_0[4]  ^ 
+                              seed_0[1]  ^ seed_0[19] ^ seed_0[17] ^ seed_0[12] ^
+                              seed_0[4]  ^ seed_0[1]  ^ seed_0[21] ^ seed_0[19] ^
+                              seed_0[14] ^ seed_0[6]  ^ seed_0[3]  ^ seed_0[0]  ^
+                              seed_0[16] ^ seed_0[14] ^ seed_0[9]  ^ seed_0[1]  ^
+                              seed_0[21] ^ seed_0[19] ^ seed_0[14] ^ seed_0[6]  ^ 
+                              seed_0[3]  ^ seed_0[0]  ^ seed_0[18] ^ seed_0[16] ^
+                              seed_0[11] ^ seed_0[3]  ^ seed_0[0]  ^ seed_0[20] ^
+                              seed_0[18] ^ seed_0[13] ^ seed_0[5]  ^ seed_0[2]  ^
+                              seed_0[22] ^ seed_0[20] ^ seed_0[15] ^ seed_0[7]  ^
+                              seed_0[4]  ^ seed_0[1]  ; 
+
+        //--------------------------- lane 1 -----------------------------------//
+            o_lane_1_23[8] <= seed_1[22] ^ seed_1[20] ^ seed_1[15] ^ 
+                              seed_1[7]  ^ seed_1[4]  ^ seed_1[1];
+
+            o_lane_1_23[7] <= seed_1[21] ^ seed_1[19] ^ seed_1[14] ^ 
+                              seed_1[6]  ^ seed_1[3]  ^ seed_1[0];
+
+            o_lane_1_23[6] <= seed_1[20] ^ seed_1[18] ^ seed_1[13] ^ 
+                              seed_1[5]  ^ seed_1[2]  ^ seed_1[22] ^ seed_1[20] ^
+                              seed_1[15] ^ seed_1[7]  ^  seed_1[4] ^ 
+                              seed_1[1];
+
+            o_lane_1_23[5] <= seed_1[19] ^ seed_1[17] ^ seed_1[12] ^ seed_1[4]  ^ 
+                              seed_1[1]  ^ seed_1[21] ^ seed_1[19] ^ seed_1[14] ^
+                              seed_1[6]  ^  seed_1[3] ^ seed_1[0];
+            o_lane_1_23[4] <= seed_1[18] ^ seed_1[16] ^ seed_1[11] ^ 
+                              seed_1[3]  ^ seed_1[0]  ^ seed_1[20] ^ seed_1[18] ^
+                              seed_1[13] ^ seed_1[5]  ^ seed_1[2]  ^ seed_1[22] ^
+                              seed_1[20] ^ seed_1[15] ^ seed_1[7]  ^
+                              seed_1[4]  ^ seed_1[1];
+            o_lane_1_23[3] <= seed_1[17] ^ seed_1[15] ^ seed_1[10] ^ seed_1[0]  ^
+                              seed_1[2]  ^ seed_1[22] ^ seed_1[20] ^ seed_1[15] ^ 
+                              seed_1[7]  ^ seed_1[4]  ^ seed_1[1]  ^ seed_1[19] ^
+                              seed_1[17] ^ seed_1[12] ^ seed_1[4]  ^ seed_1[1]  ^ 
+                              seed_1[21] ^ seed_1[19] ^ seed_1[14] ^ seed_1[6]  ^
+                              seed_1[3]  ;
+
+            o_lane_1_23[2] <= seed_1[16] ^ seed_1[14] ^ seed_1[9]  ^ seed_1[1]  ^
+                              seed_1[21] ^ seed_1[19] ^ seed_1[14] ^ seed_1[6]  ^
+                              seed_1[3]  ^ seed_1[0]  ^ seed_1[18] ^ seed_1[16] ^ 
+                              seed_1[11] ^ seed_1[3]  ^ seed_1[0]  ^ seed_1[20] ^
+                              seed_1[18] ^ seed_1[13] ^ seed_1[5]  ^ seed_1[2]  ^
+                              seed_1[22] ^ seed_1[20] ^ seed_1[15] ^ seed_1[7]  ^
+                              seed_1[4]  ^ seed_1[1] ;
+
+            o_lane_1_23[1] <= seed_1[15] ^ seed_1[13] ^ seed_1[8]  ^  seed_1[0] ^
+                              seed_1[0]  ^ seed_1[20] ^ seed_1[18] ^ seed_1[13] ^
+                              seed_1[5]  ^ seed_1[2]  ^ seed_1[22] ^ seed_1[20] ^ 
+                              seed_1[15] ^ seed_1[7]  ^ seed_1[4]  ^ seed_1[1]  ^
+                              seed_1[17] ^ seed_1[15] ^ seed_1[10] ^ seed_1[2]  ^  
+                              seed_1[22] ^ seed_1[20] ^ seed_1[15] ^ seed_1[7]  ^ 
+                              seed_1[4]  ^ seed_1[1]  ^ seed_1[19] ^ seed_1[17] ^ 
+                              seed_1[12] ^ seed_1[4]  ^ seed_1[1]  ^ seed_1[21] ^
+                              seed_1[19] ^ seed_1[14] ^ seed_1[6]  ^ seed_1[3]  ;
+                              
+            o_lane_1_23[0] <= seed_1[14] ^ seed_1[12] ^ seed_1[7]  ^ seed_1[22] ^
+                              seed_1[20] ^ seed_1[15] ^ seed_1[7]  ^ seed_1[4]  ^ 
+                              seed_1[1]  ^ seed_1[19] ^ seed_1[17] ^ seed_1[12] ^
+                              seed_1[4]  ^ seed_1[1]  ^ seed_1[21] ^ seed_1[19] ^
+                              seed_1[14] ^ seed_1[6]  ^ seed_1[3]  ^ seed_1[0]  ^
+                              seed_1[16] ^ seed_1[14] ^ seed_1[9]  ^ seed_1[1]  ^
+                              seed_1[21] ^ seed_1[19] ^ seed_1[14] ^ seed_1[6]  ^ 
+                              seed_1[3]  ^ seed_1[0]  ^ seed_1[18] ^ seed_1[16] ^
+                              seed_1[11] ^ seed_1[3]  ^ seed_1[0]  ^ seed_1[20] ^
+                              seed_1[18] ^ seed_1[13] ^ seed_1[5]  ^ seed_1[2]  ^
+                              seed_1[22] ^ seed_1[20] ^ seed_1[15] ^ seed_1[7]  ^
+                              seed_1[4]  ^ seed_1[1]  ;  
+
+        //--------------------------- lane 2 -----------------------------------//
+            o_lane_2_23[8] <= seed_2[22] ^ seed_2[20] ^ seed_2[15] ^ 
+                              seed_2[7]  ^ seed_2[4]  ^ seed_2[1];
+
+            o_lane_2_23[7] <= seed_2[21] ^ seed_2[19] ^ seed_2[14] ^ 
+                              seed_2[6]  ^ seed_2[3]  ^ seed_2[0];
+
+            o_lane_2_23[6] <= seed_2[20] ^ seed_2[18] ^ seed_2[13] ^ 
+                              seed_2[5]  ^ seed_2[2]  ^ seed_2[22] ^ seed_2[20] ^
+                              seed_2[15] ^ seed_2[7]  ^  seed_2[4] ^ 
+                              seed_2[1];
+
+            o_lane_2_23[5] <= seed_2[19] ^ seed_2[17] ^ seed_2[12] ^ seed_2[4]  ^ 
+                              seed_2[1]  ^ seed_2[21] ^ seed_2[19] ^ seed_2[14] ^
+                              seed_2[6]  ^  seed_2[3] ^ seed_2[0];
+            o_lane_2_23[4] <= seed_2[18] ^ seed_2[16] ^ seed_2[11] ^ 
+                              seed_2[3]  ^ seed_2[0]  ^ seed_2[20] ^ seed_2[18] ^
+                              seed_2[13] ^ seed_2[5]  ^ seed_2[2]  ^ seed_2[22] ^
+                              seed_2[20] ^ seed_2[15] ^ seed_2[7]  ^
+                              seed_2[4]  ^ seed_2[1];
+
+            o_lane_2_23[3] <= seed_2[17] ^ seed_2[15] ^ seed_2[10] ^ seed_2[0]  ^
+                              seed_2[2]  ^ seed_2[22] ^ seed_2[20] ^ seed_2[15] ^ 
+                              seed_2[7]  ^ seed_2[4]  ^ seed_2[1]  ^ seed_2[19] ^
+                              seed_2[17] ^ seed_2[12] ^ seed_2[4]  ^ seed_2[1]  ^ 
+                              seed_2[21] ^ seed_2[19] ^ seed_2[14] ^ seed_2[6]  ^
+                              seed_2[3]  ;
+
+            o_lane_2_23[2] <= seed_2[16] ^ seed_2[14] ^ seed_2[9]  ^ seed_2[1]  ^
+                              seed_2[21] ^ seed_2[19] ^ seed_2[14] ^ seed_2[6]  ^
+                              seed_2[3]  ^ seed_2[0]  ^ seed_2[18] ^ seed_2[16] ^ 
+                              seed_2[11] ^ seed_2[3]  ^ seed_2[0]  ^ seed_2[20] ^
+                              seed_2[18] ^ seed_2[13] ^ seed_2[5]  ^ seed_2[2]  ^
+                              seed_2[22] ^ seed_2[20] ^ seed_2[15] ^ seed_2[7]  ^
+                              seed_2[4]  ^ seed_2[1] ;
+
+            o_lane_2_23[1] <= seed_2[15] ^ seed_2[13] ^ seed_2[8]  ^  seed_2[0] ^
+                              seed_2[0]  ^ seed_2[20] ^ seed_2[18] ^ seed_2[13] ^
+                              seed_2[5]  ^ seed_2[2]  ^ seed_2[22] ^ seed_2[20] ^ 
+                              seed_2[15] ^ seed_2[7]  ^ seed_2[4]  ^ seed_2[1]  ^
+                              seed_2[17] ^ seed_2[15] ^ seed_2[10] ^ seed_2[2]  ^  
+                              seed_2[22] ^ seed_2[20] ^ seed_2[15] ^ seed_2[7]  ^ 
+                              seed_2[4]  ^ seed_2[1]  ^ seed_2[19] ^ seed_2[17] ^ 
+                              seed_2[12] ^ seed_2[4]  ^ seed_2[1]  ^ seed_2[21] ^
+                              seed_2[19] ^ seed_2[14] ^ seed_2[6]  ^ seed_2[3]  ;
+                              
+            o_lane_2_23[0] <= seed_2[14] ^ seed_2[12] ^ seed_2[7]  ^ seed_2[22] ^
+                              seed_2[20] ^ seed_2[15] ^ seed_2[7]  ^ seed_2[4]  ^ 
+                              seed_2[1]  ^ seed_2[19] ^ seed_2[17] ^ seed_2[12] ^
+                              seed_2[4]  ^ seed_2[1]  ^ seed_2[21] ^ seed_2[19] ^
+                              seed_2[14] ^ seed_2[6]  ^ seed_2[3]  ^ seed_2[0]  ^
+                              seed_2[16] ^ seed_2[14] ^ seed_2[9]  ^ seed_2[1]  ^
+                              seed_2[21] ^ seed_2[19] ^ seed_2[14] ^ seed_2[6]  ^ 
+                              seed_2[3]  ^ seed_2[0]  ^ seed_2[18] ^ seed_2[16] ^
+                              seed_2[11] ^ seed_2[3]  ^ seed_2[0]  ^ seed_2[20] ^
+                              seed_2[18] ^ seed_2[13] ^ seed_2[5]  ^ seed_2[2]  ^
+                              seed_2[22] ^ seed_2[20] ^ seed_2[15] ^ seed_2[7]  ^
+                              seed_2[4]  ^ seed_2[1]  ; 
+            
+        //--------------------------- lane 3 -----------------------------------//
+          o_lane_3_23[8] <= seed_3[22] ^ seed_3[20] ^ seed_3[15] ^ 
+                            seed_3[7]  ^ seed_3[4]  ^ seed_3[1];
+
+          o_lane_3_23[7] <= seed_3[21] ^ seed_3[19] ^ seed_3[14] ^ 
+                            seed_3[6]  ^ seed_3[3]  ^ seed_3[0];
+
+          o_lane_3_23[6] <= seed_3[20] ^ seed_3[18] ^ seed_3[13] ^ 
+                            seed_3[5]  ^ seed_3[2]  ^ seed_3[22] ^ seed_3[20] ^
+                            seed_3[15] ^ seed_3[7]  ^  seed_3[4] ^ 
+                            seed_3[1];
+
+          o_lane_3_23[5] <= seed_3[19] ^ seed_3[17] ^ seed_3[12] ^ seed_3[4]  ^ 
+                            seed_3[1]  ^ seed_3[21] ^ seed_3[19] ^ seed_3[14] ^
+                            seed_3[6]  ^  seed_3[3] ^ seed_3[0];
+
+          o_lane_3_23[4] <= seed_3[18] ^ seed_3[16] ^ seed_3[11] ^ 
+                            seed_3[3]  ^ seed_3[0]  ^ seed_3[20] ^ seed_3[18] ^
+                            seed_3[13] ^ seed_3[5]  ^ seed_3[2]  ^ seed_3[22] ^
+                            seed_3[20] ^ seed_3[15] ^ seed_3[7]  ^
+                            seed_3[4]  ^ seed_3[1];
+
+          o_lane_3_23[3] <= seed_3[17] ^ seed_3[15] ^ seed_3[10] ^ seed_3[0]  ^
+                            seed_3[2]  ^ seed_3[22] ^ seed_3[20] ^ seed_3[15] ^ 
+                            seed_3[7]  ^ seed_3[4]  ^ seed_3[1]  ^ seed_3[19] ^
+                            seed_3[17] ^ seed_3[12] ^ seed_3[4]  ^ seed_3[1]  ^ 
+                            seed_3[21] ^ seed_3[19] ^ seed_3[14] ^ seed_3[6]  ^
+                            seed_3[3]  ;
+
+          o_lane_3_23[2] <= seed_3[16] ^ seed_3[14] ^ seed_3[9]  ^ seed_3[1]  ^
+                            seed_3[21] ^ seed_3[19] ^ seed_3[14] ^ seed_3[6]  ^
+                            seed_3[3]  ^ seed_3[0]  ^ seed_3[18] ^ seed_3[16] ^ 
+                            seed_3[11] ^ seed_3[3]  ^ seed_3[0]  ^ seed_3[20] ^
+                            seed_3[18] ^ seed_3[13] ^ seed_3[5]  ^ seed_3[2]  ^
+                            seed_3[22] ^ seed_3[20] ^ seed_3[15] ^ seed_3[7]  ^
+                            seed_3[4]  ^ seed_3[1] ;
+          o_lane_3_23[1] <= seed_3[15] ^ seed_3[13] ^ seed_3[8]  ^  seed_3[0] ^
+                            seed_3[0]  ^ seed_3[20] ^ seed_3[18] ^ seed_3[13] ^
+                            seed_3[5]  ^ seed_3[2]  ^ seed_3[22] ^ seed_3[20] ^ 
+                            seed_3[15] ^ seed_3[7]  ^ seed_3[4]  ^ seed_3[1]  ^
+                            seed_3[17] ^ seed_3[15] ^ seed_3[10] ^ seed_3[2]  ^  
+                            seed_3[22] ^ seed_3[20] ^ seed_3[15] ^ seed_3[7]  ^ 
+                            seed_3[4]  ^ seed_3[1]  ^ seed_3[19] ^ seed_3[17] ^ 
+                            seed_3[12] ^ seed_3[4]  ^ seed_3[1]  ^ seed_3[21] ^
+                            seed_3[19] ^ seed_3[14] ^ seed_3[6]  ^ seed_3[3]  ;
+                            
+          o_lane_3_23[0] <= seed_3[14] ^ seed_3[12] ^ seed_3[7]  ^ seed_3[22] ^
+                            seed_3[20] ^ seed_3[15] ^ seed_3[7]  ^ seed_3[4]  ^ 
+                            seed_3[1]  ^ seed_3[19] ^ seed_3[17] ^ seed_3[12] ^
+                            seed_3[4]  ^ seed_3[1]  ^ seed_3[21] ^ seed_3[19] ^
+                            seed_3[14] ^ seed_3[6]  ^ seed_3[3]  ^ seed_3[0]  ^
+                            seed_3[16] ^ seed_3[14] ^ seed_3[9]  ^ seed_3[1]  ^
+                            seed_3[21] ^ seed_3[19] ^ seed_3[14] ^ seed_3[6]  ^ 
+                            seed_3[3]  ^ seed_3[0]  ^ seed_3[18] ^ seed_3[16] ^
+                            seed_3[11] ^ seed_3[3]  ^ seed_3[0]  ^ seed_3[20] ^
+                            seed_3[18] ^ seed_3[13] ^ seed_3[5]  ^ seed_3[2]  ^
+                            seed_3[22] ^ seed_3[20] ^ seed_3[15] ^ seed_3[7]  ^
+                            seed_3[4]  ^ seed_3[1]  ;
+
+        //--------------------------- lane 4 -----------------------------------//
+          o_lane_4_23[8] <= seed_4[22] ^ seed_4[20] ^ seed_4[15] ^ 
+                            seed_4[7]  ^ seed_4[4]  ^ seed_4[1];
+
+          o_lane_4_23[7] <= seed_4[21] ^ seed_4[19] ^ seed_4[14] ^ 
+                            seed_4[6]  ^ seed_4[3]  ^ seed_4[0];
+
+          o_lane_4_23[6] <= seed_4[20] ^ seed_4[18] ^ seed_4[13] ^ 
+                            seed_4[5]  ^ seed_4[2]  ^ seed_4[22] ^ seed_4[20] ^
+                            seed_4[15] ^ seed_4[7]  ^  seed_4[4] ^ 
+                            seed_4[1];
+
+          o_lane_4_23[5] <= seed_4[19] ^ seed_4[17] ^ seed_4[12] ^ seed_4[4]  ^ 
+                            seed_4[1]  ^ seed_4[21] ^ seed_4[19] ^ seed_4[14] ^
+                            seed_4[6]  ^  seed_4[3] ^ seed_4[0];
+          o_lane_4_23[4] <= seed_4[18] ^ seed_4[16] ^ seed_4[11] ^ 
+                            seed_4[3]  ^ seed_4[0]  ^ seed_4[20] ^ seed_4[18] ^
+                            seed_4[13] ^ seed_4[5]  ^ seed_4[2]  ^ seed_4[22] ^
+                            seed_4[20] ^ seed_4[15] ^ seed_4[7]  ^
+                            seed_4[4]  ^ seed_4[1];
+
+          o_lane_4_23[3] <= seed_4[17] ^ seed_4[15] ^ seed_4[10] ^ seed_4[0]  ^
+                            seed_4[2]  ^ seed_4[22] ^ seed_4[20] ^ seed_4[15] ^ 
+                            seed_4[7]  ^ seed_4[4]  ^ seed_4[1]  ^ seed_4[19] ^
+                            seed_4[17] ^ seed_4[12] ^ seed_4[4]  ^ seed_4[1]  ^ 
+                            seed_4[21] ^ seed_4[19] ^ seed_4[14] ^ seed_4[6]  ^
+                            seed_4[3];
+
+          o_lane_4_23[2] <= seed_4[16] ^ seed_4[14] ^ seed_4[9]  ^ seed_4[1]  ^
+                            seed_4[21] ^ seed_4[19] ^ seed_4[14] ^ seed_4[6]  ^
+                            seed_4[3]  ^ seed_4[0]  ^ seed_4[18] ^ seed_4[16] ^ 
+                            seed_4[11] ^ seed_4[3]  ^ seed_4[0]  ^ seed_4[20] ^
+                            seed_4[18] ^ seed_4[13] ^ seed_4[5]  ^ seed_4[2]  ^
+                            seed_4[22] ^ seed_4[20] ^ seed_4[15] ^ seed_4[7]  ^
+                            seed_4[4]  ^ seed_4[1];
+
+          o_lane_4_23[1] <= seed_4[15] ^ seed_4[13] ^ seed_4[8]  ^  seed_4[0] ^
+                            seed_4[0]  ^ seed_4[20] ^ seed_4[18] ^ seed_4[13] ^
+                            seed_4[5]  ^ seed_4[2]  ^ seed_4[22] ^ seed_4[20] ^ 
+                            seed_4[15] ^ seed_4[7]  ^ seed_4[4]  ^ seed_4[1]  ^
+                            seed_4[17] ^ seed_4[15] ^ seed_4[10] ^ seed_4[2]  ^  
+                            seed_4[22] ^ seed_4[20] ^ seed_4[15] ^ seed_4[7]  ^ 
+                            seed_4[4]  ^ seed_4[1]  ^ seed_4[19] ^ seed_4[17] ^ 
+                            seed_4[12] ^ seed_4[4]  ^ seed_4[1]  ^ seed_4[21] ^
+                            seed_4[19] ^ seed_4[14] ^ seed_4[6]  ^ seed_4[3];
+                            
+          o_lane_4_23[0] <= seed_4[14] ^ seed_4[12] ^ seed_4[7]  ^ seed_4[22] ^
+                            seed_4[20] ^ seed_4[15] ^ seed_4[7]  ^ seed_4[4]  ^ 
+                            seed_4[1]  ^ seed_4[19] ^ seed_4[17] ^ seed_4[12] ^
+                            seed_4[4]  ^ seed_4[1]  ^ seed_4[21] ^ seed_4[19] ^
+                            seed_4[14] ^ seed_4[6]  ^ seed_4[3]  ^ seed_4[0]  ^
+                            seed_4[16] ^ seed_4[14] ^ seed_4[9]  ^ seed_4[1]  ^
+                            seed_4[21] ^ seed_4[19] ^ seed_4[14] ^ seed_4[6]  ^ 
+                            seed_4[3]  ^ seed_4[0]  ^ seed_4[18] ^ seed_4[16] ^
+                            seed_4[11] ^ seed_4[3]  ^ seed_4[0]  ^ seed_4[20] ^
+                            seed_4[18] ^ seed_4[13] ^ seed_4[5]  ^ seed_4[2]  ^
+                            seed_4[22] ^ seed_4[20] ^ seed_4[15] ^ seed_4[7]  ^
+                            seed_4[4]  ^ seed_4[1]; 
+
+        //--------------------------- lane 5 -----------------------------------//
+            o_lane_5_23[8] <= seed_5[22] ^ seed_5[20] ^ seed_5[15] ^ 
+                              seed_5[7]  ^ seed_5[4]  ^ seed_5[1];
+
+            o_lane_5_23[7] <= seed_5[21] ^ seed_5[19] ^ seed_5[14] ^ 
+                              seed_5[6]  ^ seed_5[3]  ^ seed_5[0];
+
+            o_lane_5_23[6] <= seed_5[20] ^ seed_5[18] ^ seed_5[13] ^ 
+                              seed_5[5]  ^ seed_5[2]  ^ seed_5[22] ^ seed_5[20] ^
+                              seed_5[15] ^ seed_5[7]  ^  seed_5[4] ^ 
+                              seed_5[1];
+
+            o_lane_5_23[5] <= seed_5[19] ^ seed_5[17] ^ seed_5[12] ^ seed_5[4]  ^ 
+                              seed_5[1]  ^ seed_5[21] ^ seed_5[19] ^ seed_5[14] ^
+                              seed_5[6]  ^  seed_5[3] ^ seed_5[0];
+
+            o_lane_5_23[4] <= seed_5[18] ^ seed_5[16] ^ seed_5[11] ^ 
+                              seed_5[3]  ^ seed_5[0]  ^ seed_5[20] ^ seed_5[18] ^
+                              seed_5[13] ^ seed_5[5]  ^ seed_5[2]  ^ seed_5[22] ^
+                              seed_5[20] ^ seed_5[15] ^ seed_5[7]  ^
+                              seed_5[4]  ^ seed_5[1];
+
+            o_lane_5_23[3] <= seed_5[17] ^ seed_5[15] ^ seed_5[10] ^ seed_5[0]  ^
+                              seed_5[2]  ^ seed_5[22] ^ seed_5[20] ^ seed_5[15] ^ 
+                              seed_5[7]  ^ seed_5[4]  ^ seed_5[1]  ^ seed_5[19] ^
+                              seed_5[17] ^ seed_5[12] ^ seed_5[4]  ^ seed_5[1]  ^ 
+                              seed_5[21] ^ seed_5[19] ^ seed_5[14] ^ seed_5[6]  ^
+                              seed_5[3]  ;
+
+            o_lane_5_23[2] <= seed_5[16] ^ seed_5[14] ^ seed_5[9]  ^ seed_5[1]  ^
+                              seed_5[21] ^ seed_5[19] ^ seed_5[14] ^ seed_5[6]  ^
+                              seed_5[3]  ^ seed_5[0]  ^ seed_5[18] ^ seed_5[16] ^ 
+                              seed_5[11] ^ seed_5[3]  ^ seed_5[0]  ^ seed_5[20] ^
+                              seed_5[18] ^ seed_5[13] ^ seed_5[5]  ^ seed_5[2]  ^
+                              seed_5[22] ^ seed_5[20] ^ seed_5[15] ^ seed_5[7]  ^
+                              seed_5[4]  ^ seed_5[1] ;
+
+            o_lane_5_23[1] <= seed_5[15] ^ seed_5[13] ^ seed_5[8]  ^  seed_5[0] ^
+                              seed_5[0]  ^ seed_5[20] ^ seed_5[18] ^ seed_5[13] ^
+                              seed_5[5]  ^ seed_5[2]  ^ seed_5[22] ^ seed_5[20] ^ 
+                              seed_5[15] ^ seed_5[7]  ^ seed_5[4]  ^ seed_5[1]  ^
+                              seed_5[17] ^ seed_5[15] ^ seed_5[10] ^ seed_5[2]  ^  
+                              seed_5[22] ^ seed_5[20] ^ seed_5[15] ^ seed_5[7]  ^ 
+                              seed_5[4]  ^ seed_5[1]  ^ seed_5[19] ^ seed_5[17] ^ 
+                              seed_5[12] ^ seed_5[4]  ^ seed_5[1]  ^ seed_5[21] ^
+                              seed_5[19] ^ seed_5[14] ^ seed_5[6]  ^ seed_5[3]  ;
+                              
+            o_lane_5_23[0] <= seed_5[14] ^ seed_5[12] ^ seed_5[7]  ^ seed_5[22] ^
+                              seed_5[20] ^ seed_5[15] ^ seed_5[7]  ^ seed_5[4]  ^ 
+                              seed_5[1]  ^ seed_5[19] ^ seed_5[17] ^ seed_5[12] ^
+                              seed_5[4]  ^ seed_5[1]  ^ seed_5[21] ^ seed_5[19] ^
+                              seed_5[14] ^ seed_5[6]  ^ seed_5[3]  ^ seed_5[0]  ^
+                              seed_5[16] ^ seed_5[14] ^ seed_5[9]  ^ seed_5[1]  ^
+                              seed_5[21] ^ seed_5[19] ^ seed_5[14] ^ seed_5[6]  ^ 
+                              seed_5[3]  ^ seed_5[0]  ^ seed_5[18] ^ seed_5[16] ^
+                              seed_5[11] ^ seed_5[3]  ^ seed_5[0]  ^ seed_5[20] ^
+                              seed_5[18] ^ seed_5[13] ^ seed_5[5]  ^ seed_5[2]  ^
+                              seed_5[22] ^ seed_5[20] ^ seed_5[15] ^ seed_5[7]  ^
+                              seed_5[4]  ^ seed_5[1]  ; 
+
+        //--------------------------- lane 6 -----------------------------------//
+          o_lane_6_23[8] <= seed_6[22] ^ seed_6[20] ^ seed_6[15] ^ 
+                            seed_6[7]  ^ seed_6[4]  ^ seed_6[1];
+
+          o_lane_6_23[7] <= seed_6[21] ^ seed_6[19] ^ seed_6[14] ^ 
+                            seed_6[6]  ^ seed_6[3]  ^ seed_6[0];
+
+          o_lane_6_23[6] <= seed_6[20] ^ seed_6[18] ^ seed_6[13] ^ 
+                            seed_6[5]  ^ seed_6[2]  ^ seed_6[22] ^ seed_6[20] ^
+                            seed_6[15] ^ seed_6[7]  ^  seed_6[4] ^ 
+                            seed_6[1];
+
+          o_lane_6_23[5] <= seed_6[19] ^ seed_6[17] ^ seed_6[12] ^ seed_6[4]  ^ 
+                            seed_6[1]  ^ seed_6[21] ^ seed_6[19] ^ seed_6[14] ^
+                            seed_6[6]  ^  seed_6[3] ^ seed_6[0];
+
+          o_lane_6_23[4] <= seed_6[18] ^ seed_6[16] ^ seed_6[11] ^ 
+                            seed_6[3]  ^ seed_6[0]  ^ seed_6[20] ^ seed_6[18] ^
+                            seed_6[13] ^ seed_6[5]  ^ seed_6[2]  ^ seed_6[22] ^
+                            seed_6[20] ^ seed_6[15] ^ seed_6[7]  ^
+                            seed_6[4]  ^ seed_6[1];
+
+          o_lane_6_23[3] <= seed_6[17] ^ seed_6[15] ^ seed_6[10] ^ seed_6[0]  ^
+                            seed_6[2]  ^ seed_6[22] ^ seed_6[20] ^ seed_6[15] ^ 
+                            seed_6[7]  ^ seed_6[4]  ^ seed_6[1]  ^ seed_6[19] ^
+                            seed_6[17] ^ seed_6[12] ^ seed_6[4]  ^ seed_6[1]  ^ 
+                            seed_6[21] ^ seed_6[19] ^ seed_6[14] ^ seed_6[6]  ^
+                            seed_6[3] ;
+          o_lane_6_23[2] <= seed_6[16] ^ seed_6[14] ^ seed_6[9]  ^ seed_6[1]  ^
+                            seed_6[21] ^ seed_6[19] ^ seed_6[14] ^ seed_6[6]  ^
+                            seed_6[3]  ^ seed_6[0]  ^ seed_6[18] ^ seed_6[16] ^ 
+                            seed_6[11] ^ seed_6[3]  ^ seed_6[0]  ^ seed_6[20] ^
+                            seed_6[18] ^ seed_6[13] ^ seed_6[5]  ^ seed_6[2]  ^
+                            seed_6[22] ^ seed_6[20] ^ seed_6[15] ^ seed_6[7]  ^
+                            seed_6[4]  ^ seed_6[1];
+
+          o_lane_6_23[1] <= seed_6[15] ^ seed_6[13] ^ seed_6[8]  ^  seed_6[0] ^
+                            seed_6[0]  ^ seed_6[20] ^ seed_6[18] ^ seed_6[13] ^
+                            seed_6[5]  ^ seed_6[2]  ^ seed_6[22] ^ seed_6[20] ^ 
+                            seed_6[15] ^ seed_6[7]  ^ seed_6[4]  ^ seed_6[1]  ^
+                            seed_6[17] ^ seed_6[15] ^ seed_6[10] ^ seed_6[2]  ^  
+                            seed_6[22] ^ seed_6[20] ^ seed_6[15] ^ seed_6[7]  ^ 
+                            seed_6[4]  ^ seed_6[1]  ^ seed_6[19] ^ seed_6[17] ^ 
+                            seed_6[12] ^ seed_6[4]  ^ seed_6[1]  ^ seed_6[21] ^
+                            seed_6[19] ^ seed_6[14] ^ seed_6[6]  ^ seed_6[3];
+                            
+          o_lane_6_23[0] <= seed_6[14] ^ seed_6[12] ^ seed_6[7]  ^ seed_6[22] ^
+                            seed_6[20] ^ seed_6[15] ^ seed_6[7]  ^ seed_6[4]  ^ 
+                            seed_6[1]  ^ seed_6[19] ^ seed_6[17] ^ seed_6[12] ^
+                            seed_6[4]  ^ seed_6[1]  ^ seed_6[21] ^ seed_6[19] ^
+                            seed_6[14] ^ seed_6[6]  ^ seed_6[3]  ^ seed_6[0]  ^
+                            seed_6[16] ^ seed_6[14] ^ seed_6[9]  ^ seed_6[1]  ^
+                            seed_6[21] ^ seed_6[19] ^ seed_6[14] ^ seed_6[6]  ^ 
+                            seed_6[3]  ^ seed_6[0]  ^ seed_6[18] ^ seed_6[16] ^
+                            seed_6[11] ^ seed_6[3]  ^ seed_6[0]  ^ seed_6[20] ^
+                            seed_6[18] ^ seed_6[13] ^ seed_6[5]  ^ seed_6[2]  ^
+                            seed_6[22] ^ seed_6[20] ^ seed_6[15] ^ seed_6[7]  ^
+                            seed_6[4]  ^ seed_6[1]; 
+
+        //--------------------------- lane 7 -----------------------------------//
+            o_lane_7_23[8] <= seed_7[22] ^ seed_7[20] ^ seed_7[15] ^ 
+                              seed_7[7]  ^ seed_7[4]  ^ seed_7[1];
+
+            o_lane_7_23[7] <= seed_7[21] ^ seed_7[19] ^ seed_7[14] ^ 
+                              seed_7[6]  ^ seed_7[3]  ^ seed_7[0];
+
+            o_lane_7_23[6] <= seed_7[20] ^ seed_7[18] ^ seed_7[13] ^ 
+                              seed_7[5]  ^ seed_7[2]  ^ seed_7[22] ^ seed_7[20] ^
+                              seed_7[15] ^ seed_7[7]  ^  seed_7[4] ^ 
+                              seed_7[1];
+
+            o_lane_7_23[5] <= seed_7[19] ^ seed_7[17] ^ seed_7[12] ^ seed_7[4]  ^ 
+                              seed_7[1]  ^ seed_7[21] ^ seed_7[19] ^ seed_7[14] ^
+                              seed_7[6]  ^  seed_7[3] ^ seed_7[0];
+            o_lane_7_23[4] <= seed_7[18] ^ seed_7[16] ^ seed_7[11] ^ 
+                              seed_7[3]  ^ seed_7[0]  ^ seed_7[20] ^ seed_7[18] ^
+                              seed_7[13] ^ seed_7[5]  ^ seed_7[2]  ^ seed_7[22] ^
+                              seed_7[20] ^ seed_7[15] ^ seed_7[7]  ^
+                              seed_7[4]  ^ seed_7[1];
+
+            o_lane_7_23[3] <= seed_7[17] ^ seed_7[15] ^ seed_7[10] ^ seed_7[0]  ^
+                              seed_7[2]  ^ seed_7[22] ^ seed_7[20] ^ seed_7[15] ^ 
+                              seed_7[7]  ^ seed_7[4]  ^ seed_7[1]  ^ seed_7[19] ^
+                              seed_7[17] ^ seed_7[12] ^ seed_7[4]  ^ seed_7[1]  ^ 
+                              seed_7[21] ^ seed_7[19] ^ seed_7[14] ^ seed_7[6]  ^
+                              seed_7[3];
+
+            o_lane_7_23[2] <= seed_7[16] ^ seed_7[14] ^ seed_7[9]  ^ seed_7[1]  ^
+                              seed_7[21] ^ seed_7[19] ^ seed_7[14] ^ seed_7[6]  ^
+                              seed_7[3]  ^ seed_7[0]  ^ seed_7[18] ^ seed_7[16] ^ 
+                              seed_7[11] ^ seed_7[3]  ^ seed_7[0]  ^ seed_7[20] ^
+                              seed_7[18] ^ seed_7[13] ^ seed_7[5]  ^ seed_7[2]  ^
+                              seed_7[22] ^ seed_7[20] ^ seed_7[15] ^ seed_7[7]  ^
+                              seed_7[4]  ^ seed_7[1];
+
+            o_lane_7_23[1] <= seed_7[15] ^ seed_7[13] ^ seed_7[8]  ^  seed_7[0] ^
+                              seed_7[0]  ^ seed_7[20] ^ seed_7[18] ^ seed_7[13] ^
+                              seed_7[5]  ^ seed_7[2]  ^ seed_7[22] ^ seed_7[20] ^ 
+                              seed_7[15] ^ seed_7[7]  ^ seed_7[4]  ^ seed_7[1]  ^
+                              seed_7[17] ^ seed_7[15] ^ seed_7[10] ^ seed_7[2]  ^  
+                              seed_7[22] ^ seed_7[20] ^ seed_7[15] ^ seed_7[7]  ^ 
+                              seed_7[4]  ^ seed_7[1]  ^ seed_7[19] ^ seed_7[17] ^ 
+                              seed_7[12] ^ seed_7[4]  ^ seed_7[1]  ^ seed_7[21] ^
+                              seed_7[19] ^ seed_7[14] ^ seed_7[6]  ^ seed_7[3];
+                              
+            o_lane_7_23[0] <= seed_7[14] ^ seed_7[12] ^ seed_7[7]  ^ seed_7[22] ^
+                              seed_7[20] ^ seed_7[15] ^ seed_7[7]  ^ seed_7[4]  ^ 
+                              seed_7[1]  ^ seed_7[19] ^ seed_7[17] ^ seed_7[12] ^
+                              seed_7[4]  ^ seed_7[1]  ^ seed_7[21] ^ seed_7[19] ^
+                              seed_7[14] ^ seed_7[6]  ^ seed_7[3]  ^ seed_7[0]  ^
+                              seed_7[16] ^ seed_7[14] ^ seed_7[9]  ^ seed_7[1]  ^
+                              seed_7[21] ^ seed_7[19] ^ seed_7[14] ^ seed_7[6]  ^ 
+                              seed_7[3]  ^ seed_7[0]  ^ seed_7[18] ^ seed_7[16] ^
+                              seed_7[11] ^ seed_7[3]  ^ seed_7[0]  ^ seed_7[20] ^
+                              seed_7[18] ^ seed_7[13] ^ seed_7[5]  ^ seed_7[2]  ^
+                              seed_7[22] ^ seed_7[20] ^ seed_7[15] ^ seed_7[7]  ^
+                              seed_7[4]  ^ seed_7[1]; 
+
     end
     else begin  
         {o_final_gene_0, o_final_gene_1, o_final_gene_2, o_final_gene_3, o_final_gene_4, o_final_gene_5, o_final_gene_6, o_final_gene_7,
@@ -140,9 +629,9 @@ always @(posedge i_clk or negedge i_rst_n) begin
 
         case (i_state)
             IDLE: begin
-                temp_Data_by_0 <= i_data_in_0; temp_Data_by_1 <= i_data_in_1; temp_Data_by_2 <= i_data_in_2; temp_Data_by_3 <= i_data_in_3;
-                temp_Data_by_4 <= i_data_in_4; temp_Data_by_5 <= i_data_in_5; temp_Data_by_6 <= i_data_in_6; temp_Data_by_7 <= i_data_in_7;
-                temp_Data_by_8 <= i_data_in_8; temp_Data_by_9 <= i_data_in_9; temp_Data_by_10 <= i_data_in_10; temp_Data_by_11 <= i_data_in_11;
+                temp_Data_by_0  <= i_data_in_0;   temp_Data_by_1 <= i_data_in_1; temp_Data_by_2 <= i_data_in_2; temp_Data_by_3 <= i_data_in_3;
+                temp_Data_by_4  <= i_data_in_4;   temp_Data_by_5 <= i_data_in_5; temp_Data_by_6 <= i_data_in_6; temp_Data_by_7 <= i_data_in_7;
+                temp_Data_by_8  <= i_data_in_8;   temp_Data_by_9 <= i_data_in_9; temp_Data_by_10 <= i_data_in_10; temp_Data_by_11 <= i_data_in_11;
                 temp_Data_by_12 <= i_data_in_12; temp_Data_by_13 <= i_data_in_13; temp_Data_by_14 <= i_data_in_14; temp_Data_by_15 <= i_data_in_15;
             end
 
@@ -154,11 +643,485 @@ always @(posedge i_clk or negedge i_rst_n) begin
                         temp_Data_by_4 <= i_data_in_4; temp_Data_by_5 <= i_data_in_5; temp_Data_by_6 <= i_data_in_6; temp_Data_by_7 <= i_data_in_7;
                         temp_Data_by_8 <= i_data_in_8; temp_Data_by_9 <= i_data_in_9; temp_Data_by_10 <= i_data_in_10; temp_Data_by_11 <= i_data_in_11;
                         temp_Data_by_12 <= i_data_in_12; temp_Data_by_13 <= i_data_in_13; temp_Data_by_14 <= i_data_in_14; temp_Data_by_15 <= i_data_in_15;
+
+                //--------------------------- lane 0 -----------------------------------//
+                    o_lane_0_23[8] <= seed_0[22] ^ seed_0[20] ^ seed_0[15] ^ 
+                                      seed_0[7]  ^ seed_0[4]  ^ seed_0[1];
+
+                    o_lane_0_23[7] <= seed_0[21] ^ seed_0[19] ^ seed_0[14] ^ 
+                                      seed_0[6]  ^ seed_0[3]  ^ seed_0[0];
+
+                    o_lane_0_23[6] <= seed_0[20] ^ seed_0[18] ^ seed_0[13] ^ 
+                                      seed_0[5]  ^ seed_0[2]  ^ seed_0[22] ^ seed_0[20] ^
+                                      seed_0[15] ^ seed_0[7]  ^  seed_0[4] ^ 
+                                      seed_0[1];
+
+                    o_lane_0_23[5] <= seed_0[19] ^ seed_0[17] ^ seed_0[12] ^ seed_0[4]  ^ 
+                                      seed_0[1]  ^ seed_0[21] ^ seed_0[19] ^ seed_0[14] ^
+                                      seed_0[6]  ^  seed_0[3] ^ seed_0[0];
+                    o_lane_0_23[4] <= seed_0[18] ^ seed_0[16] ^ seed_0[11] ^ 
+                                      seed_0[3]  ^ seed_0[0]  ^ seed_0[20] ^ seed_0[18] ^
+                                      seed_0[13] ^ seed_0[5]  ^ seed_0[2]  ^ seed_0[22] ^
+                                      seed_0[20] ^ seed_0[15] ^ seed_0[7]  ^
+                                      seed_0[4]  ^ seed_0[1];
+
+                    o_lane_0_23[3] <= seed_0[17] ^ seed_0[15] ^ seed_0[10] ^ seed_0[0]  ^
+                                      seed_0[2]  ^ seed_0[22] ^ seed_0[20] ^ seed_0[15] ^ 
+                                      seed_0[7]  ^ seed_0[4]  ^ seed_0[1]  ^ seed_0[19] ^
+                                      seed_0[17] ^ seed_0[12] ^ seed_0[4]  ^ seed_0[1]  ^ 
+                                      seed_0[21] ^ seed_0[19] ^ seed_0[14] ^ seed_0[6]  ^
+                                      seed_0[3]  ;
+
+                    o_lane_0_23[2] <= seed_0[16] ^ seed_0[14] ^ seed_0[9]  ^ seed_0[1]  ^
+                                      seed_0[21] ^ seed_0[19] ^ seed_0[14] ^ seed_0[6]  ^
+                                      seed_0[3]  ^ seed_0[0]  ^ seed_0[18] ^ seed_0[16] ^ 
+                                      seed_0[11] ^ seed_0[3]  ^ seed_0[0]  ^ seed_0[20] ^
+                                      seed_0[18] ^ seed_0[13] ^ seed_0[5]  ^ seed_0[2]  ^
+                                      seed_0[22] ^ seed_0[20] ^ seed_0[15] ^ seed_0[7]  ^
+                                      seed_0[4]  ^ seed_0[1] ;
+                    o_lane_0_23[1] <= seed_0[15] ^ seed_0[13] ^ seed_0[8]  ^  seed_0[0] ^
+                                      seed_0[0]  ^ seed_0[20] ^ seed_0[18] ^ seed_0[13] ^
+                                      seed_0[5]  ^ seed_0[2]  ^ seed_0[22] ^ seed_0[20] ^ 
+                                      seed_0[15] ^ seed_0[7]  ^ seed_0[4]  ^ seed_0[1]  ^
+                                      seed_0[17] ^ seed_0[15] ^ seed_0[10] ^ seed_0[2]  ^  
+                                      seed_0[22] ^ seed_0[20] ^ seed_0[15] ^ seed_0[7]  ^ 
+                                      seed_0[4]  ^ seed_0[1]  ^ seed_0[19] ^ seed_0[17] ^ 
+                                      seed_0[12] ^ seed_0[4]  ^ seed_0[1]  ^ seed_0[21] ^
+                                      seed_0[19] ^ seed_0[14] ^ seed_0[6]  ^ seed_0[3]  ;
+                                      
+                    o_lane_0_23[0] <= seed_0[14] ^ seed_0[12] ^ seed_0[7]  ^ seed_0[22] ^
+                                      seed_0[20] ^ seed_0[15] ^ seed_0[7]  ^ seed_0[4]  ^ 
+                                      seed_0[1]  ^ seed_0[19] ^ seed_0[17] ^ seed_0[12] ^
+                                      seed_0[4]  ^ seed_0[1]  ^ seed_0[21] ^ seed_0[19] ^
+                                      seed_0[14] ^ seed_0[6]  ^ seed_0[3]  ^ seed_0[0]  ^
+                                      seed_0[16] ^ seed_0[14] ^ seed_0[9]  ^ seed_0[1]  ^
+                                      seed_0[21] ^ seed_0[19] ^ seed_0[14] ^ seed_0[6]  ^ 
+                                      seed_0[3]  ^ seed_0[0]  ^ seed_0[18] ^ seed_0[16] ^
+                                      seed_0[11] ^ seed_0[3]  ^ seed_0[0]  ^ seed_0[20] ^
+                                      seed_0[18] ^ seed_0[13] ^ seed_0[5]  ^ seed_0[2]  ^
+                                      seed_0[22] ^ seed_0[20] ^ seed_0[15] ^ seed_0[7]  ^
+                                      seed_0[4]  ^ seed_0[1]  ; 
+
+                //--------------------------- lane 1 -----------------------------------//
+                    o_lane_1_23[8] <= seed_1[22] ^ seed_1[20] ^ seed_1[15] ^ 
+                                      seed_1[7]  ^ seed_1[4]  ^ seed_1[1];
+
+                    o_lane_1_23[7] <= seed_1[21] ^ seed_1[19] ^ seed_1[14] ^ 
+                                      seed_1[6]  ^ seed_1[3]  ^ seed_1[0];
+
+                    o_lane_1_23[6] <= seed_1[20] ^ seed_1[18] ^ seed_1[13] ^ 
+                                      seed_1[5]  ^ seed_1[2]  ^ seed_1[22] ^ seed_1[20] ^
+                                      seed_1[15] ^ seed_1[7]  ^  seed_1[4] ^ 
+                                      seed_1[1];
+
+                    o_lane_1_23[5] <= seed_1[19] ^ seed_1[17] ^ seed_1[12] ^ seed_1[4]  ^ 
+                                      seed_1[1]  ^ seed_1[21] ^ seed_1[19] ^ seed_1[14] ^
+                                      seed_1[6]  ^  seed_1[3] ^ seed_1[0];
+                    o_lane_1_23[4] <= seed_1[18] ^ seed_1[16] ^ seed_1[11] ^ 
+                                      seed_1[3]  ^ seed_1[0]  ^ seed_1[20] ^ seed_1[18] ^
+                                      seed_1[13] ^ seed_1[5]  ^ seed_1[2]  ^ seed_1[22] ^
+                                      seed_1[20] ^ seed_1[15] ^ seed_1[7]  ^
+                                      seed_1[4]  ^ seed_1[1];
+                    o_lane_1_23[3] <= seed_1[17] ^ seed_1[15] ^ seed_1[10] ^ seed_1[0]  ^
+                                      seed_1[2]  ^ seed_1[22] ^ seed_1[20] ^ seed_1[15] ^ 
+                                      seed_1[7]  ^ seed_1[4]  ^ seed_1[1]  ^ seed_1[19] ^
+                                      seed_1[17] ^ seed_1[12] ^ seed_1[4]  ^ seed_1[1]  ^ 
+                                      seed_1[21] ^ seed_1[19] ^ seed_1[14] ^ seed_1[6]  ^
+                                      seed_1[3]  ;
+
+                    o_lane_1_23[2] <= seed_1[16] ^ seed_1[14] ^ seed_1[9]  ^ seed_1[1]  ^
+                                      seed_1[21] ^ seed_1[19] ^ seed_1[14] ^ seed_1[6]  ^
+                                      seed_1[3]  ^ seed_1[0]  ^ seed_1[18] ^ seed_1[16] ^ 
+                                      seed_1[11] ^ seed_1[3]  ^ seed_1[0]  ^ seed_1[20] ^
+                                      seed_1[18] ^ seed_1[13] ^ seed_1[5]  ^ seed_1[2]  ^
+                                      seed_1[22] ^ seed_1[20] ^ seed_1[15] ^ seed_1[7]  ^
+                                      seed_1[4]  ^ seed_1[1] ;
+
+                    o_lane_1_23[1] <= seed_1[15] ^ seed_1[13] ^ seed_1[8]  ^  seed_1[0] ^
+                                      seed_1[0]  ^ seed_1[20] ^ seed_1[18] ^ seed_1[13] ^
+                                      seed_1[5]  ^ seed_1[2]  ^ seed_1[22] ^ seed_1[20] ^ 
+                                      seed_1[15] ^ seed_1[7]  ^ seed_1[4]  ^ seed_1[1]  ^
+                                      seed_1[17] ^ seed_1[15] ^ seed_1[10] ^ seed_1[2]  ^  
+                                      seed_1[22] ^ seed_1[20] ^ seed_1[15] ^ seed_1[7]  ^ 
+                                      seed_1[4]  ^ seed_1[1]  ^ seed_1[19] ^ seed_1[17] ^ 
+                                      seed_1[12] ^ seed_1[4]  ^ seed_1[1]  ^ seed_1[21] ^
+                                      seed_1[19] ^ seed_1[14] ^ seed_1[6]  ^ seed_1[3]  ;
+                                      
+                    o_lane_1_23[0] <= seed_1[14] ^ seed_1[12] ^ seed_1[7]  ^ seed_1[22] ^
+                                      seed_1[20] ^ seed_1[15] ^ seed_1[7]  ^ seed_1[4]  ^ 
+                                      seed_1[1]  ^ seed_1[19] ^ seed_1[17] ^ seed_1[12] ^
+                                      seed_1[4]  ^ seed_1[1]  ^ seed_1[21] ^ seed_1[19] ^
+                                      seed_1[14] ^ seed_1[6]  ^ seed_1[3]  ^ seed_1[0]  ^
+                                      seed_1[16] ^ seed_1[14] ^ seed_1[9]  ^ seed_1[1]  ^
+                                      seed_1[21] ^ seed_1[19] ^ seed_1[14] ^ seed_1[6]  ^ 
+                                      seed_1[3]  ^ seed_1[0]  ^ seed_1[18] ^ seed_1[16] ^
+                                      seed_1[11] ^ seed_1[3]  ^ seed_1[0]  ^ seed_1[20] ^
+                                      seed_1[18] ^ seed_1[13] ^ seed_1[5]  ^ seed_1[2]  ^
+                                      seed_1[22] ^ seed_1[20] ^ seed_1[15] ^ seed_1[7]  ^
+                                      seed_1[4]  ^ seed_1[1]  ;  
+
+                //--------------------------- lane 2 -----------------------------------//
+                    o_lane_2_23[8] <= seed_2[22] ^ seed_2[20] ^ seed_2[15] ^ 
+                                      seed_2[7]  ^ seed_2[4]  ^ seed_2[1];
+
+                    o_lane_2_23[7] <= seed_2[21] ^ seed_2[19] ^ seed_2[14] ^ 
+                                      seed_2[6]  ^ seed_2[3]  ^ seed_2[0];
+
+                    o_lane_2_23[6] <= seed_2[20] ^ seed_2[18] ^ seed_2[13] ^ 
+                                      seed_2[5]  ^ seed_2[2]  ^ seed_2[22] ^ seed_2[20] ^
+                                      seed_2[15] ^ seed_2[7]  ^  seed_2[4] ^ 
+                                      seed_2[1];
+
+                    o_lane_2_23[5] <= seed_2[19] ^ seed_2[17] ^ seed_2[12] ^ seed_2[4]  ^ 
+                                      seed_2[1]  ^ seed_2[21] ^ seed_2[19] ^ seed_2[14] ^
+                                      seed_2[6]  ^  seed_2[3] ^ seed_2[0];
+                    o_lane_2_23[4] <= seed_2[18] ^ seed_2[16] ^ seed_2[11] ^ 
+                                      seed_2[3]  ^ seed_2[0]  ^ seed_2[20] ^ seed_2[18] ^
+                                      seed_2[13] ^ seed_2[5]  ^ seed_2[2]  ^ seed_2[22] ^
+                                      seed_2[20] ^ seed_2[15] ^ seed_2[7]  ^
+                                      seed_2[4]  ^ seed_2[1];
+
+                    o_lane_2_23[3] <= seed_2[17] ^ seed_2[15] ^ seed_2[10] ^ seed_2[0]  ^
+                                      seed_2[2]  ^ seed_2[22] ^ seed_2[20] ^ seed_2[15] ^ 
+                                      seed_2[7]  ^ seed_2[4]  ^ seed_2[1]  ^ seed_2[19] ^
+                                      seed_2[17] ^ seed_2[12] ^ seed_2[4]  ^ seed_2[1]  ^ 
+                                      seed_2[21] ^ seed_2[19] ^ seed_2[14] ^ seed_2[6]  ^
+                                      seed_2[3]  ;
+
+                    o_lane_2_23[2] <= seed_2[16] ^ seed_2[14] ^ seed_2[9]  ^ seed_2[1]  ^
+                                      seed_2[21] ^ seed_2[19] ^ seed_2[14] ^ seed_2[6]  ^
+                                      seed_2[3]  ^ seed_2[0]  ^ seed_2[18] ^ seed_2[16] ^ 
+                                      seed_2[11] ^ seed_2[3]  ^ seed_2[0]  ^ seed_2[20] ^
+                                      seed_2[18] ^ seed_2[13] ^ seed_2[5]  ^ seed_2[2]  ^
+                                      seed_2[22] ^ seed_2[20] ^ seed_2[15] ^ seed_2[7]  ^
+                                      seed_2[4]  ^ seed_2[1] ;
+
+                    o_lane_2_23[1] <= seed_2[15] ^ seed_2[13] ^ seed_2[8]  ^  seed_2[0] ^
+                                      seed_2[0]  ^ seed_2[20] ^ seed_2[18] ^ seed_2[13] ^
+                                      seed_2[5]  ^ seed_2[2]  ^ seed_2[22] ^ seed_2[20] ^ 
+                                      seed_2[15] ^ seed_2[7]  ^ seed_2[4]  ^ seed_2[1]  ^
+                                      seed_2[17] ^ seed_2[15] ^ seed_2[10] ^ seed_2[2]  ^  
+                                      seed_2[22] ^ seed_2[20] ^ seed_2[15] ^ seed_2[7]  ^ 
+                                      seed_2[4]  ^ seed_2[1]  ^ seed_2[19] ^ seed_2[17] ^ 
+                                      seed_2[12] ^ seed_2[4]  ^ seed_2[1]  ^ seed_2[21] ^
+                                      seed_2[19] ^ seed_2[14] ^ seed_2[6]  ^ seed_2[3]  ;
+                                      
+                    o_lane_2_23[0] <= seed_2[14] ^ seed_2[12] ^ seed_2[7]  ^ seed_2[22] ^
+                                      seed_2[20] ^ seed_2[15] ^ seed_2[7]  ^ seed_2[4]  ^ 
+                                      seed_2[1]  ^ seed_2[19] ^ seed_2[17] ^ seed_2[12] ^
+                                      seed_2[4]  ^ seed_2[1]  ^ seed_2[21] ^ seed_2[19] ^
+                                      seed_2[14] ^ seed_2[6]  ^ seed_2[3]  ^ seed_2[0]  ^
+                                      seed_2[16] ^ seed_2[14] ^ seed_2[9]  ^ seed_2[1]  ^
+                                      seed_2[21] ^ seed_2[19] ^ seed_2[14] ^ seed_2[6]  ^ 
+                                      seed_2[3]  ^ seed_2[0]  ^ seed_2[18] ^ seed_2[16] ^
+                                      seed_2[11] ^ seed_2[3]  ^ seed_2[0]  ^ seed_2[20] ^
+                                      seed_2[18] ^ seed_2[13] ^ seed_2[5]  ^ seed_2[2]  ^
+                                      seed_2[22] ^ seed_2[20] ^ seed_2[15] ^ seed_2[7]  ^
+                                      seed_2[4]  ^ seed_2[1]  ; 
+                    
+                //--------------------------- lane 3 -----------------------------------//
+                  o_lane_3_23[8] <= seed_3[22] ^ seed_3[20] ^ seed_3[15] ^ 
+                                    seed_3[7]  ^ seed_3[4]  ^ seed_3[1];
+
+                  o_lane_3_23[7] <= seed_3[21] ^ seed_3[19] ^ seed_3[14] ^ 
+                                    seed_3[6]  ^ seed_3[3]  ^ seed_3[0];
+
+                  o_lane_3_23[6] <= seed_3[20] ^ seed_3[18] ^ seed_3[13] ^ 
+                                    seed_3[5]  ^ seed_3[2]  ^ seed_3[22] ^ seed_3[20] ^
+                                    seed_3[15] ^ seed_3[7]  ^  seed_3[4] ^ 
+                                    seed_3[1];
+
+                  o_lane_3_23[5] <= seed_3[19] ^ seed_3[17] ^ seed_3[12] ^ seed_3[4]  ^ 
+                                    seed_3[1]  ^ seed_3[21] ^ seed_3[19] ^ seed_3[14] ^
+                                    seed_3[6]  ^  seed_3[3] ^ seed_3[0];
+
+                  o_lane_3_23[4] <= seed_3[18] ^ seed_3[16] ^ seed_3[11] ^ 
+                                    seed_3[3]  ^ seed_3[0]  ^ seed_3[20] ^ seed_3[18] ^
+                                    seed_3[13] ^ seed_3[5]  ^ seed_3[2]  ^ seed_3[22] ^
+                                    seed_3[20] ^ seed_3[15] ^ seed_3[7]  ^
+                                    seed_3[4]  ^ seed_3[1];
+
+                  o_lane_3_23[3] <= seed_3[17] ^ seed_3[15] ^ seed_3[10] ^ seed_3[0]  ^
+                                    seed_3[2]  ^ seed_3[22] ^ seed_3[20] ^ seed_3[15] ^ 
+                                    seed_3[7]  ^ seed_3[4]  ^ seed_3[1]  ^ seed_3[19] ^
+                                    seed_3[17] ^ seed_3[12] ^ seed_3[4]  ^ seed_3[1]  ^ 
+                                    seed_3[21] ^ seed_3[19] ^ seed_3[14] ^ seed_3[6]  ^
+                                    seed_3[3]  ;
+
+                  o_lane_3_23[2] <= seed_3[16] ^ seed_3[14] ^ seed_3[9]  ^ seed_3[1]  ^
+                                    seed_3[21] ^ seed_3[19] ^ seed_3[14] ^ seed_3[6]  ^
+                                    seed_3[3]  ^ seed_3[0]  ^ seed_3[18] ^ seed_3[16] ^ 
+                                    seed_3[11] ^ seed_3[3]  ^ seed_3[0]  ^ seed_3[20] ^
+                                    seed_3[18] ^ seed_3[13] ^ seed_3[5]  ^ seed_3[2]  ^
+                                    seed_3[22] ^ seed_3[20] ^ seed_3[15] ^ seed_3[7]  ^
+                                    seed_3[4]  ^ seed_3[1] ;
+                  o_lane_3_23[1] <= seed_3[15] ^ seed_3[13] ^ seed_3[8]  ^  seed_3[0] ^
+                                    seed_3[0]  ^ seed_3[20] ^ seed_3[18] ^ seed_3[13] ^
+                                    seed_3[5]  ^ seed_3[2]  ^ seed_3[22] ^ seed_3[20] ^ 
+                                    seed_3[15] ^ seed_3[7]  ^ seed_3[4]  ^ seed_3[1]  ^
+                                    seed_3[17] ^ seed_3[15] ^ seed_3[10] ^ seed_3[2]  ^  
+                                    seed_3[22] ^ seed_3[20] ^ seed_3[15] ^ seed_3[7]  ^ 
+                                    seed_3[4]  ^ seed_3[1]  ^ seed_3[19] ^ seed_3[17] ^ 
+                                    seed_3[12] ^ seed_3[4]  ^ seed_3[1]  ^ seed_3[21] ^
+                                    seed_3[19] ^ seed_3[14] ^ seed_3[6]  ^ seed_3[3]  ;
+                                    
+                  o_lane_3_23[0] <= seed_3[14] ^ seed_3[12] ^ seed_3[7]  ^ seed_3[22] ^
+                                    seed_3[20] ^ seed_3[15] ^ seed_3[7]  ^ seed_3[4]  ^ 
+                                    seed_3[1]  ^ seed_3[19] ^ seed_3[17] ^ seed_3[12] ^
+                                    seed_3[4]  ^ seed_3[1]  ^ seed_3[21] ^ seed_3[19] ^
+                                    seed_3[14] ^ seed_3[6]  ^ seed_3[3]  ^ seed_3[0]  ^
+                                    seed_3[16] ^ seed_3[14] ^ seed_3[9]  ^ seed_3[1]  ^
+                                    seed_3[21] ^ seed_3[19] ^ seed_3[14] ^ seed_3[6]  ^ 
+                                    seed_3[3]  ^ seed_3[0]  ^ seed_3[18] ^ seed_3[16] ^
+                                    seed_3[11] ^ seed_3[3]  ^ seed_3[0]  ^ seed_3[20] ^
+                                    seed_3[18] ^ seed_3[13] ^ seed_3[5]  ^ seed_3[2]  ^
+                                    seed_3[22] ^ seed_3[20] ^ seed_3[15] ^ seed_3[7]  ^
+                                    seed_3[4]  ^ seed_3[1]  ;
+
+                //--------------------------- lane 4 -----------------------------------//
+                  o_lane_4_23[8] <= seed_4[22] ^ seed_4[20] ^ seed_4[15] ^ 
+                                    seed_4[7]  ^ seed_4[4]  ^ seed_4[1];
+
+                  o_lane_4_23[7] <= seed_4[21] ^ seed_4[19] ^ seed_4[14] ^ 
+                                    seed_4[6]  ^ seed_4[3]  ^ seed_4[0];
+
+                  o_lane_4_23[6] <= seed_4[20] ^ seed_4[18] ^ seed_4[13] ^ 
+                                    seed_4[5]  ^ seed_4[2]  ^ seed_4[22] ^ seed_4[20] ^
+                                    seed_4[15] ^ seed_4[7]  ^  seed_4[4] ^ 
+                                    seed_4[1];
+
+                  o_lane_4_23[5] <= seed_4[19] ^ seed_4[17] ^ seed_4[12] ^ seed_4[4]  ^ 
+                                    seed_4[1]  ^ seed_4[21] ^ seed_4[19] ^ seed_4[14] ^
+                                    seed_4[6]  ^  seed_4[3] ^ seed_4[0];
+                  o_lane_4_23[4] <= seed_4[18] ^ seed_4[16] ^ seed_4[11] ^ 
+                                    seed_4[3]  ^ seed_4[0]  ^ seed_4[20] ^ seed_4[18] ^
+                                    seed_4[13] ^ seed_4[5]  ^ seed_4[2]  ^ seed_4[22] ^
+                                    seed_4[20] ^ seed_4[15] ^ seed_4[7]  ^
+                                    seed_4[4]  ^ seed_4[1];
+
+                  o_lane_4_23[3] <= seed_4[17] ^ seed_4[15] ^ seed_4[10] ^ seed_4[0]  ^
+                                    seed_4[2]  ^ seed_4[22] ^ seed_4[20] ^ seed_4[15] ^ 
+                                    seed_4[7]  ^ seed_4[4]  ^ seed_4[1]  ^ seed_4[19] ^
+                                    seed_4[17] ^ seed_4[12] ^ seed_4[4]  ^ seed_4[1]  ^ 
+                                    seed_4[21] ^ seed_4[19] ^ seed_4[14] ^ seed_4[6]  ^
+                                    seed_4[3];
+
+                  o_lane_4_23[2] <= seed_4[16] ^ seed_4[14] ^ seed_4[9]  ^ seed_4[1]  ^
+                                    seed_4[21] ^ seed_4[19] ^ seed_4[14] ^ seed_4[6]  ^
+                                    seed_4[3]  ^ seed_4[0]  ^ seed_4[18] ^ seed_4[16] ^ 
+                                    seed_4[11] ^ seed_4[3]  ^ seed_4[0]  ^ seed_4[20] ^
+                                    seed_4[18] ^ seed_4[13] ^ seed_4[5]  ^ seed_4[2]  ^
+                                    seed_4[22] ^ seed_4[20] ^ seed_4[15] ^ seed_4[7]  ^
+                                    seed_4[4]  ^ seed_4[1];
+
+                  o_lane_4_23[1] <= seed_4[15] ^ seed_4[13] ^ seed_4[8]  ^  seed_4[0] ^
+                                    seed_4[0]  ^ seed_4[20] ^ seed_4[18] ^ seed_4[13] ^
+                                    seed_4[5]  ^ seed_4[2]  ^ seed_4[22] ^ seed_4[20] ^ 
+                                    seed_4[15] ^ seed_4[7]  ^ seed_4[4]  ^ seed_4[1]  ^
+                                    seed_4[17] ^ seed_4[15] ^ seed_4[10] ^ seed_4[2]  ^  
+                                    seed_4[22] ^ seed_4[20] ^ seed_4[15] ^ seed_4[7]  ^ 
+                                    seed_4[4]  ^ seed_4[1]  ^ seed_4[19] ^ seed_4[17] ^ 
+                                    seed_4[12] ^ seed_4[4]  ^ seed_4[1]  ^ seed_4[21] ^
+                                    seed_4[19] ^ seed_4[14] ^ seed_4[6]  ^ seed_4[3];
+                                    
+                  o_lane_4_23[0] <= seed_4[14] ^ seed_4[12] ^ seed_4[7]  ^ seed_4[22] ^
+                                    seed_4[20] ^ seed_4[15] ^ seed_4[7]  ^ seed_4[4]  ^ 
+                                    seed_4[1]  ^ seed_4[19] ^ seed_4[17] ^ seed_4[12] ^
+                                    seed_4[4]  ^ seed_4[1]  ^ seed_4[21] ^ seed_4[19] ^
+                                    seed_4[14] ^ seed_4[6]  ^ seed_4[3]  ^ seed_4[0]  ^
+                                    seed_4[16] ^ seed_4[14] ^ seed_4[9]  ^ seed_4[1]  ^
+                                    seed_4[21] ^ seed_4[19] ^ seed_4[14] ^ seed_4[6]  ^ 
+                                    seed_4[3]  ^ seed_4[0]  ^ seed_4[18] ^ seed_4[16] ^
+                                    seed_4[11] ^ seed_4[3]  ^ seed_4[0]  ^ seed_4[20] ^
+                                    seed_4[18] ^ seed_4[13] ^ seed_4[5]  ^ seed_4[2]  ^
+                                    seed_4[22] ^ seed_4[20] ^ seed_4[15] ^ seed_4[7]  ^
+                                    seed_4[4]  ^ seed_4[1]; 
+
+                //--------------------------- lane 5 -----------------------------------//
+                    o_lane_5_23[8] <= seed_5[22] ^ seed_5[20] ^ seed_5[15] ^ 
+                                      seed_5[7]  ^ seed_5[4]  ^ seed_5[1];
+
+                    o_lane_5_23[7] <= seed_5[21] ^ seed_5[19] ^ seed_5[14] ^ 
+                                      seed_5[6]  ^ seed_5[3]  ^ seed_5[0];
+
+                    o_lane_5_23[6] <= seed_5[20] ^ seed_5[18] ^ seed_5[13] ^ 
+                                      seed_5[5]  ^ seed_5[2]  ^ seed_5[22] ^ seed_5[20] ^
+                                      seed_5[15] ^ seed_5[7]  ^  seed_5[4] ^ 
+                                      seed_5[1];
+
+                    o_lane_5_23[5] <= seed_5[19] ^ seed_5[17] ^ seed_5[12] ^ seed_5[4]  ^ 
+                                      seed_5[1]  ^ seed_5[21] ^ seed_5[19] ^ seed_5[14] ^
+                                      seed_5[6]  ^  seed_5[3] ^ seed_5[0];
+
+                    o_lane_5_23[4] <= seed_5[18] ^ seed_5[16] ^ seed_5[11] ^ 
+                                      seed_5[3]  ^ seed_5[0]  ^ seed_5[20] ^ seed_5[18] ^
+                                      seed_5[13] ^ seed_5[5]  ^ seed_5[2]  ^ seed_5[22] ^
+                                      seed_5[20] ^ seed_5[15] ^ seed_5[7]  ^
+                                      seed_5[4]  ^ seed_5[1];
+
+                    o_lane_5_23[3] <= seed_5[17] ^ seed_5[15] ^ seed_5[10] ^ seed_5[0]  ^
+                                      seed_5[2]  ^ seed_5[22] ^ seed_5[20] ^ seed_5[15] ^ 
+                                      seed_5[7]  ^ seed_5[4]  ^ seed_5[1]  ^ seed_5[19] ^
+                                      seed_5[17] ^ seed_5[12] ^ seed_5[4]  ^ seed_5[1]  ^ 
+                                      seed_5[21] ^ seed_5[19] ^ seed_5[14] ^ seed_5[6]  ^
+                                      seed_5[3]  ;
+
+                    o_lane_5_23[2] <= seed_5[16] ^ seed_5[14] ^ seed_5[9]  ^ seed_5[1]  ^
+                                      seed_5[21] ^ seed_5[19] ^ seed_5[14] ^ seed_5[6]  ^
+                                      seed_5[3]  ^ seed_5[0]  ^ seed_5[18] ^ seed_5[16] ^ 
+                                      seed_5[11] ^ seed_5[3]  ^ seed_5[0]  ^ seed_5[20] ^
+                                      seed_5[18] ^ seed_5[13] ^ seed_5[5]  ^ seed_5[2]  ^
+                                      seed_5[22] ^ seed_5[20] ^ seed_5[15] ^ seed_5[7]  ^
+                                      seed_5[4]  ^ seed_5[1] ;
+
+                    o_lane_5_23[1] <= seed_5[15] ^ seed_5[13] ^ seed_5[8]  ^  seed_5[0] ^
+                                      seed_5[0]  ^ seed_5[20] ^ seed_5[18] ^ seed_5[13] ^
+                                      seed_5[5]  ^ seed_5[2]  ^ seed_5[22] ^ seed_5[20] ^ 
+                                      seed_5[15] ^ seed_5[7]  ^ seed_5[4]  ^ seed_5[1]  ^
+                                      seed_5[17] ^ seed_5[15] ^ seed_5[10] ^ seed_5[2]  ^  
+                                      seed_5[22] ^ seed_5[20] ^ seed_5[15] ^ seed_5[7]  ^ 
+                                      seed_5[4]  ^ seed_5[1]  ^ seed_5[19] ^ seed_5[17] ^ 
+                                      seed_5[12] ^ seed_5[4]  ^ seed_5[1]  ^ seed_5[21] ^
+                                      seed_5[19] ^ seed_5[14] ^ seed_5[6]  ^ seed_5[3]  ;
+                                      
+                    o_lane_5_23[0] <= seed_5[14] ^ seed_5[12] ^ seed_5[7]  ^ seed_5[22] ^
+                                      seed_5[20] ^ seed_5[15] ^ seed_5[7]  ^ seed_5[4]  ^ 
+                                      seed_5[1]  ^ seed_5[19] ^ seed_5[17] ^ seed_5[12] ^
+                                      seed_5[4]  ^ seed_5[1]  ^ seed_5[21] ^ seed_5[19] ^
+                                      seed_5[14] ^ seed_5[6]  ^ seed_5[3]  ^ seed_5[0]  ^
+                                      seed_5[16] ^ seed_5[14] ^ seed_5[9]  ^ seed_5[1]  ^
+                                      seed_5[21] ^ seed_5[19] ^ seed_5[14] ^ seed_5[6]  ^ 
+                                      seed_5[3]  ^ seed_5[0]  ^ seed_5[18] ^ seed_5[16] ^
+                                      seed_5[11] ^ seed_5[3]  ^ seed_5[0]  ^ seed_5[20] ^
+                                      seed_5[18] ^ seed_5[13] ^ seed_5[5]  ^ seed_5[2]  ^
+                                      seed_5[22] ^ seed_5[20] ^ seed_5[15] ^ seed_5[7]  ^
+                                      seed_5[4]  ^ seed_5[1]  ; 
+
+                //--------------------------- lane 6 -----------------------------------//
+                  o_lane_6_23[8] <= seed_6[22] ^ seed_6[20] ^ seed_6[15] ^ 
+                                    seed_6[7]  ^ seed_6[4]  ^ seed_6[1];
+
+                  o_lane_6_23[7] <= seed_6[21] ^ seed_6[19] ^ seed_6[14] ^ 
+                                    seed_6[6]  ^ seed_6[3]  ^ seed_6[0];
+
+                  o_lane_6_23[6] <= seed_6[20] ^ seed_6[18] ^ seed_6[13] ^ 
+                                    seed_6[5]  ^ seed_6[2]  ^ seed_6[22] ^ seed_6[20] ^
+                                    seed_6[15] ^ seed_6[7]  ^  seed_6[4] ^ 
+                                    seed_6[1];
+
+                  o_lane_6_23[5] <= seed_6[19] ^ seed_6[17] ^ seed_6[12] ^ seed_6[4]  ^ 
+                                    seed_6[1]  ^ seed_6[21] ^ seed_6[19] ^ seed_6[14] ^
+                                    seed_6[6]  ^  seed_6[3] ^ seed_6[0];
+
+                  o_lane_6_23[4] <= seed_6[18] ^ seed_6[16] ^ seed_6[11] ^ 
+                                    seed_6[3]  ^ seed_6[0]  ^ seed_6[20] ^ seed_6[18] ^
+                                    seed_6[13] ^ seed_6[5]  ^ seed_6[2]  ^ seed_6[22] ^
+                                    seed_6[20] ^ seed_6[15] ^ seed_6[7]  ^
+                                    seed_6[4]  ^ seed_6[1];
+
+                  o_lane_6_23[3] <= seed_6[17] ^ seed_6[15] ^ seed_6[10] ^ seed_6[0]  ^
+                                    seed_6[2]  ^ seed_6[22] ^ seed_6[20] ^ seed_6[15] ^ 
+                                    seed_6[7]  ^ seed_6[4]  ^ seed_6[1]  ^ seed_6[19] ^
+                                    seed_6[17] ^ seed_6[12] ^ seed_6[4]  ^ seed_6[1]  ^ 
+                                    seed_6[21] ^ seed_6[19] ^ seed_6[14] ^ seed_6[6]  ^
+                                    seed_6[3] ;
+                  o_lane_6_23[2] <= seed_6[16] ^ seed_6[14] ^ seed_6[9]  ^ seed_6[1]  ^
+                                    seed_6[21] ^ seed_6[19] ^ seed_6[14] ^ seed_6[6]  ^
+                                    seed_6[3]  ^ seed_6[0]  ^ seed_6[18] ^ seed_6[16] ^ 
+                                    seed_6[11] ^ seed_6[3]  ^ seed_6[0]  ^ seed_6[20] ^
+                                    seed_6[18] ^ seed_6[13] ^ seed_6[5]  ^ seed_6[2]  ^
+                                    seed_6[22] ^ seed_6[20] ^ seed_6[15] ^ seed_6[7]  ^
+                                    seed_6[4]  ^ seed_6[1];
+
+                  o_lane_6_23[1] <= seed_6[15] ^ seed_6[13] ^ seed_6[8]  ^  seed_6[0] ^
+                                    seed_6[0]  ^ seed_6[20] ^ seed_6[18] ^ seed_6[13] ^
+                                    seed_6[5]  ^ seed_6[2]  ^ seed_6[22] ^ seed_6[20] ^ 
+                                    seed_6[15] ^ seed_6[7]  ^ seed_6[4]  ^ seed_6[1]  ^
+                                    seed_6[17] ^ seed_6[15] ^ seed_6[10] ^ seed_6[2]  ^  
+                                    seed_6[22] ^ seed_6[20] ^ seed_6[15] ^ seed_6[7]  ^ 
+                                    seed_6[4]  ^ seed_6[1]  ^ seed_6[19] ^ seed_6[17] ^ 
+                                    seed_6[12] ^ seed_6[4]  ^ seed_6[1]  ^ seed_6[21] ^
+                                    seed_6[19] ^ seed_6[14] ^ seed_6[6]  ^ seed_6[3];
+                                    
+                  o_lane_6_23[0] <= seed_6[14] ^ seed_6[12] ^ seed_6[7]  ^ seed_6[22] ^
+                                    seed_6[20] ^ seed_6[15] ^ seed_6[7]  ^ seed_6[4]  ^ 
+                                    seed_6[1]  ^ seed_6[19] ^ seed_6[17] ^ seed_6[12] ^
+                                    seed_6[4]  ^ seed_6[1]  ^ seed_6[21] ^ seed_6[19] ^
+                                    seed_6[14] ^ seed_6[6]  ^ seed_6[3]  ^ seed_6[0]  ^
+                                    seed_6[16] ^ seed_6[14] ^ seed_6[9]  ^ seed_6[1]  ^
+                                    seed_6[21] ^ seed_6[19] ^ seed_6[14] ^ seed_6[6]  ^ 
+                                    seed_6[3]  ^ seed_6[0]  ^ seed_6[18] ^ seed_6[16] ^
+                                    seed_6[11] ^ seed_6[3]  ^ seed_6[0]  ^ seed_6[20] ^
+                                    seed_6[18] ^ seed_6[13] ^ seed_6[5]  ^ seed_6[2]  ^
+                                    seed_6[22] ^ seed_6[20] ^ seed_6[15] ^ seed_6[7]  ^
+                                    seed_6[4]  ^ seed_6[1]; 
+
+                //--------------------------- lane 7 -----------------------------------//
+                    o_lane_7_23[8] <= seed_7[22] ^ seed_7[20] ^ seed_7[15] ^ 
+                                      seed_7[7]  ^ seed_7[4]  ^ seed_7[1];
+
+                    o_lane_7_23[7] <= seed_7[21] ^ seed_7[19] ^ seed_7[14] ^ 
+                                      seed_7[6]  ^ seed_7[3]  ^ seed_7[0];
+
+                    o_lane_7_23[6] <= seed_7[20] ^ seed_7[18] ^ seed_7[13] ^ 
+                                      seed_7[5]  ^ seed_7[2]  ^ seed_7[22] ^ seed_7[20] ^
+                                      seed_7[15] ^ seed_7[7]  ^  seed_7[4] ^ 
+                                      seed_7[1];
+
+                    o_lane_7_23[5] <= seed_7[19] ^ seed_7[17] ^ seed_7[12] ^ seed_7[4]  ^ 
+                                      seed_7[1]  ^ seed_7[21] ^ seed_7[19] ^ seed_7[14] ^
+                                      seed_7[6]  ^  seed_7[3] ^ seed_7[0];
+                    o_lane_7_23[4] <= seed_7[18] ^ seed_7[16] ^ seed_7[11] ^ 
+                                      seed_7[3]  ^ seed_7[0]  ^ seed_7[20] ^ seed_7[18] ^
+                                      seed_7[13] ^ seed_7[5]  ^ seed_7[2]  ^ seed_7[22] ^
+                                      seed_7[20] ^ seed_7[15] ^ seed_7[7]  ^
+                                      seed_7[4]  ^ seed_7[1];
+
+                    o_lane_7_23[3] <= seed_7[17] ^ seed_7[15] ^ seed_7[10] ^ seed_7[0]  ^
+                                      seed_7[2]  ^ seed_7[22] ^ seed_7[20] ^ seed_7[15] ^ 
+                                      seed_7[7]  ^ seed_7[4]  ^ seed_7[1]  ^ seed_7[19] ^
+                                      seed_7[17] ^ seed_7[12] ^ seed_7[4]  ^ seed_7[1]  ^ 
+                                      seed_7[21] ^ seed_7[19] ^ seed_7[14] ^ seed_7[6]  ^
+                                      seed_7[3];
+
+                    o_lane_7_23[2] <= seed_7[16] ^ seed_7[14] ^ seed_7[9]  ^ seed_7[1]  ^
+                                      seed_7[21] ^ seed_7[19] ^ seed_7[14] ^ seed_7[6]  ^
+                                      seed_7[3]  ^ seed_7[0]  ^ seed_7[18] ^ seed_7[16] ^ 
+                                      seed_7[11] ^ seed_7[3]  ^ seed_7[0]  ^ seed_7[20] ^
+                                      seed_7[18] ^ seed_7[13] ^ seed_7[5]  ^ seed_7[2]  ^
+                                      seed_7[22] ^ seed_7[20] ^ seed_7[15] ^ seed_7[7]  ^
+                                      seed_7[4]  ^ seed_7[1];
+
+                    o_lane_7_23[1] <= seed_7[15] ^ seed_7[13] ^ seed_7[8]  ^  seed_7[0] ^
+                                      seed_7[0]  ^ seed_7[20] ^ seed_7[18] ^ seed_7[13] ^
+                                      seed_7[5]  ^ seed_7[2]  ^ seed_7[22] ^ seed_7[20] ^ 
+                                      seed_7[15] ^ seed_7[7]  ^ seed_7[4]  ^ seed_7[1]  ^
+                                      seed_7[17] ^ seed_7[15] ^ seed_7[10] ^ seed_7[2]  ^  
+                                      seed_7[22] ^ seed_7[20] ^ seed_7[15] ^ seed_7[7]  ^ 
+                                      seed_7[4]  ^ seed_7[1]  ^ seed_7[19] ^ seed_7[17] ^ 
+                                      seed_7[12] ^ seed_7[4]  ^ seed_7[1]  ^ seed_7[21] ^
+                                      seed_7[19] ^ seed_7[14] ^ seed_7[6]  ^ seed_7[3];
+                                      
+                    o_lane_7_23[0] <= seed_7[14] ^ seed_7[12] ^ seed_7[7]  ^ seed_7[22] ^
+                                      seed_7[20] ^ seed_7[15] ^ seed_7[7]  ^ seed_7[4]  ^ 
+                                      seed_7[1]  ^ seed_7[19] ^ seed_7[17] ^ seed_7[12] ^
+                                      seed_7[4]  ^ seed_7[1]  ^ seed_7[21] ^ seed_7[19] ^
+                                      seed_7[14] ^ seed_7[6]  ^ seed_7[3]  ^ seed_7[0]  ^
+                                      seed_7[16] ^ seed_7[14] ^ seed_7[9]  ^ seed_7[1]  ^
+                                      seed_7[21] ^ seed_7[19] ^ seed_7[14] ^ seed_7[6]  ^ 
+                                      seed_7[3]  ^ seed_7[0]  ^ seed_7[18] ^ seed_7[16] ^
+                                      seed_7[11] ^ seed_7[3]  ^ seed_7[0]  ^ seed_7[20] ^
+                                      seed_7[18] ^ seed_7[13] ^ seed_7[5]  ^ seed_7[2]  ^
+                                      seed_7[22] ^ seed_7[20] ^ seed_7[15] ^ seed_7[7]  ^
+                                      seed_7[4]  ^ seed_7[1]; 
+
+
             end
 
             PATTERN_LFSR: begin
                 if (i_enable_buffer) begin
                     // First update all LFSR states
+                    {o_lane_0_23, rx_lfsr_lane_0} <= next_lfsr_state(rx_lfsr_lane_0);
                     {o_lane_1_23, rx_lfsr_lane_1} <= next_lfsr_state(rx_lfsr_lane_1);
                     {o_lane_2_23, rx_lfsr_lane_2} <= next_lfsr_state(rx_lfsr_lane_2);
                     {o_lane_3_23, rx_lfsr_lane_3} <= next_lfsr_state(rx_lfsr_lane_3);
@@ -166,7 +1129,6 @@ always @(posedge i_clk or negedge i_rst_n) begin
                     {o_lane_5_23, rx_lfsr_lane_5} <= next_lfsr_state(rx_lfsr_lane_5);
                     {o_lane_6_23, rx_lfsr_lane_6} <= next_lfsr_state(rx_lfsr_lane_6);
                     {o_lane_7_23, rx_lfsr_lane_7} <= next_lfsr_state(rx_lfsr_lane_7);
-                    {o_lane_0_23, rx_lfsr_lane_0} <= next_lfsr_state(rx_lfsr_lane_0);
 
                     // Then check descrambling enable
                     if (i_enable_Descrambeling_pattern) begin
@@ -175,92 +1137,92 @@ always @(posedge i_clk or negedge i_rst_n) begin
                         
                         case (i_functional_rx_lanes)
                             DEGRADE_LANES_0_TO_7: begin
-                                temp_Data_by_0 <= {o_lane_0_23, rx_lfsr_lane_0} ^ i_data_in_0;
-                                temp_Data_by_1 <= {o_lane_1_23, rx_lfsr_lane_1} ^ i_data_in_1;
-                                temp_Data_by_2 <= {o_lane_2_23, rx_lfsr_lane_2} ^ i_data_in_2;
-                                temp_Data_by_3 <= {o_lane_3_23, rx_lfsr_lane_3} ^ i_data_in_3;
-                                temp_Data_by_4 <= {o_lane_4_23, rx_lfsr_lane_4} ^ i_data_in_4;
-                                temp_Data_by_5 <= {o_lane_5_23, rx_lfsr_lane_5} ^ i_data_in_5;
-                                temp_Data_by_6 <= {o_lane_6_23, rx_lfsr_lane_6} ^ i_data_in_6;
-                                temp_Data_by_7 <= {o_lane_7_23, rx_lfsr_lane_7} ^ i_data_in_7;
+                                temp_Data_by_0 <= {rx_lfsr_lane_0, o_lane_0_23} ^ i_data_in_0;
+                                temp_Data_by_1 <= {rx_lfsr_lane_1, o_lane_1_23} ^ i_data_in_1;
+                                temp_Data_by_2 <= {rx_lfsr_lane_2, o_lane_2_23} ^ i_data_in_2;
+                                temp_Data_by_3 <= {rx_lfsr_lane_3, o_lane_3_23} ^ i_data_in_3;
+                                temp_Data_by_4 <= {rx_lfsr_lane_4, o_lane_4_23} ^ i_data_in_4;
+                                temp_Data_by_5 <= {rx_lfsr_lane_5, o_lane_5_23} ^ i_data_in_5;
+                                temp_Data_by_6 <= {rx_lfsr_lane_6, o_lane_6_23} ^ i_data_in_6;
+                                temp_Data_by_7 <= {rx_lfsr_lane_7, o_lane_7_23} ^ i_data_in_7;
                             end
                             DEGRADE_LANES_8_TO_15: begin
-                                temp_Data_by_8  <= {o_lane_0_23, rx_lfsr_lane_0} ^ i_data_in_8;
-                                temp_Data_by_9  <= {o_lane_1_23, rx_lfsr_lane_1} ^ i_data_in_9;
-                                temp_Data_by_10 <= {o_lane_2_23, rx_lfsr_lane_2} ^ i_data_in_10;
-                                temp_Data_by_11 <= {o_lane_3_23, rx_lfsr_lane_3} ^ i_data_in_11;
-                                temp_Data_by_12 <= {o_lane_4_23, rx_lfsr_lane_4} ^ i_data_in_12;
-                                temp_Data_by_13 <= {o_lane_5_23, rx_lfsr_lane_5} ^ i_data_in_13;
-                                temp_Data_by_14 <= {o_lane_6_23, rx_lfsr_lane_6} ^ i_data_in_14;
-                                temp_Data_by_15 <= {o_lane_7_23, rx_lfsr_lane_7} ^ i_data_in_15;
+                                temp_Data_by_8  <= {rx_lfsr_lane_0, o_lane_0_23} ^ i_data_in_8;
+                                temp_Data_by_9  <= {rx_lfsr_lane_1, o_lane_1_23} ^ i_data_in_9;
+                                temp_Data_by_10 <= {rx_lfsr_lane_2, o_lane_2_23} ^ i_data_in_10;
+                                temp_Data_by_11 <= {rx_lfsr_lane_3, o_lane_3_23} ^ i_data_in_11;
+                                temp_Data_by_12 <= {rx_lfsr_lane_4, o_lane_4_23} ^ i_data_in_12;
+                                temp_Data_by_13 <= {rx_lfsr_lane_5, o_lane_5_23} ^ i_data_in_13;
+                                temp_Data_by_14 <= {rx_lfsr_lane_6, o_lane_6_23} ^ i_data_in_14;
+                                temp_Data_by_15 <= {rx_lfsr_lane_7, o_lane_7_23} ^ i_data_in_15;
                             end
                             DEGRADE_LANES_0_TO_15: begin
-                                temp_Data_by_0  <= {o_lane_0_23, rx_lfsr_lane_0} ^ i_data_in_0;
-                                temp_Data_by_1  <= {o_lane_1_23, rx_lfsr_lane_1} ^ i_data_in_1;
-                                temp_Data_by_2  <= {o_lane_2_23, rx_lfsr_lane_2} ^ i_data_in_2;
-                                temp_Data_by_3  <= {o_lane_3_23, rx_lfsr_lane_3} ^ i_data_in_3;
-                                temp_Data_by_4  <= {o_lane_4_23, rx_lfsr_lane_4} ^ i_data_in_4;
-                                temp_Data_by_5  <= {o_lane_5_23, rx_lfsr_lane_5} ^ i_data_in_5;
-                                temp_Data_by_6  <= {o_lane_6_23, rx_lfsr_lane_6} ^ i_data_in_6;
-                                temp_Data_by_7  <= {o_lane_7_23, rx_lfsr_lane_7} ^ i_data_in_7;
-                                temp_Data_by_8  <= {o_lane_0_23, rx_lfsr_lane_0} ^ i_data_in_8;
-                                temp_Data_by_9  <= {o_lane_1_23, rx_lfsr_lane_1} ^ i_data_in_9;
-                                temp_Data_by_10 <= {o_lane_2_23, rx_lfsr_lane_2} ^ i_data_in_10;
-                                temp_Data_by_11 <= {o_lane_3_23, rx_lfsr_lane_3} ^ i_data_in_11;
-                                temp_Data_by_12 <= {o_lane_4_23, rx_lfsr_lane_4} ^ i_data_in_12;
-                                temp_Data_by_13 <= {o_lane_5_23, rx_lfsr_lane_5} ^ i_data_in_13;
-                                temp_Data_by_14 <= {o_lane_6_23, rx_lfsr_lane_6} ^ i_data_in_14;
-                                temp_Data_by_15 <= {o_lane_7_23, rx_lfsr_lane_7} ^ i_data_in_15;
+                                temp_Data_by_0  <= {rx_lfsr_lane_0, o_lane_0_23} ^ i_data_in_0;
+                                temp_Data_by_1  <= {rx_lfsr_lane_1, o_lane_1_23} ^ i_data_in_1;
+                                temp_Data_by_2  <= {rx_lfsr_lane_2, o_lane_2_23} ^ i_data_in_2;
+                                temp_Data_by_3  <= {rx_lfsr_lane_3, o_lane_3_23} ^ i_data_in_3;
+                                temp_Data_by_4  <= {rx_lfsr_lane_4, o_lane_4_23} ^ i_data_in_4;
+                                temp_Data_by_5  <= {rx_lfsr_lane_5, o_lane_5_23} ^ i_data_in_5;
+                                temp_Data_by_6  <= {rx_lfsr_lane_6, o_lane_6_23} ^ i_data_in_6;
+                                temp_Data_by_7  <= {rx_lfsr_lane_7, o_lane_7_23} ^ i_data_in_7;
+                                temp_Data_by_8  <= {rx_lfsr_lane_0, o_lane_0_23} ^ i_data_in_8;
+                                temp_Data_by_9  <= {rx_lfsr_lane_1, o_lane_1_23} ^ i_data_in_9;
+                                temp_Data_by_10 <= {rx_lfsr_lane_2, o_lane_2_23} ^ i_data_in_10;
+                                temp_Data_by_11 <= {rx_lfsr_lane_3, o_lane_3_23} ^ i_data_in_11;
+                                temp_Data_by_12 <= {rx_lfsr_lane_4, o_lane_4_23} ^ i_data_in_12;
+                                temp_Data_by_13 <= {rx_lfsr_lane_5, o_lane_5_23} ^ i_data_in_13;
+                                temp_Data_by_14 <= {rx_lfsr_lane_6, o_lane_6_23} ^ i_data_in_14;
+                                temp_Data_by_15 <= {rx_lfsr_lane_7, o_lane_7_23} ^ i_data_in_15;
                             end
                         endcase
                     end
                     else begin
                         enable_pattern_comparitor<=1;
-                         temp_Data_by_0 <= i_data_in_0; temp_Data_by_1 <= i_data_in_1; temp_Data_by_2 <= i_data_in_2; temp_Data_by_3 <= i_data_in_3;
-                        temp_Data_by_4 <= i_data_in_4; temp_Data_by_5 <= i_data_in_5; temp_Data_by_6 <= i_data_in_6; temp_Data_by_7 <= i_data_in_7;
-                        temp_Data_by_8 <= i_data_in_8; temp_Data_by_9 <= i_data_in_9; temp_Data_by_10 <= i_data_in_10; temp_Data_by_11 <= i_data_in_11;
+                        temp_Data_by_0  <= i_data_in_0;  temp_Data_by_1  <= i_data_in_1; temp_Data_by_2   <= i_data_in_2; temp_Data_by_3   <= i_data_in_3;
+                        temp_Data_by_4  <= i_data_in_4;  temp_Data_by_5  <= i_data_in_5; temp_Data_by_6   <= i_data_in_6; temp_Data_by_7   <= i_data_in_7;
+                        temp_Data_by_8  <= i_data_in_8;  temp_Data_by_9  <= i_data_in_9; temp_Data_by_10  <= i_data_in_10; temp_Data_by_11 <= i_data_in_11;
                         temp_Data_by_12 <= i_data_in_12; temp_Data_by_13 <= i_data_in_13; temp_Data_by_14 <= i_data_in_14; temp_Data_by_15 <= i_data_in_15;
                       
 
                         // Generate local LFSR patterns
                         case (i_functional_rx_lanes)
                             DEGRADE_LANES_0_TO_7: begin
-                                o_final_gene_0 <= {o_lane_0_23, rx_lfsr_lane_0};
-                                o_final_gene_1 <= {o_lane_1_23, rx_lfsr_lane_1};
-                                o_final_gene_2 <= {o_lane_2_23, rx_lfsr_lane_2};
-                                o_final_gene_3 <= {o_lane_3_23, rx_lfsr_lane_3};
-                                o_final_gene_4 <= {o_lane_4_23, rx_lfsr_lane_4};
-                                o_final_gene_5 <= {o_lane_5_23, rx_lfsr_lane_5};
-                                o_final_gene_6 <= {o_lane_6_23, rx_lfsr_lane_6};
-                                o_final_gene_7 <= {o_lane_7_23, rx_lfsr_lane_7};
+                                o_final_gene_0 <= {rx_lfsr_lane_0, o_lane_0_23};
+                                o_final_gene_1 <= {rx_lfsr_lane_1, o_lane_1_23};
+                                o_final_gene_2 <= {rx_lfsr_lane_2, o_lane_2_23};
+                                o_final_gene_3 <= {rx_lfsr_lane_3, o_lane_3_23};
+                                o_final_gene_4 <= {rx_lfsr_lane_4, o_lane_4_23};
+                                o_final_gene_5 <= {rx_lfsr_lane_5, o_lane_5_23};
+                                o_final_gene_6 <= {rx_lfsr_lane_6, o_lane_6_23};
+                                o_final_gene_7 <= {rx_lfsr_lane_7, o_lane_7_23};
                             end
                             DEGRADE_LANES_8_TO_15: begin
-                                o_final_gene_8  <= {o_lane_0_23, rx_lfsr_lane_0};
-                                o_final_gene_9  <= {o_lane_1_23, rx_lfsr_lane_1};
-                                o_final_gene_10 <= {o_lane_2_23, rx_lfsr_lane_2};
-                                o_final_gene_11 <= {o_lane_3_23, rx_lfsr_lane_3};
-                                o_final_gene_12 <= {o_lane_4_23, rx_lfsr_lane_4};
-                                o_final_gene_13 <= {o_lane_5_23, rx_lfsr_lane_5};
-                                o_final_gene_14 <= {o_lane_6_23, rx_lfsr_lane_6};
-                                o_final_gene_15 <= {o_lane_7_23, rx_lfsr_lane_7};
+                                o_final_gene_8  <= {rx_lfsr_lane_0, o_lane_0_23};
+                                o_final_gene_9  <= {rx_lfsr_lane_1, o_lane_1_23};
+                                o_final_gene_10 <= {rx_lfsr_lane_2, o_lane_2_23};
+                                o_final_gene_11 <= {rx_lfsr_lane_3, o_lane_3_23};
+                                o_final_gene_12 <= {rx_lfsr_lane_4, o_lane_4_23};
+                                o_final_gene_13 <= {rx_lfsr_lane_5, o_lane_5_23};
+                                o_final_gene_14 <= {rx_lfsr_lane_6, o_lane_6_23};
+                                o_final_gene_15 <= {rx_lfsr_lane_7, o_lane_7_23};
                             end
                             DEGRADE_LANES_0_TO_15: begin
-                                o_final_gene_0  <= {o_lane_0_23, rx_lfsr_lane_0};
-                                o_final_gene_1  <= {o_lane_1_23, rx_lfsr_lane_1};
-                                o_final_gene_2  <= {o_lane_2_23, rx_lfsr_lane_2};
-                                o_final_gene_3  <= {o_lane_3_23, rx_lfsr_lane_3};
-                                o_final_gene_4  <= {o_lane_4_23, rx_lfsr_lane_4};
-                                o_final_gene_5  <= {o_lane_5_23, rx_lfsr_lane_5};
-                                o_final_gene_6  <= {o_lane_6_23, rx_lfsr_lane_6};
-                                o_final_gene_7  <= {o_lane_7_23, rx_lfsr_lane_7};
-                                o_final_gene_8  <= {o_lane_0_23, rx_lfsr_lane_0};
-                                o_final_gene_9  <= {o_lane_1_23, rx_lfsr_lane_1};
-                                o_final_gene_10 <= {o_lane_2_23, rx_lfsr_lane_2};
-                                o_final_gene_11 <= {o_lane_3_23, rx_lfsr_lane_3};
-                                o_final_gene_12 <= {o_lane_4_23, rx_lfsr_lane_4};
-                                o_final_gene_13 <= {o_lane_5_23, rx_lfsr_lane_5};
-                                o_final_gene_14 <= {o_lane_6_23, rx_lfsr_lane_6};
-                                o_final_gene_15 <= {o_lane_7_23, rx_lfsr_lane_7};
+                                o_final_gene_0  <= {rx_lfsr_lane_0, o_lane_0_23};
+                                o_final_gene_1  <= {rx_lfsr_lane_1, o_lane_1_23};
+                                o_final_gene_2  <= {rx_lfsr_lane_2, o_lane_2_23};
+                                o_final_gene_3  <= {rx_lfsr_lane_3, o_lane_3_23};
+                                o_final_gene_4  <= {rx_lfsr_lane_4, o_lane_4_23};
+                                o_final_gene_5  <= {rx_lfsr_lane_5, o_lane_5_23};
+                                o_final_gene_6  <= {rx_lfsr_lane_6, o_lane_6_23};
+                                o_final_gene_7  <= {rx_lfsr_lane_7, o_lane_7_23};
+                                o_final_gene_8  <= {rx_lfsr_lane_0, o_lane_0_23};
+                                o_final_gene_9  <= {rx_lfsr_lane_1, o_lane_1_23};
+                                o_final_gene_10 <= {rx_lfsr_lane_2, o_lane_2_23};
+                                o_final_gene_11 <= {rx_lfsr_lane_3, o_lane_3_23};
+                                o_final_gene_12 <= {rx_lfsr_lane_4, o_lane_4_23};
+                                o_final_gene_13 <= {rx_lfsr_lane_5, o_lane_5_23};
+                                o_final_gene_14 <= {rx_lfsr_lane_6, o_lane_6_23};
+                                o_final_gene_15 <= {rx_lfsr_lane_7, o_lane_7_23};
                             end
                         endcase
                     end
@@ -317,12 +1279,6 @@ always @(posedge i_clk or negedge i_rst_n) begin
                 end
             end
         endcase
-
-        // // Assign delayed values to outputs
-        // o_Data_by_0 <= temp_Data_by_0; o_Data_by_1 <= temp_Data_by_1; o_Data_by_2 <= temp_Data_by_2; o_Data_by_3 <= temp_Data_by_3;
-        // o_Data_by_4 <= temp_Data_by_4; o_Data_by_5 <= temp_Data_by_5; o_Data_by_6 <= temp_Data_by_6; o_Data_by_7 <= temp_Data_by_7;
-        // o_Data_by_8 <= temp_Data_by_8; o_Data_by_9 <= temp_Data_by_9; o_Data_by_10 <= temp_Data_by_10; o_Data_by_11 <= temp_Data_by_11;
-        // o_Data_by_12 <= temp_Data_by_12; o_Data_by_13 <= temp_Data_by_13; o_Data_by_14 <= temp_Data_by_14; o_Data_by_15 <= temp_Data_by_15;
     end
 end
 // Assign delayed values to outputs
