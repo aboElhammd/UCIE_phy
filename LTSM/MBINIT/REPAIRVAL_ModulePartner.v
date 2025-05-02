@@ -143,7 +143,7 @@ module REPAIRVAL_ModulePartner (
                     o_ValidOutDatat_ModulePartner <= 1'b1;
                     // o_ValidMsgInfoREPAIRVAL_ModulePartner <= 1'b1;
                     o_TX_SbMessage <= MBINIT_REPAIRVAL_result_resp;
-                    o_VAL_Result_logged <= i_VAL_Result_logged;
+                    o_VAL_Result_logged <= (CS == REPAIRVAL_CHECK_BUSY_RESULT)? i_VAL_Result_logged : o_VAL_Result_logged;
                 end
                 REPAIRVAL_DONE_RESP: begin
                     o_ValidOutDatat_ModulePartner <= 1'b1;
