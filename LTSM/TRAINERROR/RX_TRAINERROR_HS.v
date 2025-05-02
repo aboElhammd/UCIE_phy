@@ -7,6 +7,7 @@ module RX_TRAINERROR_HS #(
 	input 										 i_rx_msg_valid,
 	input   									 i_falling_edge_busy,	    // gayly mn elSB 34an y2olii enu khalas ba3t el data bta3te fa anzl el valid
    	input   									 i_SB_Busy,		 		    // gayly mn elSB 34an y2olii enu khalas ba3t el data bta3te fa anzl el valid
+	input 										 i_partner_req_trainerror,
     input                                        i_tx_valid,
     input       [SB_MSG_WIDTH-1:0]               i_decoded_SB_msg,          // gyaly mn el SB b3d my3ml decode ll msg eli gyalo mn el partner w yb3tli el crossponding format liha 
     output reg  [SB_MSG_WIDTH-1:0]               o_encoded_SB_msg_rx,       // sent to SB 34an 22olo haystkhdm anhy encoding
@@ -79,7 +80,7 @@ always @ (*) begin
 *-----------------------------------------------------------------------------*/
         WAIT_FOR_TRAINERROR_REQ  : begin 
             if (i_trainerror_en) begin
-				if (i_decoded_SB_msg == TRAINERROR_entry_req_msg && i_rx_msg_valid) begin 
+				if ((i_decoded_SB_msg == TRAINERROR_entry_req_msg && i_rx_msg_valid) || i_partner_req_trainerror) begin 
 					NS = SEND_TRAINERROR_RESP;
 				end 
 				else begin

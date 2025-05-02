@@ -11,6 +11,7 @@ module TRAINERROR_HS_WRAPPER # (
     input                                       i_rx_msg_valid,
     input                                       i_SB_Busy,              // 1: means SB shaghal mtb3tloosh 7aga, 0: means SB fady
     input                                       i_falling_edge_busy,
+    input                                       i_partner_req_trainerror,
 	input			[SB_MSG_WIDTH-1:0]			i_decoded_SB_msg, 		// gyaly mn el SB b3d my3ml decode ll msg eli gyalo mn el partner w yb3tli el crossponding format liha 
 	output 	reg		[SB_MSG_WIDTH-1:0]			o_encoded_SB_msg, 	    // sent to SB 34an 22olo haystkhdm anhy encoding 
 	output	    								o_TRAINERROR_HS_end,    // sent to LTSM 34an ykhush el MBINIT w 22olo eni khalst
@@ -43,16 +44,17 @@ assign o_tx_msg_valid      = wp_rx_valid | wp_tx_valid;
 TX_TRAINERROR_HS  #(
     .SB_MSG_WIDTH(SB_MSG_WIDTH)
 ) U_TX_TRAINERROR_HS (
-    .i_clk                  (i_clk),
-    .i_rst_n                (i_rst_n),
-    .i_trainerror_en        (i_trainerror_en),
-    .i_rx_msg_valid         (i_rx_msg_valid),
-    .i_falling_edge_busy    (i_falling_edge_busy),
-    .i_rx_valid             (wp_rx_valid),
-    .i_decoded_SB_msg       (i_decoded_SB_msg),
-    .o_encoded_SB_msg_tx    (wp_tx_encoded_SB_msg),
-    .o_trainerror_end_tx    (wp_tx_TRAINERROR_end),
-    .o_valid_tx             (wp_tx_valid)
+    .i_clk                      (i_clk),
+    .i_rst_n                    (i_rst_n),
+    .i_trainerror_en            (i_trainerror_en),
+    .i_rx_msg_valid             (i_rx_msg_valid),
+    .i_falling_edge_busy        (i_falling_edge_busy),
+    .i_partner_req_trainerror   (i_partner_req_trainerror),
+    .i_rx_valid                 (wp_rx_valid),
+    .i_decoded_SB_msg           (i_decoded_SB_msg),
+    .o_encoded_SB_msg_tx        (wp_tx_encoded_SB_msg),
+    .o_trainerror_end_tx        (wp_tx_TRAINERROR_end),
+    .o_valid_tx                 (wp_tx_valid)
 );
 
 /************
@@ -62,17 +64,18 @@ TX_TRAINERROR_HS  #(
 RX_TRAINERROR_HS  #(
     .SB_MSG_WIDTH(SB_MSG_WIDTH)
 ) U_RX_TRAINERROR_HS (
-    .i_clk                  (i_clk),
-    .i_rst_n                (i_rst_n),
-    .i_trainerror_en        (i_trainerror_en),
-    .i_rx_msg_valid         (i_rx_msg_valid),
-    .i_SB_Busy              (i_SB_Busy),
-    .i_falling_edge_busy    (i_falling_edge_busy),
-    .i_tx_valid             (wp_tx_valid),
-    .i_decoded_SB_msg       (i_decoded_SB_msg),
-    .o_encoded_SB_msg_rx    (wp_rx_encoded_SB_msg),
-    .o_trainerror_end_rx    (wp_rx_TRAINERROR_end),
-    .o_valid_rx             (wp_rx_valid)
+    .i_clk                      (i_clk),
+    .i_rst_n                    (i_rst_n),
+    .i_trainerror_en            (i_trainerror_en),
+    .i_rx_msg_valid             (i_rx_msg_valid),
+    .i_SB_Busy                  (i_SB_Busy),
+    .i_falling_edge_busy        (i_falling_edge_busy),
+    .i_partner_req_trainerror   (i_partner_req_trainerror),
+    .i_tx_valid                 (wp_tx_valid),
+    .i_decoded_SB_msg           (i_decoded_SB_msg),
+    .o_encoded_SB_msg_rx        (wp_rx_encoded_SB_msg),
+    .o_trainerror_end_rx        (wp_rx_TRAINERROR_end),
+    .o_valid_rx                 (wp_rx_valid)
 );
 
 /////////////////////////////////////////
