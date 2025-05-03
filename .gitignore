@@ -96,5 +96,7 @@ MB_modelling/Data_deserializer/MB_RX_DESER.v
 MB_modelling/Data_serializer/MB_TX_SERIALIZER.v
 MB_modelling/Data_serializer/TB_MB_TX_SERIALIZER.sv
 integration/LTSM_SB_MB/mon_data.txt
+integration/LTSM_SB_MB/run_uvm.do
+integration/LTSM_SB_MB/wave_uvm.do
 integration/LTSM_SB_MB/vsim_stacktrace.vstf
 MB_Blocks/vaild_tx_rx/Valtrain_Controller_new.v
