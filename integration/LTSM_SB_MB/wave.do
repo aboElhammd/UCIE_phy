@@ -46,17 +46,17 @@ add wave -noupdate -expand -group MODULE -group DATA_LANES_OUT -radix hexadecima
 add wave -noupdate -expand -group MODULE -expand -group VALID_LANE_OUT /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/o_TVLD_L
 add wave -noupdate -expand -group MODULE /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/o_pl_data
 add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/LTSM_TOP_inst/i_clk
-add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sync_sb_rx_msg_valid
-add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/LTSM_TOP_inst/i_decoded_SB_msg
-add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/i_rx_msg_no_string_1
-add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sb_rx_data_bus
+add wave -noupdate -expand -group MODULE -expand -group LTSM -color Blue /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sync_sb_rx_msg_valid
+add wave -noupdate -expand -group MODULE -expand -group LTSM -color Blue /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/LTSM_TOP_inst/i_decoded_SB_msg
+add wave -noupdate -expand -group MODULE -expand -group LTSM -color Blue /TB_LTSM_SB_MB/i_rx_msg_no_string_1
+add wave -noupdate -expand -group MODULE -expand -group LTSM -color Blue /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sb_rx_data_bus
 add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sb_rx_msg_info
 add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/LTSM_TOP_inst/SBINIT_inst/i_SB_Busy
 add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sb_tx_msg_valid
 add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sb_tx_data_valid
-add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/o_tx_msg_no_string_1
-add wave -noupdate -expand -group MODULE -expand -group LTSM -radix unsigned /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sb_tx_msg_no
-add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sb_tx_data_bus
+add wave -noupdate -expand -group MODULE -expand -group LTSM -color Magenta /TB_LTSM_SB_MB/o_tx_msg_no_string_1
+add wave -noupdate -expand -group MODULE -expand -group LTSM -color Magenta -radix unsigned /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sb_tx_msg_no
+add wave -noupdate -expand -group MODULE -expand -group LTSM -color Magenta /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sb_tx_data_bus
 add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/sb_tx_msg_info
 add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/sub_state_1
 add wave -noupdate -expand -group MODULE -expand -group LTSM /TB_LTSM_SB_MB/CS_top_1
@@ -342,13 +342,7 @@ add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENC
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/o_header_valid
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/msg_code
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/msg_sub_code
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/msg_sub_code_reg
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 -radix binary /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/msg_info
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/STATE_TRANSITIONED
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/RESET_MSG_SUBCODE_COUNTER
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/INCREMENT_MSG_SUBCODE_COUNTER
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/msg_sub_code_saved_before_tests
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/i_tx_point_sweep_test_en_reg
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/header_members_valid
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/i_clk
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/i_rst_n
@@ -368,13 +362,7 @@ add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENC
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/o_header_valid
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/msg_code
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/msg_sub_code
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/msg_sub_code_reg
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 -radix binary /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/msg_info
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/STATE_TRANSITIONED
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/RESET_MSG_SUBCODE_COUNTER
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/INCREMENT_MSG_SUBCODE_COUNTER
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/msg_sub_code_saved_before_tests
-add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/i_tx_point_sweep_test_en_reg
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_TX_HEADER_ENCODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/tx_wrapper/header_encoder_dut/header_members_valid
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_RX_HEADER_DECODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/rx_wrapper/rx_header_decoder_dut/i_clk
 add wave -noupdate -expand -group MODULE -group SIDEBAND -group SB_RX_HEADER_DECODER_1 /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/SB_inst/rx_wrapper/rx_header_decoder_dut/i_rst_n
@@ -913,8 +901,8 @@ add wave -noupdate -group Linkspeed_rx /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/LTSM_TOP
 add wave -noupdate -group Linkspeed_rx /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/LTSM_TOP_inst/MBTRAIN_inst/linkspeed_wrapper_inst/linkspeed_rx_inst/cs
 add wave -noupdate -group Linkspeed_rx /TB_LTSM_SB_MB/LTSM_SB_MB_inst_1/LTSM_TOP_inst/MBTRAIN_inst/linkspeed_wrapper_inst/linkspeed_rx_inst/ns
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 1} {42924375000 fs} 0}
-quietly wave cursor active 1
+WaveRestoreCursors {{Cursor 1} {13218828900 fs} 0} {{Cursor 2} {13516079500 fs} 0 Red Red}
+quietly wave cursor active 2
 configure wave -namecolwidth 291
 configure wave -valuecolwidth 102
 configure wave -justifyvalue left
@@ -929,4 +917,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {42892474800 fs} {43211475200 fs}
+WaveRestoreZoom {13119139700 fs} {13615312500 fs}
