@@ -4,6 +4,7 @@ module SB_PACKET_FRAMING (
 	input		[61:0]	i_header,
 	input		[63:0]	i_data,
 	input				i_header_valid,
+	input 				i_data_valid,
 	input 				i_d_valid,
 	input 				i_ser_done,
 	output	reg	[63:0]	o_framed_packet_phase,
@@ -57,7 +58,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
 	else if (i_d_valid) begin
 		dp 					<= ^i_data;
 		dp_ready 			<=	1;
-		if (|i_data) begin
+		if (i_data_valid) begin
 			msg_with_data 	<= 1;
 		end
 		else begin
