@@ -91,3 +91,10 @@ MB_Blocks/clock_tx_rx/work/_lib1_2.qtl
 MB_Blocks/clock_tx_rx/work/@_opt/_data/exemptaz1ngz
 MB_Blocks/clock_tx_rx/work/@_opt/_data/exemptz1dems
 MB_Blocks/clock_tx_rx/work/@_opt/_data/exemptzkbe4t
+MB_Blocks/clock_tx_rx/Clk_patt.v
+MB_modelling/Data_deserializer/MB_RX_DESER.v
+MB_modelling/Data_serializer/MB_TX_SERIALIZER.v
+MB_modelling/Data_serializer/TB_MB_TX_SERIALIZER.sv
+integration/LTSM_SB_MB/mon_data.txt
+integration/LTSM_SB_MB/vsim_stacktrace.vstf
+MB_Blocks/vaild_tx_rx/Valtrain_Controller_new.v
