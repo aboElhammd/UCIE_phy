@@ -27,18 +27,18 @@ module tx_initiated_point_test_rx (
 		output reg 		  o_test_ack_rx
 
 );
-/*------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------//////////////
 --states  
 ------------------------------------------------------------------------------*/
 parameter IDLE=0;
-parameter WAIT_FOR_TEST_REQ=1;
-parameter WAIT_FOR_LFSR_CLEAR_REQ=2; // and SENDS TEST RESPONSE
-parameter CLEAR_LFSR=3; //and send LFSR_CLEAR_RESP
+parameter WAIT_FOR_TEST_REQ=1; 
+parameter WAIT_FOR_LFSR_CLEAR_REQ=2; // and SENDS TEST RESPONSE 
+parameter CLEAR_LFSR=3; //and send LFSR_CLEAR_RESP 
 // parameter COMPARE_RESULT=4; 
-parameter WAIT_FOR_RESULT_REQ=4; //no messages is sent in here 
-parameter WAIT_FOR_END_REQ=5;     //
-parameter END_RESP=6;
-parameter TEST_FINISH=7;
+parameter WAIT_FOR_RESULT_REQ=4; //no messages is sent in here
+parameter WAIT_FOR_END_REQ=5;     
+parameter END_RESP=6; 
+parameter TEST_FINISH=7; 
 /*------------------------------------------------------------------------------
 --variables declaration  
 ------------------------------------------------------------------------------*/
