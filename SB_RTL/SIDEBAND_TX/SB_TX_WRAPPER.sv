@@ -124,6 +124,7 @@ SB_PACKET_FRAMING packet_framing_dut (
 	.i_header             (header), //
 	.i_data               (data), //
 	.i_header_valid       (header_frame_enable), //
+	.i_data_valid         (i_data_valid),
 	.i_d_valid            (data_frame_enable), //
 	.o_framed_packet_phase(framed_packet_phase), //
 	.o_timeout_ctr_start  (start_count), //
