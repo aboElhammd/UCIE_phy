@@ -7,6 +7,8 @@ module TB_LTSM_SB_MB;
 localparam SER_WIDTH = 32;
 localparam DELAY_CYCLES = 3;
 localparam ERROR_LANE = 32'h00000810;
+localparam MB_PLL_CLK_PER = 0.25;  // in ns
+localparam SB_PLL_CLK_PER = 1.25;  // in ns
 ///////////////////////////////////
 //////////// SIGNALS //////////////
 ///////////////////////////////////
@@ -14,12 +16,9 @@ localparam ERROR_LANE = 32'h00000810;
     * Module
 --------------------------------*/
 // Inputs
-logic                 i_ser_clk_4G;
-logic                 i_clk;      
+logic                 i_ser_clk_4G;     
 logic                 i_rst_n;
-logic                 i_clk_sb;   
-logic                 i_ckp_1;      
-logic                 i_ckn_1;      
+logic                 i_clk_sb;       
 logic [8*63:0]        i_lp_data_1;
 logic                 i_start_training_RDI_1;
 logic [SER_WIDTH-1:0] i_RVLD_L_1; 
@@ -167,14 +166,12 @@ logic partner_serliazer_valid_en [DELAY_CYCLES-1:0];
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 LTSM_SB_MB LTSM_SB_MB_inst_1 (
     // Input Ports
-    .i_clk                     (i_ser_clk_4G),
-    .i_clk_sb                  (i_clk_sb),
-    .i_ckp                     (i_ckp_1),
-    .i_ckn                     (i_ckn_1),
-    .i_CKP                     (o_CKP_2),//partner_CKP   [DELAY_CYCLES-1]),
-    .i_CKN                     (o_CKN_2),//partner_CKN   [DELAY_CYCLES-1]),
-    .i_TRACK                   (o_TRACK_2),//partner_TRACK [DELAY_CYCLES-1]),
+    .i_pll_mb_clk              (i_ser_clk_4G),
+    .i_pll_sb_clk              (i_clk_sb),
     .i_rst_n                   (i_rst_n),
+    .i_RCKP                    (o_CKP_2),//partner_CKP   [DELAY_CYCLES-1]),
+    .i_RCKN                    (o_CKN_2),//partner_CKN   [DELAY_CYCLES-1]),
+    .i_RTRACK                  (o_TRACK_2),//partner_TRACK [DELAY_CYCLES-1]),
     .i_lp_data                 (i_lp_data_1),
     .i_start_training_RDI      (i_start_training_RDI_1),
     .i_RVLD_L                  (partner_TVLD_L [DELAY_CYCLES-1]),
@@ -227,41 +224,39 @@ LTSM_SB_MB LTSM_SB_MB_inst_1 (
     .o_SBCLK                   (o_SBCLK_1),
     .o_sb_fifo_data            (o_sb_fifo_data_1),
     .o_serliazer_data_en       (o_serliazer_en_1),
+    .o_serliazer_valid_en      (o_serliazer_valid_en_1),
     .o_diff_or_quad_clk        (o_diff_or_quad_clk_1),
     .o_reciever_ref_volatge    (o_reciever_ref_volatge_1),
-    .o_pi_step                 (o_pi_step_1),
-    .o_serliazer_valid_en      (o_serliazer_valid_en_1)
+    .o_pi_step                 (o_pi_step_1)
 );
 
 LTSM_SB_MB LTSM_SB_MB_inst_2 (
     // Input Ports
-    .i_clk                     (i_ser_clk_4G),
-    .i_clk_sb                  (i_clk_sb),
-    .i_ckp                     (i_ckp_2),
-    .i_ckn                     (i_ckn_2),
-    .i_CKP                     (o_CKP_1),//module_CKP   [DELAY_CYCLES-1]),
-    .i_CKN                     (o_CKN_1),//module_CKN   [DELAY_CYCLES-1]),
-    .i_TRACK                   (o_TRACK_1),//module_TRACK [DELAY_CYCLES-1]),
+    .i_pll_mb_clk              (i_ser_clk_4G),
+    .i_pll_sb_clk              (i_clk_sb),
     .i_rst_n                   (i_rst_n),
+    .i_RCKP                    (o_CKP_1),//module_CKP   [DELAY_CYCLES-1]),
+    .i_RCKN                    (o_CKN_1),//module_CKN   [DELAY_CYCLES-1]),
+    .i_RTRACK                  (o_TRACK_1),//module_TRACK [DELAY_CYCLES-1]),
     .i_lp_data                 (i_lp_data_2),
     .i_start_training_RDI      (i_start_training_RDI_2),
     .i_RVLD_L                  (module_TVLD_L [DELAY_CYCLES-1]),
     .i_deser_valid_val         (partner_serliazer_valid_en [DELAY_CYCLES-1]),
-    .i_lfsr_rx_lane_0          (module_tx_lane_0  [DELAY_CYCLES-1] ),//& ERROR_LANE),
-    .i_lfsr_rx_lane_1          (module_tx_lane_1  [DELAY_CYCLES-1] ),//& ERROR_LANE),
-    .i_lfsr_rx_lane_2          (module_tx_lane_2  [DELAY_CYCLES-1] ),//& ERROR_LANE),
-    .i_lfsr_rx_lane_3          (module_tx_lane_3  [DELAY_CYCLES-1] ),//& ERROR_LANE),
-    .i_lfsr_rx_lane_4          (module_tx_lane_4  [DELAY_CYCLES-1] ),//& ERROR_LANE),
-    .i_lfsr_rx_lane_5          (module_tx_lane_5  [DELAY_CYCLES-1] ),//& ERROR_LANE),
-    .i_lfsr_rx_lane_6          (module_tx_lane_6  [DELAY_CYCLES-1] ),//& ERROR_LANE),
-    .i_lfsr_rx_lane_7          (module_tx_lane_7  [DELAY_CYCLES-1] ),//& ERROR_LANE),
-    .i_lfsr_rx_lane_8          (module_tx_lane_8  [DELAY_CYCLES-1] ),//& ERROR_LANE),
-    .i_lfsr_rx_lane_9          (module_tx_lane_9  [DELAY_CYCLES-1] ),//& ERROR_LANE),
+    .i_lfsr_rx_lane_0          (module_tx_lane_0  [DELAY_CYCLES-1] & ERROR_LANE),
+    .i_lfsr_rx_lane_1          (module_tx_lane_1  [DELAY_CYCLES-1] & ERROR_LANE),
+    .i_lfsr_rx_lane_2          (module_tx_lane_2  [DELAY_CYCLES-1] & ERROR_LANE),
+    .i_lfsr_rx_lane_3          (module_tx_lane_3  [DELAY_CYCLES-1] & ERROR_LANE),
+    .i_lfsr_rx_lane_4          (module_tx_lane_4  [DELAY_CYCLES-1] & ERROR_LANE),
+    .i_lfsr_rx_lane_5          (module_tx_lane_5  [DELAY_CYCLES-1] & ERROR_LANE),
+    .i_lfsr_rx_lane_6          (module_tx_lane_6  [DELAY_CYCLES-1] & ERROR_LANE),
+    .i_lfsr_rx_lane_7          (module_tx_lane_7  [DELAY_CYCLES-1] & ERROR_LANE),
+    .i_lfsr_rx_lane_8          (module_tx_lane_8  [DELAY_CYCLES-1] & ERROR_LANE),
+    .i_lfsr_rx_lane_9          (module_tx_lane_9  [DELAY_CYCLES-1] & ERROR_LANE),
     .i_lfsr_rx_lane_10         (module_tx_lane_10 [DELAY_CYCLES-1]),
     .i_lfsr_rx_lane_11         (module_tx_lane_11 [DELAY_CYCLES-1]),
     .i_lfsr_rx_lane_12         (module_tx_lane_12 [DELAY_CYCLES-1]),
     .i_lfsr_rx_lane_13         (module_tx_lane_13 [DELAY_CYCLES-1]),
-    .i_lfsr_rx_lane_14         (module_tx_lane_14 [DELAY_CYCLES-1]),
+    .i_lfsr_rx_lane_14         (module_tx_lane_14 [DELAY_CYCLES-1] & ERROR_LANE),
     .i_lfsr_rx_lane_15         (module_tx_lane_15 [DELAY_CYCLES-1]),
     .i_deser_valid_data        (partner_serliazer_en [DELAY_CYCLES-1]),
     .i_deser_data_sb           (i_deser_data_sb_2),
@@ -331,7 +326,9 @@ SB_TX_SERIALIZER SB_TX_SERIALIZER_inst_2(
     .i_pack_finished    (o_pack_finished_sb_2),
     .TXDATASB           (SB_SER_DATA_2)
 );
-
+/******************************************************************************
+ * MAINBAND DATA DESERIALIZERS
+/******************************************************************************/
 /******************************************************************************
  * SIDEBAND DATA DESERIALIZERS
 /******************************************************************************/
@@ -354,22 +351,15 @@ SB_RX_DESER SB_RX_DESER_inst_2 (
     .par_data_out           (i_deser_data_sb_2),
     .de_ser_done            (i_deser_done_sb_2)
 );
+
 // just for modelling
+reg i_clk;
 clock_div_32 clock_div_32_inst_1 (
     .i_clk             (i_ser_clk_4G),
     .i_rst_n           (i_rst_n),
     .o_div_clk         (i_clk)
-);   
+);  
 
-// clock divider by 2
-reg clk_div_2;
-always @ (posedge i_ser_clk_4G or negedge i_rst_n) begin
-    if (~i_rst_n) begin
-        clk_div_2 <= 0;
-    end else begin
-        clk_div_2 <= ~clk_div_2;
-    end
-end
 /**************************************************************************************************************************************************
 *************************************************************** STIMILUS GENERATION ***************************************************************
 **************************************************************************************************************************************************/
@@ -379,18 +369,12 @@ end
 
  initial begin
     i_ser_clk_4G = 0;
-    forever #125 i_ser_clk_4G = ~i_ser_clk_4G; // 0.25ns period = 4GHz
+    forever #((MB_PLL_CLK_PER*1000)/2) i_ser_clk_4G = ~i_ser_clk_4G; // 0.25ns period = 4GHz
  end
-
-
-assign i_ckp_1 = clk_div_2;
-assign i_ckp_2 = clk_div_2;
-assign i_ckn_1 = ~ clk_div_2;
-assign i_ckn_2 = ~ clk_div_2;
 
 initial begin
     i_clk_sb =  0;
-    forever #625 i_clk_sb = ~ i_clk_sb; // 1.25ns period = 800MHz
+    forever #((SB_PLL_CLK_PER*1000)/2) i_clk_sb = ~ i_clk_sb; // 1.25ns period = 800MHz
 end
 
 ///////////////////////////////////
