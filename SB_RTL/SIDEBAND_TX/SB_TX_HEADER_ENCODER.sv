@@ -92,21 +92,24 @@ reg  [7:0] 	msg_code;
 reg  [7:0] 	msg_sub_code;
 reg  [4:0] 	opcode;
 reg  [15:0] msg_info;
-reg  [15:0] rdi_msg_info;
+//reg  [15:0] rdi_msg_info;
+
 
 wire [2:0] 	scrid, dstid;
 
-reg  [3:0] 	state_reg;
-reg  [3:0] 	sub_state_reg;
-reg  [7:0] 	msg_sub_code_reg;
-reg 		msg_sub_code_saved_before_tests; // flag to save the last MSgSubCode before enter to tests to keep count from this point not from zero
-reg 	  	i_tx_point_sweep_test_en_reg;
+//reg  [3:0]	i_msg_no_reg;
+//reg  [3:0] 	state_reg;
+//reg  [3:0] 	sub_state_reg;
+//reg  [7:0] 	msg_sub_code_reg;
+//reg 		msg_sub_code_saved_before_tests; // flag to save the last MSgSubCode before enter to tests to keep count from this point not from zero
+//reg 	  	i_tx_point_sweep_test_en_reg;
 reg 		header_members_valid;
 
-reg  [1:0] 	req_req_cntr; //To count and help to resolve req req case
-reg  [7:0] 	first_req_msgsubcode_req_req_case;
-reg  [7:0] 	second_req_msgsubcode_req_req_case;
-reg 		rsp_rsp_case;
+//reg  [1:0] 	req_req_cntr; //To count and help to resolve req req case
+//reg  [7:0] 	first_req_msgsubcode_req_req_case;
+//reg  [7:0] 	second_req_msgsubcode_req_req_case;
+//reg 		rsp_rsp_case;
+//reg 		rsp_before_req_case;
 
 
 
@@ -118,13 +121,13 @@ assign LTSM_MSG_VALID 								= i_msg_valid && !i_rdi_msg; //There is an avalibl
 assign SB_OUT_OF_RESET_MSG 							= i_state == SBINIT && i_msg_no == 3;
 assign REQ 											= i_msg_no[0];
 assign RX_INIT_D_TO_C_SWEEP_DONE_WITH_RESULTS_MSG 	= i_msg_no == 9;
-assign LAST_SENT_MSG_WAS_APPLY_DEGRADE_REQ 			= i_state == MBINIT && i_msg_no == 5 && msg_sub_code_reg == 8'h14;
-assign STATE_TRANSITIONED 							= i_state != state_reg;
-assign SUB_STATE_TRANSITIONED 						= i_sub_state == sub_state_reg;
-assign RESET_MSG_SUBCODE_COUNTER 					= SB_OUT_OF_RESET_MSG ||  (STATE_TRANSITIONED && i_state != PHYRETRAIN && i_state != MBTRAIN);
-assign INCREMENT_MSG_SUBCODE_COUNTER 				= REQ && i_state != TRAINERROR;
+//assign LAST_SENT_MSG_WAS_APPLY_DEGRADE_REQ 			= i_state == MBINIT && i_msg_no == 5 && msg_sub_code_reg == 8'h14;
+//assign STATE_TRANSITIONED 							= i_state != state_reg;
+//assign SUB_STATE_TRANSITIONED 						= i_sub_state == sub_state_reg;
+//assign RESET_MSG_SUBCODE_COUNTER 					= SB_OUT_OF_RESET_MSG ||  (STATE_TRANSITIONED && i_state != PHYRETRAIN && i_state != MBTRAIN);
+//assign INCREMENT_MSG_SUBCODE_COUNTER 				= REQ && i_state != TRAINERROR;
 assign TX_OR_RX_INT_D_TO_C_RESULTS_RESP  			= i_tx_point_sweep_test_en && (i_tx_point_sweep_test == TX_INIT_POINT_TEST || i_tx_point_sweep_test == RX_INIT_SWEEP_TEST) && i_msg_no == 6;
-assign REQ_REQ_CNTR_INCR 							= REQ && i_state != SBINIT && SUB_STATE_TRANSITIONED && !LAST_SENT_MSG_WAS_APPLY_DEGRADE_REQ;
+//assign REQ_REQ_CNTR_INCR 							= REQ && i_state != SBINIT && SUB_STATE_TRANSITIONED && !LAST_SENT_MSG_WAS_APPLY_DEGRADE_REQ;
 
 
 
@@ -139,11 +142,8 @@ assign dstid = 3'b110;
 /*------------------------------------------------------------------------------
 -- Meassage Code Encoding   
 ------------------------------------------------------------------------------*/
-always @(posedge i_clk or negedge i_rst_n) begin
-	if(~i_rst_n) begin
-		msg_code <= 0;
-	end 
-	else if (LTSM_MSG_VALID) begin
+always @(*) begin
+	if (LTSM_MSG_VALID) begin
 		if (i_tx_point_sweep_test_en) begin
 			msg_code [7:4] <= 4'h8;
 			if (RX_INIT_D_TO_C_SWEEP_DONE_WITH_RESULTS_MSG) begin
@@ -185,11 +185,8 @@ end
 /*------------------------------------------------------------------------------
 -- Opcode Encoding  
 ------------------------------------------------------------------------------*/
-always @(posedge i_clk or negedge i_rst_n) begin
-	if(~i_rst_n) begin
-		opcode <= 0;
-	end 
-	else if (LTSM_MSG_VALID) begin
+always @(*) begin
+	if (LTSM_MSG_VALID) begin
 		if (i_data_valid) begin
 			opcode <= 5'b11011;	
 		end
@@ -203,229 +200,201 @@ end
 /*------------------------------------------------------------------------------
 -- Message Subcode Encoding  
 ------------------------------------------------------------------------------*/
-always @(posedge i_clk or negedge i_rst_n) begin
-	if (~i_rst_n) begin
-		// Reset block
-		msg_sub_code                      <= 0;
-		msg_sub_code_reg                  <= 0;
-		rsp_rsp_case                      <= 0;
-		first_req_msgsubcode_req_req_case <= 0;
-		second_req_msgsubcode_req_req_case<= 0;
-		msg_sub_code_saved_before_tests   <= 0;
-	end 
-	else if (LTSM_MSG_VALID) begin
-		if (i_tx_point_sweep_test_en) begin
-			// Save msg_sub_code once before tests begin
-			if (~msg_sub_code_saved_before_tests) begin
-				msg_sub_code_reg             	<= msg_sub_code;
-				msg_sub_code_saved_before_tests <= 1;
-			end
-
-			// Test mode: choose msg_sub_code based on i_tx_point_sweep_test type and i_msg_no
-			case (i_tx_point_sweep_test)
-				TX_INIT_POINT_TEST: begin
-					if (i_msg_no == 1 || i_msg_no == 2)
-						msg_sub_code <= 8'h01;
-					else if (i_msg_no == 3 || i_msg_no == 4)
-						msg_sub_code <= 8'h02;
-					else if (i_msg_no == 5 || i_msg_no == 6)
-						msg_sub_code <= 8'h03;
-					else if (i_msg_no == 7 || i_msg_no == 8)
-						msg_sub_code <= 8'h04;
-				end
-
-				TX_INIT_SWEEP_TEST: begin
-					if (i_msg_no == 1 || i_msg_no == 2)
-						msg_sub_code <= 8'h05;
-					else if (i_msg_no == 3 || i_msg_no == 4)
-						msg_sub_code <= 8'h02;
-					else if (i_msg_no == 5 || i_msg_no == 6)
-						msg_sub_code <= 8'h06;
-				end
-
-				RX_INIT_POINT_TEST: begin
-					if (i_msg_no == 1 || i_msg_no == 2)
-						msg_sub_code <= 8'h07;
-					else if (i_msg_no == 3 || i_msg_no == 4)
-						msg_sub_code <= 8'h02;
-					else if (i_msg_no == 5 || i_msg_no == 6)
-						msg_sub_code <= 8'h08;
-					else if (i_msg_no == 7 || i_msg_no == 8)
-						msg_sub_code <= 8'h09;
-				end
-				
-				RX_INIT_SWEEP_TEST: begin
-					if (i_msg_no == 1 || i_msg_no == 2)
-						msg_sub_code <= 8'h0A;
-					else if (i_msg_no == 3 || i_msg_no == 4)
-						msg_sub_code <= 8'h02;
-					else if (i_msg_no == 5 || i_msg_no == 6)
-						msg_sub_code <= 8'h0B;
-					else if (i_msg_no == 7 || i_msg_no == 8)
-						msg_sub_code <= 8'h0D;
-					else if (i_msg_no == 9)
-						msg_sub_code <= 8'h0C;
-				end
-			endcase			
-		end
-		else begin
-			msg_sub_code_saved_before_tests <= 0;
-			// Normal operation (non-test mode)
-			if (RESET_MSG_SUBCODE_COUNTER) begin
-				msg_sub_code <= 0;
-			end
-			else if (STATE_TRANSITIONED && i_state == MBTRAIN) begin
-				case (i_sub_state)
-				    VALREF 		:   msg_sub_code <= 8'h00;
-				    SPEEDIDLE	: 	msg_sub_code <= 8'h04;
-				    TXSELFCAL	:  	msg_sub_code <= 8'h05;
-				    REPAIR 		:   msg_sub_code <= 8'h1B;
-				    default 	:	msg_sub_code <= 8'h00;
-				endcase
-			end
-			else if (STATE_TRANSITIONED && i_state == PHYRETRAIN) begin
-				msg_sub_code <= 8'h01;
-			end
-			else if (INCREMENT_MSG_SUBCODE_COUNTER) begin
-				// Increment in test mode edge: restore saved code if required
-				if (i_tx_point_sweep_test_en_reg && i_state == MBINIT) begin
-					if (LAST_SENT_MSG_WAS_APPLY_DEGRADE_REQ) begin
-						msg_sub_code <= msg_sub_code_reg;
-					end
-					else begin
-						msg_sub_code <= msg_sub_code_reg + 3;
-					end
-				end else if (i_tx_point_sweep_test_en_reg && i_state == MBTRAIN && msg_sub_code_reg == 8'h0E) begin 
-					msg_sub_code <= msg_sub_code_reg + 2;
-				end else if (i_tx_point_sweep_test_en_reg && i_state == MBTRAIN && msg_sub_code_reg == 8'h15) begin
-					msg_sub_code <= msg_sub_code_reg + 4;
-				end else if (i_tx_point_sweep_test_en_reg) begin
-					msg_sub_code <= msg_sub_code_reg + 1;
-				end
-
-				// Action based on current state
-				else begin
-					case (i_state)
-						MBINIT: begin
-							if (msg_sub_code == 8'h00)
-								msg_sub_code <= 8'h02;
-							else if (msg_sub_code == 8'h04)
-								msg_sub_code <= 8'h08;
-							else if (msg_sub_code == 8'h0A)
-								msg_sub_code <= 8'h0C;
-							else if (msg_sub_code == 8'h11) begin
-								msg_sub_code     <= 8'h14;
-								msg_sub_code_reg <= 8'h14;
-							end
-							else if (msg_sub_code == 8'h14) begin
-								if (i_msg_no == 5)
-									msg_sub_code <= 8'h14;
-								else if (i_msg_no == 3)
-									msg_sub_code <= 8'h13;
-							end
-							else if (msg_sub_code == 8'h0F) begin
-								if (i_msg_no == 3)
-									msg_sub_code <= 8'h0E;
-								else
-									msg_sub_code <= msg_sub_code + 1;
-							end
-							else if (msg_sub_code == 8'h10) begin
-								if (i_msg_no == 5)
-									msg_sub_code <= 8'h0F;
-								else
-									msg_sub_code <= msg_sub_code + 1;
-							end
-							else
-								msg_sub_code <= msg_sub_code + 1;
-						end
-
-						MBTRAIN: begin
-							if (msg_sub_code == 8'h19)
-								msg_sub_code <= 8'h1B;
-							else if (msg_sub_code == 8'h0E)
-								msg_sub_code <= 8'h10;
-							else if (msg_sub_code == 8'h15) begin
-								if (i_msg_no == 3)
-									msg_sub_code <= 8'h16;
-								else if (i_msg_no == 9)
-									msg_sub_code <= 8'h19;
-								else if (i_msg_no == 11)
-									msg_sub_code <= 8'h1F;
-								else
-									msg_sub_code <= msg_sub_code + 1;
-							end
-							else if (msg_sub_code == 8'h16) begin
-								if (i_msg_no == 5)
-									msg_sub_code <= 8'h17;
-								else if (i_msg_no == 7)
-									msg_sub_code <= 8'h18;
-								else
-									msg_sub_code <= msg_sub_code + 1;
-							end
-							else if (msg_sub_code == 8'h17)
-								msg_sub_code <= 8'h1B;
-							else if (msg_sub_code == 8'h18)
-								msg_sub_code <= 8'h04;
-							else if (msg_sub_code == 8'h1D)
-								msg_sub_code <= 8'h05;
-							else
-								msg_sub_code <= msg_sub_code + 1;
-						end
-
-						PHYRETRAIN: begin
-							msg_sub_code <= 8'h01;
-						end
-
-						default: begin
-							msg_sub_code <= msg_sub_code + 1;
-						end
-					endcase
-					first_req_msgsubcode_req_req_case <= msg_sub_code;
-				end
-			end  // end increment counter
-
-			else if (~REQ && i_state == MBTRAIN && i_sub_state == LINKSPEED) begin
-				case (i_msg_no)
-					4:  msg_sub_code <= 8'h16;
-					6:  msg_sub_code <= 8'h17;
-					8:  msg_sub_code <= 8'h18;
-					12: msg_sub_code <= 8'h1F;
-				endcase
-			end
-
-			else if (~REQ && i_state == MBINIT && i_sub_state == REVERSALMB) begin
-				case (i_msg_no)
-					4: msg_sub_code <= 8'h0E;
-					6: msg_sub_code <= 8'h0F;
-					8: msg_sub_code <= 8'h10;
-				endcase
-			end
-
-			else if (req_req_cntr == 2 && ~REQ) begin
-				second_req_msgsubcode_req_req_case 	<= msg_sub_code;
-				msg_sub_code                    	<= first_req_msgsubcode_req_req_case;
-				rsp_rsp_case                    	<= 1;
-			end
-
-			else if (rsp_rsp_case && ~REQ) begin
-				msg_sub_code <= second_req_msgsubcode_req_req_case;
-				rsp_rsp_case <= 0;
-			end
-
-		end // end non-test mode
-	end // end LTSM_MSG_VALID
+always @(*) begin
+  msg_sub_code = 8'h00;  // Default
+  if(i_msg_valid) begin
+    if(i_tx_point_sweep_test_en) begin
+      // Handle Point/Sweep Test Messages
+      case(i_tx_point_sweep_test)
+        TX_INIT_POINT_TEST: begin
+          case(i_msg_no)
+            1, 2: msg_sub_code = 8'h01;  // Start Tx Init D to C point test Req / Resp
+            3, 4: msg_sub_code = 8'h02;  // Clear Error Req / Resp
+            5, 6: msg_sub_code = 8'h03;  // Results Req / Resp
+            7, 8: msg_sub_code = 8'h04;  // End Tx Init D to C point test req / Resp
+          endcase
+        end
+        
+        TX_INIT_SWEEP_TEST: begin
+          case(i_msg_no)
+            1, 2: msg_sub_code = 8'h05;  // Start Tx Init D to C eye sweep Req / Resp
+            3, 4: msg_sub_code = 8'h02;  // Clear Error Req / Resp
+            5, 6: msg_sub_code = 8'h06;  // End Tx Init D to C eye sweep Req / Resp
+          endcase
+        end
+        
+        RX_INIT_POINT_TEST: begin
+          case(i_msg_no)
+            1, 2: msg_sub_code = 8'h07;  // Start Rx Init D to C point test Req / Resp
+            3, 4: msg_sub_code = 8'h02;  // Clear Error Req / Resp
+            5, 6: msg_sub_code = 8'h08;  // End Rx Init D to C point test Req / Resp
+            7, 8: msg_sub_code = 8'h09;  // End Rx Init D to C point test Req / Resp
+          endcase
+        end
+        
+        RX_INIT_SWEEP_TEST: begin
+          case(i_msg_no)
+            1, 2: msg_sub_code = 8'h0A;  // Start Rx Init D to C eye sweep Req / Resp
+            3, 4: msg_sub_code = 8'h02;  // Clear Error Req / Resp
+            5, 6: msg_sub_code = 8'h0B;  // Results Req / Resp
+            7, 8: msg_sub_code = 8'h0D;  // End Rx Init D to C eye sweep Req / Resp
+            9 	: msg_sub_code = 8'h0C;  // Done Rx Init D to C eye sweep Resp with result
+          endcase
+        end
+      endcase
+    end
+    else begin
+      // Handle Normal Messages
+      case(i_state)
+        SBINIT: begin
+          case(i_msg_no)
+            1, 2: msg_sub_code = 8'h01;  // SBINIT done Req / Resp
+            3 	: msg_sub_code = 8'h00;  // SBINIT out of Reset
+          endcase
+        end
+        
+        MBINIT: begin
+          	case(i_sub_state)
+	            PARAM: begin
+	                msg_sub_code = 8'h00;  // PARAM config Req / Resp
+	            end
+	            CAL: begin
+	                msg_sub_code = 8'h02;  // CAL Done Req / Resp
+	            end
+	            REPAIRCLK: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h03;  // REPAIRCLK init Req / Resp
+	                3, 4: msg_sub_code = 8'h04;  // REPAIRCLK result Req / Resp
+	                5, 6: msg_sub_code = 8'h08;  // REPAIRCLK done Req / Resp
+	              endcase
+	            end
+	            REPAIRVAL: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h09;  // REPAIRVAL init Req / Resp
+	                3, 4: msg_sub_code = 8'h0A;  // REPAIRVAL result Req / Resp
+	                5, 6: msg_sub_code = 8'h0C;  // REPAIRVAL done Req / Resp
+	              endcase
+	            end
+	            REVERSALMB: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h0D;  // REVERSALMB init Req / Resp
+	                3, 4: msg_sub_code = 8'h0E;  // REVERSALMB clear error Req / Resp
+	                5, 6: msg_sub_code = 8'h0F;  // REVERSALMB result Req / Resp
+	                7, 8: msg_sub_code = 8'h10;  // REVERSALMB done Req / Resp
+	              endcase
+	            end
+	            REPAIRMB: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h11;  // REPAIRMB start Req / Resp
+	                3, 4: msg_sub_code = 8'h13;  // REPAIRMB end Req / Resp
+	                5, 6: msg_sub_code = 8'h14;  // REPAIRMB apply degrade Req / Resp
+	              endcase
+	            end
+          	endcase
+        end
+        
+        MBTRAIN: begin
+          	case(i_sub_state)
+	            VALREF: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h00;  // VALVREF start Req / Resp
+	                3, 4: msg_sub_code = 8'h01;  // VALVREF end Req / Resp
+	              endcase
+	            end
+	            DATAVREF: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h02;  // DATAVREF start Req / Resp
+	                3, 4: msg_sub_code = 8'h03;  // DATAVREF end Req / Resp
+	              endcase
+	            end
+	            SPEEDIDLE: begin
+	              msg_sub_code = 8'h04;  // SPEEDIDLE Done Req / Resp
+	            end
+	            TXSELFCAL: begin
+	                msg_sub_code = 8'h05;  // TXSELFCAL Done Req / Resp
+	            end
+	            RXCLKCAL: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h06;  // DATAVREF start Req / Resp
+	                3, 4: msg_sub_code = 8'h07;  // DATAVREF done Req / Resp
+	              endcase
+	            end
+	            VALTRAINCENTER: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h08;  // VALTRAINCENTER start Req / Resp
+	                3, 4: msg_sub_code = 8'h09;  // VALTRAINCENTER done Req / Resp
+	              endcase
+	            end
+	            VALTRAINVREF: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h0A;  // VALTRAINVREF start Req / Resp
+	                3, 4: msg_sub_code = 8'h0B;  // VALTRAINVREF done Req / Resp
+	              endcase
+	            end
+	            DATATRAINCENTER1: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h0C;  // DATATRAINCENTER1 start Req / Resp
+	                3, 4: msg_sub_code = 8'h0D;  // DATATRAINCENTER1 end Req / Resp
+	              endcase
+	            end
+	            DATATRAINVREF: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h0E;  // DATATRAINCENTER1 start Req / Resp
+	                3, 4: msg_sub_code = 8'h10;  // DATATRAINCENTER1 end Req / Resp
+	              endcase
+	            end
+	            RXDESKEW: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h11;  // RXDESKEW start Req / Resp
+	                3, 4: msg_sub_code = 8'h12;  // RXDESKEW end Req / Resp
+	              endcase
+	            end
+	            DATATRAINCENTER2: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h13;  // DATATRAINCENTER2 start Req / Resp
+	                3, 4: msg_sub_code = 8'h14;  // DATATRAINCENTER2 end Req / Resp
+	              endcase
+	            end
+	            LINKSPEED: begin
+	              case(i_msg_no)
+	                1, 2  : msg_sub_code = 8'h15;  // LINKSPEED start Req / Resp
+	                3, 4  : msg_sub_code = 8'h16;  // LINKSPEED error Req / Resp
+	                5, 6  : msg_sub_code = 8'h17;  // LINKSPEED speed degrade Req / Resp
+	                7, 8  : msg_sub_code = 8'h18;  // LINKSPEED error Req / Resp
+	                9, 10 : msg_sub_code = 8'h19;  // LINKSPEED done Req / Resp
+	                11, 12: msg_sub_code = 8'h19;  // LINKSPEED exit to phy retrain Req / Resp
+	              endcase
+	            end
+	            REPAIR: begin
+	              case(i_msg_no)
+	                1, 2: msg_sub_code = 8'h1B;  // REPAIR Init Req / Resp
+	                3, 4: msg_sub_code = 8'h1C;  // REPAIR Apply repair Req / Resp
+	                5, 6: msg_sub_code = 8'h1D;  // REPAIR End Req / Resp
+	                7, 8: msg_sub_code = 8'h1E;  // REPAIR Apply degrade Req / Resp
+	              endcase
+	            end
+           	endcase
+        end
+        
+        
+        TRAINERROR_HS: begin
+          msg_sub_code = 8'h00;  // TRAINERROR Entry Req / Resp
+        end
+        
+        PHYRETRAIN: begin
+          msg_sub_code = 8'h01;  // PHYRETRAIN.retrain start Req / Resp
+        end
+      endcase
+    end
+  end
 end
-
 
 
 /*------------------------------------------------------------------------------
 -- Message Info Encoding  
 ------------------------------------------------------------------------------*/
-always @(posedge i_clk or negedge i_rst_n) begin
-	if (~i_rst_n) begin
-		msg_info <= 0;
-	end
-	else if(LTSM_MSG_VALID) begin
+always @(*) begin
+	if(LTSM_MSG_VALID) begin
 		if (TX_OR_RX_INT_D_TO_C_RESULTS_RESP) begin
 			msg_info <= {{10{1'b0}}, i_msg_info[1:0], {4{1'b0}}};
 		end
@@ -439,7 +408,7 @@ end
 /*------------------------------------------------------------------------------
 -- Req Req Counter  
 ------------------------------------------------------------------------------*/
-always @(posedge i_clk or negedge i_rst_n) begin
+/*always @(posedge i_clk or negedge i_rst_n) begin
 	if (~i_rst_n) begin
 		req_req_cntr 	<= 0;
 	end
@@ -451,29 +420,31 @@ always @(posedge i_clk or negedge i_rst_n) begin
 			req_req_cntr 	<= 0;
 		end
 	end
-end
+end*/
 
 
 /*------------------------------------------------------------------------------
 -- Previous State / SubState / Test  
 ------------------------------------------------------------------------------*/
-always @(posedge i_clk or negedge i_rst_n) begin
+/*always @(posedge i_clk or negedge i_rst_n) begin
 	if (~i_rst_n) begin
+		i_msg_no_reg 					<= 0;
 		state_reg 						<= 0;
 		sub_state_reg 					<= 0;
 		i_tx_point_sweep_test_en_reg	<= 0;
 	end
 	else if(i_msg_valid) begin
+		i_msg_no_reg 					<= i_msg_no;
 		state_reg 						<= i_state;
 		sub_state_reg 					<= i_sub_state;
 		i_tx_point_sweep_test_en_reg 	<= i_tx_point_sweep_test_en;
 	end
-end
+end*/
 
 /*------------------------------------------------------------------------------
 -- Internal flag to tell that all header Are updated and can use them  
 ------------------------------------------------------------------------------*/
-always @(posedge i_clk or negedge i_rst_n) begin
+/*always @(posedge i_clk or negedge i_rst_n) begin
 	if (~i_rst_n) begin
 		header_members_valid <= 0;
 	end
@@ -486,7 +457,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
 	else begin
 		header_members_valid <= 0;
 	end
-end
+end*/
 
 
 /*------------------------------------------------------------------------------
@@ -497,31 +468,17 @@ always @(posedge i_clk or negedge i_rst_n) begin
 		o_header 			<= 0;
 		o_header_valid 		<= 0;
 	end
-	else if (header_members_valid) begin
-		if (!i_rdi_msg) begin
-			o_header [4:0] 		<= opcode;
-			o_header [13:5] 	<= 0;
-			o_header [21:14] 	<= msg_code;
-			o_header [28:22] 	<= 0;
-			o_header [31:29] 	<= scrid;
-			o_header [39:32] 	<= msg_sub_code;
-			o_header [55:40] 	<= msg_info;
-			o_header [58:56] 	<= dstid;
-			o_header [61:59] 	<= 0;
-			o_header_valid 		<= 1;	
-		end
-		else begin
-			o_header [4:0] 		<= 5'b10010;
-			o_header [13:5] 	<= 0;
-			o_header [16:14] 	<= i_rdi_msg_code;
-			o_header [28:22] 	<= 0;
-			o_header [31:29] 	<= scrid;
-			o_header [35:32] 	<= i_rdi_msg_sub_code;
-			o_header [55:40] 	<= rdi_msg_info;
-			o_header [58:56] 	<= dstid;
-			o_header [61:59] 	<= 0;
-			o_header_valid 		<= 1;
-		end
+	else if (i_msg_valid) begin
+		o_header [4:0] 		<= opcode;
+		o_header [13:5] 	<= 0;
+		o_header [21:14] 	<= msg_code;
+		o_header [28:22] 	<= 0;
+		o_header [31:29] 	<= scrid;
+		o_header [39:32] 	<= msg_sub_code;
+		o_header [55:40] 	<= msg_info;
+		o_header [58:56] 	<= dstid;
+		o_header [61:59] 	<= 0;
+		o_header_valid 		<= 1;
 	end
 	else begin
 		o_header_valid 			<= 0;
@@ -532,7 +489,7 @@ end
 /*------------------------------------------------------------------------------
 -- RDI MsgInfo  
 ------------------------------------------------------------------------------*/
-always @(posedge i_clk or negedge i_rst_n) begin
+/*always @(posedge i_clk or negedge i_rst_n) begin
 	if (~i_rst_n) begin
 		rdi_msg_info <= 0;
 	end
@@ -563,7 +520,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
 			default : rdi_msg_info <= 16'h0000;
 		endcase
 	end
-end
+end*/
 
 
 
