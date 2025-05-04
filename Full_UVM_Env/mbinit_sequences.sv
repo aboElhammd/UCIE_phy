@@ -512,7 +512,7 @@ bit first_time=1;
 				msg_subcode=msg_subcode-1;
 			end else if(resp.resp_detected && first_time) begin
 				first_time=0;
-				send_sb_message_without_data(8'hA5,8'h13,16'h0000);       // Edited by yahya
+				send_sb_message_without_data(8'hA5,8'h13,16'h0000);
 			end else if (!resp.resp_detected) begin //case that should never happens
 				`uvm_info("MBINIT sequence:repair mb" , "calling the wait for response task ", UVM_MEDIUM);
 				wait_for_response();

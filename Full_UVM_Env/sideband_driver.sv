@@ -117,7 +117,7 @@ class sideband_driver extends  uvm_driver #(sideband_sequence_item);
 	task drive_item(sideband_sequence_item trans);
 		// //encoding delay 
 			if (!trans.pattern_packet) begin
-				repeat(80)
+				repeat(25)
 					@(posedge sb_vif_intf.clk);
 			end
 
@@ -150,7 +150,7 @@ class sideband_driver extends  uvm_driver #(sideband_sequence_item);
 			if(trans.data_packet) begin
 				// //encoding delay 
 					if (!trans.pattern_packet) begin
-						repeat(80)
+						repeat(25)
 							@(posedge sb_vif_intf.clk);
 					end
 				//waititng for 64 cycle to mimics the serializer delay

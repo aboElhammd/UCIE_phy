@@ -9,19 +9,21 @@ class MB_monitor extends uvm_monitor;
     int file; // File descriptor
 
     integer next_PRBS_Pattern = 0;
+    integer cntr = 1;
     
     localparam SER_WIDTH = 32;
     logic [SER_WIDTH-1:0] Data_per_lane_ID[16];
+    logic [3:0] seq_type;
 
     // PRBS Pattern Storage
-	reg [31:0] prbs_mem_0 [0:26214]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_1 [0:26214]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_2 [0:26214]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_3 [0:26214]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_4 [0:26214]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_5 [0:26214]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_6 [0:26214]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_7 [0:26214]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_0 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_1 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_2 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_3 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_4 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_5 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_6 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_7 [0:262144]; // 8 lanes x 262144 words
 
     /*-------------------------------------------------------------------------------
     -- UVM Factory register
@@ -63,6 +65,8 @@ class MB_monitor extends uvm_monitor;
         if (!file) begin
             `uvm_error("MB_MONITOR", "Failed to open mon_data.txt for writing")
         end
+        load_patterns();
+        init_data_per_lane_id();
     endfunction : build_phase
 
     // Run Phase
@@ -99,33 +103,88 @@ class MB_monitor extends uvm_monitor;
 
             mon_ap.write(mon_seq_item);
 
+            
+
+            //@(mon_vif.o_serliazer_data_en);
             case (mon_seq_item.seq_type)
                 4'b1000: begin
-                    // `uvm_info("MB_MONITOR", $sformatf("Sequence type LFSR detected"), UVM_MEDIUM)
-                    load_patterns();
+                    seq_type = 4'b1000;
                     check_LFSR_pattern(mon_seq_item);
-                    next_PRBS_Pattern ++;
-                    // `uvm_info("MB_MONITOR", "WE ARE CHECKING LFSR PATTERN", UVM_MEDIUM);
+                    repeat(31) @(posedge mon_vif.i_clk);
                 end
                 4'b0100: begin
-                    // `uvm_info("MB_MONITOR", $sformatf("Sequence type PER_LANE_ID detected"), UVM_MEDIUM)
-                    init_data_per_lane_id();
+           		    seq_type = 4'b0100;
                     check_per_lane_id_pattern(mon_seq_item);
-                    // `uvm_info("MB_MONITOR", "WE ARE CHECKING PER_LANE ID PATTERN", UVM_MEDIUM);
+                    repeat(31) @(posedge mon_vif.i_clk);
                 end
                 4'b0010: begin
-                    // `uvm_info("MB_MONITOR", $sformatf("Sequence type VALID detected"), UVM_MEDIUM)
+                    seq_type = 4'b0010;
                     check_valid_pattern(mon_seq_item);
-                    // `uvm_info("MB_MONITOR", "WE ARE CHECKING VALID PATTERN", UVM_MEDIUM);
+                    repeat(31) @(posedge mon_vif.i_clk);
                 end
                 4'b0001: begin
-                    // `uvm_info("MB_MONITOR", $sformatf("Sequence type CLK detected"), UVM_MEDIUM)
+                    //cntr ++;
+                    seq_type = 4'b0001;
                     check_clock_pattern(mon_seq_item);
-                    // `uvm_info("MB_MONITOR", "WE ARE CHECKING CLK PATTERN", UVM_MEDIUM);
                 end
                 4'b0000: begin
-                    //`uvm_info("MB_MONITOR", $sformatf("Sequence type CLK detected"), UVM_MEDIUM)
-                    next_PRBS_Pattern = 0;
+                	case (seq_type)
+		                4'b1000: begin
+		                	if (mon_vif.o_serliazer_data_en) begin
+		                		check_LFSR_pattern(mon_seq_item);
+		                    	repeat(31) @(posedge mon_vif.i_clk);
+		                	end
+		                	else if (cntr != 1) begin
+		                		$display("***************************************************************************");
+		                    	$display("///////////////////////////////////////////////////////////////////////////");
+		                    	`uvm_info("MB_MONITOR", $sformatf("LFSR Pattern no. %0d patterns", cntr), UVM_MEDIUM)
+		                    	$display("///////////////////////////////////////////////////////////////////////////");
+		                    	$display("***************************************************************************");
+		                    	if (cntr != 128)
+		                    		`uvm_error("MB_MONITOR", $sformatf("LFSR Pattern is %0d less than 128", cntr))
+                				seq_type = 4'b0000;
+		                	end                    
+		                end
+		                4'b0100: begin
+		                	if (mon_vif.o_serliazer_data_en) begin
+		                		check_per_lane_id_pattern(mon_seq_item);
+		                    	repeat(31) @(posedge mon_vif.i_clk);
+		                	end
+		                	else if (cntr != 1) begin
+		                		$display("***************************************************************************");
+		                    	$display("///////////////////////////////////////////////////////////////////////////");
+		                    	`uvm_info("MB_MONITOR", $sformatf("Per-Lane Pattern no. %0d patterns", cntr), UVM_MEDIUM)
+		                    	$display("///////////////////////////////////////////////////////////////////////////");
+		                    	$display("***************************************************************************");
+		                    	if (cntr != 64)
+		                    		`uvm_error("MB_MONITOR", $sformatf("Per-Lane ID Pattern is %0d less than 64", cntr))
+                				seq_type = 4'b0000;
+		                	end 
+		                end
+		                4'b0010: begin	
+		                	if (mon_vif.o_serliazer_valid_en) begin
+			                    check_valid_pattern(mon_seq_item);
+			                    repeat(31) @(posedge mon_vif.i_clk);
+			                end
+			                else if (cntr != 1) begin
+			                	$display("***************************************************************************");
+		                    	$display("///////////////////////////////////////////////////////////////////////////");
+		                    	`uvm_info("MB_MONITOR", $sformatf("VALTRAIN Pattern no. %0d patterns", cntr), UVM_MEDIUM)
+		                    	$display("///////////////////////////////////////////////////////////////////////////");
+		                    	$display("***************************************************************************");
+		                    	if (cntr != 32)
+		                    		`uvm_error("MB_MONITOR", $sformatf("VALTRAIN Pattern is %0d less than 32", cntr))
+                				seq_type = 4'b0000;
+		                	end 
+		                end
+		                4'b0001: begin
+                			seq_type = 4'b0000;
+	                	end
+	                	4'b0000: begin
+		                	next_PRBS_Pattern = 0;
+                			cntr = 1;
+	                	end
+	                endcase
                 end
             endcase
         end
@@ -134,108 +193,88 @@ class MB_monitor extends uvm_monitor;
 
     // Check LFSR pattern for all 16 lanes
     task check_LFSR_pattern(MB_sequence_item mon_seq_item);
-    	// static integer per_lane_id_pattern_Correct_count 	= 0;
-    	// static integer per_lane_id_pattern_Error_count 		= 0; 
+
+    	logic [SER_WIDTH-1:0] lane_data;
+        logic [SER_WIDTH-1:0] lane_data_GM;
 
         if (mon_vif.o_serliazer_data_en) begin
             for (int i = 0; i < 16; i++) begin
-                logic [SER_WIDTH-1:0] lane_data;
-                logic [SER_WIDTH-1:0] lane_data_GM;
-                for (int i = 0; i < 16; i++) begin
-	                case (i)
-	                    0:  begin 
-	                    	lane_data 		= mon_seq_item.o_lfsr_tx_lane_0;
-	                    	lane_data_GM 	= prbs_mem_0 [next_PRBS_Pattern];
-	                    end
-	                    1:  begin 
-	                    	lane_data 		= mon_seq_item.o_lfsr_tx_lane_1;
-	                    	lane_data_GM 	= prbs_mem_1 [next_PRBS_Pattern];
-	                    end
-	                    2:  begin 
-	                    	lane_data 	 	= mon_seq_item.o_lfsr_tx_lane_2;
-	                    	lane_data_GM 	= prbs_mem_2 [next_PRBS_Pattern];
-	                    end
-	                    3:  begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_3;
-	                    	lane_data_GM 	= prbs_mem_3 [next_PRBS_Pattern];
-	                    end
-	                    4:  begin 
-	                    	lane_data 	 	= mon_seq_item.o_lfsr_tx_lane_4;
-	                    	lane_data_GM 	= prbs_mem_4 [next_PRBS_Pattern];
-	                    end
-	                    5:  begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_5;
-	                    	lane_data_GM 	= prbs_mem_5 [next_PRBS_Pattern];
-	                    end
-	                    6:  begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_6;
-	                    	lane_data_GM 	= prbs_mem_6 [next_PRBS_Pattern];
-	                    end
-	                    7:  begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_7;
-	                    	lane_data_GM 	= prbs_mem_7 [next_PRBS_Pattern];
-	                    end
-	                    8:  begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_8;
-	                    	lane_data_GM 	= prbs_mem_0 [next_PRBS_Pattern];
-	                    end
-	                    9:  begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_9;
-	                    	lane_data_GM 	= prbs_mem_1 [next_PRBS_Pattern];
-	                    end
-	                    10: begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_10;
-	                    	lane_data_GM 	= prbs_mem_2 [next_PRBS_Pattern];
-	                    end
-	                    11: begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_11;
-	                    	lane_data_GM 	= prbs_mem_3 [next_PRBS_Pattern];
-	                    end
-	                    12: begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_12;
-	                    	lane_data_GM 	= prbs_mem_4 [next_PRBS_Pattern];
-	                    end
-	                    13: begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_13;
-	                    	lane_data_GM 	= prbs_mem_5 [next_PRBS_Pattern];
-	                    end
-	                    14: begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_14;
-	                    	lane_data_GM 	= prbs_mem_6 [next_PRBS_Pattern];
-	                    end
-	                    15: begin 
-	                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_15;
-	                    	lane_data_GM 	= prbs_mem_7 [next_PRBS_Pattern];
-	                    end
-	                endcase
-	            end
+                case (i)
+                    0:  begin 
+                    	lane_data 		= mon_seq_item.o_lfsr_tx_lane_0;
+                    	lane_data_GM 	= prbs_mem_0 [next_PRBS_Pattern];
+                    end
+                    1:  begin 
+                    	lane_data 		= mon_seq_item.o_lfsr_tx_lane_1;
+                    	lane_data_GM 	= prbs_mem_1 [next_PRBS_Pattern];
+                    end
+                    2:  begin 
+                    	lane_data 	 	= mon_seq_item.o_lfsr_tx_lane_2;
+                    	lane_data_GM 	= prbs_mem_2 [next_PRBS_Pattern];
+                    end
+                    3:  begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_3;
+                    	lane_data_GM 	= prbs_mem_3 [next_PRBS_Pattern];
+                    end
+                    4:  begin 
+                    	lane_data 	 	= mon_seq_item.o_lfsr_tx_lane_4;
+                    	lane_data_GM 	= prbs_mem_4 [next_PRBS_Pattern];
+                    end
+                    5:  begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_5;
+                    	lane_data_GM 	= prbs_mem_5 [next_PRBS_Pattern];
+                    end
+                    6:  begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_6;
+                    	lane_data_GM 	= prbs_mem_6 [next_PRBS_Pattern];
+                    end
+                    7:  begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_7;
+                    	lane_data_GM 	= prbs_mem_7 [next_PRBS_Pattern];
+                    end
+                    8:  begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_8;
+                    	lane_data_GM 	= prbs_mem_0 [next_PRBS_Pattern];
+                    end
+                    9:  begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_9;
+                    	lane_data_GM 	= prbs_mem_1 [next_PRBS_Pattern];
+                    end
+                    10: begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_10;
+                    	lane_data_GM 	= prbs_mem_2 [next_PRBS_Pattern];
+                    end
+                    11: begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_11;
+                    	lane_data_GM 	= prbs_mem_3 [next_PRBS_Pattern];
+                    end
+                    12: begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_12;
+                    	lane_data_GM 	= prbs_mem_4 [next_PRBS_Pattern];
+                    end
+                    13: begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_13;
+                    	lane_data_GM 	= prbs_mem_5 [next_PRBS_Pattern];
+                    end
+                    14: begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_14;
+                    	lane_data_GM 	= prbs_mem_6 [next_PRBS_Pattern];
+                    end
+                    15: begin 
+                    	lane_data   	= mon_seq_item.o_lfsr_tx_lane_15;
+                    	lane_data_GM 	= prbs_mem_7 [next_PRBS_Pattern];
+                    end
+                endcase
 
                 if (lane_data == lane_data_GM) begin
-                    // `uvm_info("MB_MONITOR", $sformatf("Data o_lfsr_tx_lane_%0d is correct: %0h", i, lane_data), UVM_MEDIUM)
-                    // per_lane_id_pattern_Correct_count ++;
+                    // `uvm_info("MB_MONITOR", $sformatf("Data o_lfsr_tx_lane_%0d is correct: %0h,  next_PRBS_Pattern %0d", i, lane_data, next_PRBS_Pattern), UVM_MEDIUM)
                 end else begin
-                    `uvm_error("MB_MONITOR", $sformatf("Data o_lfsr_tx_lane_%0d is incorrect: expected %0h, got %0h", 
-                                                       i, lane_data_GM, lane_data))
-                	// per_lane_id_pattern_Error_count ++;
+                    `uvm_error("MB_MONITOR", $sformatf("Data o_lfsr_tx_lane_%0d is incorrect: expected %0h, got %0h,  next_PRBS_Pattern %0d", 
+                                                       i, lane_data_GM, lane_data, next_PRBS_Pattern))
                 end
             end
-            // `uvm_info("MB_MONITOR",
-			// "
-			// *************************************************************per_lane_id_pattern checking ended**************************************************
-			// ", UVM_MEDIUM)
-
-			// uvm_info("PER_LANE_ID_CHECK", $sformatf(
-			// 		 "per_lane_id_pattern checking report:\n"  \
-			// 		 "per_lane_id_pattern_Correct_count = %0d\n"  \
-			// 		 "per_lane_id_pattern_Error_count = %0d",
-			// 		  per_lane_id_pattern_Correct_count,
-			// 		  per_lane_id_pattern_Error_count
-			// 		), UVM_MEDIUM);
-
-			// `uvm_info("MB_MONITOR",
-			// "
-			// *************************************************************************************************************************************************
-			// ", UVM_MEDIUM)
+        	next_PRBS_Pattern ++;
+        	cntr ++;
         end
     endtask : check_LFSR_pattern
 
@@ -243,8 +282,6 @@ class MB_monitor extends uvm_monitor;
 
     // Check per-lane ID pattern for all 16 lanes
     task check_per_lane_id_pattern(MB_sequence_item mon_seq_item);
-    	// static integer per_lane_id_pattern_Correct_count 	= 0;
-    	// static integer per_lane_id_pattern_Error_count 		= 0; 
 
         if (mon_vif.o_serliazer_data_en) begin
             for (int i = 0; i < 16; i++) begin
@@ -270,46 +307,26 @@ class MB_monitor extends uvm_monitor;
 
                 if (lane_data == Data_per_lane_ID[i]) begin
                     // `uvm_info("MB_MONITOR", $sformatf("Data o_lfsr_tx_lane_%0d is correct: %0h", i, lane_data), UVM_MEDIUM)
-                    // per_lane_id_pattern_Correct_count ++;
                 end else begin
                     `uvm_error("MB_MONITOR", $sformatf("Data o_lfsr_tx_lane_%0d is incorrect: expected %0h, got %0h", 
                                                        i, Data_per_lane_ID[i], lane_data))
-                	// per_lane_id_pattern_Error_count ++;
                 end
             end
-            // `uvm_info("MB_MONITOR",
-			// "
-			// *************************************************************per_lane_id_pattern checking ended**************************************************
-			// ", UVM_MEDIUM)
-
-			// uvm_info("PER_LANE_ID_CHECK", $sformatf(
-			// 		 "per_lane_id_pattern checking report:\n"  \
-			// 		 "per_lane_id_pattern_Correct_count = %0d\n"  \
-			// 		 "per_lane_id_pattern_Error_count = %0d",
-			// 		  per_lane_id_pattern_Correct_count,
-			// 		  per_lane_id_pattern_Error_count
-			// 		), UVM_MEDIUM);
-
-			// `uvm_info("MB_MONITOR",
-			// "
-			// *************************************************************************************************************************************************
-			// ", UVM_MEDIUM)
+            cntr ++;
         end
     endtask : check_per_lane_id_pattern
 
     task check_valid_pattern(MB_sequence_item mon_seq_item);
-    	// integer valid_pattern_Correct_count 	= 0;
-    	// integer valid_pattern_Error_count 		= 0; 
 
         if (mon_vif.o_serliazer_valid_en) begin
             logic [SER_WIDTH-1:0] valid_pattern = 32'hf0f0f0f0;
             if (mon_seq_item.o_TVLD_L == valid_pattern) begin
                 //`uvm_info("MB_MONITOR", $sformatf("Data o_TVLD_L is correct: %0h", mon_seq_item.o_TVLD_L), UVM_MEDIUM)
-                // valid_pattern_Correct_count ++;
             end else begin
                 `uvm_error("MB_MONITOR", $sformatf("Data o_TVLD_L is incorrect: expected %0h, got %0h", valid_pattern, mon_seq_item.o_TVLD_L))
                 // valid_pattern_Error_count ++;
             end
+            cntr ++;
         end
     endtask : check_valid_pattern
 

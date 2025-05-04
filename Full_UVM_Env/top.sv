@@ -153,6 +153,18 @@ initial begin
     uvm_config_db#(virtual sideband_interface)::set(null, "uvm_test_top", "my_SB_vif", sb_intf);
     fork
     run_test("PHY_test");
+    // run_test("linkspeed_speed_degrade_vs_done_test");
+    // run_test("linkspeed_done_vs_speed_degrade_test");
+    // run_test("linkspeed_done_vs_repair_test");
+    // run_test("linkspeed_done_vs_phyretrain_test");  
+    // run_test("linkspeed_repair_vs_done_test");
+    // run_test("linkspeed_repair_vs_repair_test");
+    // run_test("linkspeed_repair_vs_speed_degrade_test");
+    // run_test("linkspeed_repair_vs_phyretrain_test");
+    // run_test("linkspeed_speed_degrade_vs_done_test");
+    // run_test("linkspeed_speed_degrade_vs_repair_test");
+    // run_test("linkspeed_speed_degrade_vs_phyretrain_test");
+    // run_test("linkspeed_speed_degrade_vs_speed_degrade_test");
     begin
         i_rst_n=0;
         #50

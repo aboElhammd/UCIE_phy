@@ -370,8 +370,8 @@ endclass : LFSR_CLEAR_handshake
 /*------------------------------------------------------------------------------
 --result request and done handshake  
 ------------------------------------------------------------------------------*/
-class tx_initiated_point_test_result_and_done_handshakes #(parameter lanes_result =16'hffff) extends point_test_seqeunces_base_class;
-	`uvm_object_utils(tx_initiated_point_test_result_and_done_handshakes)
+class tx_initiated_point_test_result_and_done_handshakes #(parameter lanes_result = 16'hffff) extends point_test_seqeunces_base_class;
+	`uvm_object_param_utils(tx_initiated_point_test_result_and_done_handshakes #(lanes_result))
 	task body();
 		bit first_time=1;
 		bit [7:0]msg_subcode=8'h03;
