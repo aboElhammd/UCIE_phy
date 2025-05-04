@@ -54,7 +54,7 @@ class MB_Per_Lane_ID_Pattern_sequence extends  uvm_sequence #(MB_sequence_item);
 			Per_Lane_ID_Pattern_trans.i_RVLD_L 			 = {4{8'b11110000}};
 			Per_Lane_ID_Pattern_trans.seq_type 			 = 4'b0100;
 
-			if (i == 127)
+			if (i == 63)
 				Per_Lane_ID_Pattern_trans.last_seq = 1;
 			else 
 				Per_Lane_ID_Pattern_trans.last_seq = 0;
@@ -86,14 +86,14 @@ class MB_LFSR_Pattern_sequence extends  uvm_sequence #(MB_sequence_item);
 	MB_sequence_item LFSR_Pattern_trans;
 	
 	// PRBS Pattern Storage
-	reg [31:0] prbs_mem_0 [0:26244]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_1 [0:26244]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_2 [0:26244]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_3 [0:26244]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_4 [0:26244]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_5 [0:26244]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_6 [0:26244]; // 8 lanes x 262144 words
-	reg [31:0] prbs_mem_7 [0:26244]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_0 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_1 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_2 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_3 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_4 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_5 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_6 [0:262144]; // 8 lanes x 262144 words
+	reg [31:0] prbs_mem_7 [0:262144]; // 8 lanes x 262144 words
 
 /*-------------------------------------------------------------------------------
 -- UVM Factory register
@@ -231,11 +231,11 @@ class MB_VALTRAIN_Pattern_sequence extends  uvm_sequence #(MB_sequence_item);
 			else 
 				VALTRAIN_Pattern_trans.last_seq = 0;
 			finish_item(VALTRAIN_Pattern_trans);
-			`uvm_info("MB_VALTRAIN_Pattern_sequence" ,
+		end
+		`uvm_info("MB_VALTRAIN_Pattern_sequence" ,
 			"
 			*************************************************************MB_VALTRAIN_Pattern_sequence has Ended**************************************************
 			", UVM_MEDIUM);
-		end
 	endtask : body
 
 endclass : MB_VALTRAIN_Pattern_sequence

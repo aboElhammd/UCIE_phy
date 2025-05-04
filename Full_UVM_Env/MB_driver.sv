@@ -72,19 +72,20 @@ class MB_driver extends  uvm_driver #(MB_sequence_item);
 
 	task deser_valid();
 		// In case of Data or PerLane ID pattern
-		if (drv_seq_item.seq_type == 3'b1000 || drv_seq_item.seq_type == 3'b0100) begin
+		if (drv_seq_item.seq_type == 4'b1000 || drv_seq_item.seq_type == 4'b0100) begin
 			drv_vif.i_deser_valid_val 	<= 1'b1;
 			drv_vif.i_deser_valid_data 	<= 1'b1;
 			drv_vif.seq_type 			<= drv_seq_item.seq_type;
 			repeat(32) @(posedge drv_vif.i_clk);
 			if (drv_seq_item.last_seq) begin
+				`uvm_info("***************************", "DAKHLNAAA", UVM_LOW);
 				drv_vif.i_deser_valid_val 	<= 1'b0;
 				drv_vif.i_deser_valid_data 	<= 1'b0;
 				drv_vif.seq_type 			<= 4'b0000;
 			end
 		end
 		// In case of VALTRAIN pattern
-		else if (drv_seq_item.seq_type == 3'b0010) begin
+		else if (drv_seq_item.seq_type == 4'b0010) begin
 			//`uvm_info("BNB3T VALID SEQQQ", "VALIDD SEQQ", UVM_LOW);
 			drv_vif.i_deser_valid_val 	<= 1'b1;
 			drv_vif.i_deser_valid_data 	<= 1'b0;
@@ -97,12 +98,15 @@ class MB_driver extends  uvm_driver #(MB_sequence_item);
 			end
 		end
 		// In case of CLK pattern
-		else if (drv_seq_item.seq_type == 3'b0001) begin
+		else if (drv_seq_item.seq_type == 4'b0001) begin
 			drv_vif.i_deser_valid_val 	<= 1'b0;
 			drv_vif.i_deser_valid_data 	<= 1'b0;
 			drv_vif.seq_type 			<= drv_seq_item.seq_type;
 			@(posedge drv_vif.i_clk);
 			//`uvm_info( "Driver CLK Pattern" ,$sformatf("i_CKP = %0d, i_CKN = %0d, i_TRACK = %0d",drv_vif.i_CKP, drv_vif.i_CKN, drv_vif.i_TRACK)  ,UVM_MEDIUM);
+			if (drv_seq_item.last_seq) begin
+				drv_vif.seq_type 			<= 4'b0000;
+			end
 		end
 	endtask : deser_valid
 

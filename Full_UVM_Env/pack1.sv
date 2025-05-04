@@ -48,8 +48,17 @@ package pack1;
 	`include "sideband_subscriber.sv"
 	`include "PHY_env.sv"
 	`include "PHY_test.sv"
-	
-	
+	// `include "linkspeed_done_vs_phyretrain_test.sv"
+	// `include "linkspeed_done_vs_repair_test.sv"
+	// `include "linkspeed_done_vs_speed_degrade_test.sv"
+	// `include "linkspeed_repair_vs_done_test.sv"
+	// `include "linkspeed_repair_vs_phyretrain_test.sv"
+	// `include "linkspeed_repair_vs_repair_test.sv"
+	// `include "linkspeed_repair_vs_speed_degrade_test.sv"
+	`include "linkspeed_speed_degrade_vs_done_test.sv"
+	// `include "linkspeed_speed_degrade_vs_phyretrain_test.sv"
+	// `include "linkspeed_speed_degrade_vs_repair_test.sv"
+	// `include "linkspeed_speed_degrade_vs_speed_degrade_test.sv"
 
 
 endpackage : pack1
