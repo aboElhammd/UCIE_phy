@@ -1,5 +1,5 @@
-class linkspeed_speed_degrade_vs_done_test extends  uvm_test;
-	
+class linkspeed_done_vs_speed_degrade_test extends  uvm_test;
+
 /*-------------------------------------------------------------------------------
 -- Interface, port, fields
 -------------------------------------------------------------------------------*/
@@ -45,17 +45,17 @@ class linkspeed_speed_degrade_vs_done_test extends  uvm_test;
 	MBTRAIN_RXDESKEW_Vsequence 														MBTRAIN_RXDESKEW_Vseq;
 	MBTRAIN_DATATRAINCENTER2_Vsequence 	#(.lanes_result(16'hffff))					MBTRAIN_DATATRAINCENTER2_Vseq;
 	MBTRAIN_LINKSPEED_Vsequence 		#(.lanes_result(16'hffff), .TEST_TYPE(0))	MBTRAIN_LINKSPEED_Vseq;
-	MBTRAIN_LINKSPEED_Vsequence 		#(.lanes_result(16'haffa), .TEST_TYPE(1))	MBTRAIN_LINKSPEED_bad_Vseq;
-	
+	MBTRAIN_LINKSPEED_Vsequence 		#(.lanes_result(16'hffff), .TEST_TYPE(6))	MBTRAIN_LINKSPEED_bad_Vseq;
+
 /*-------------------------------------------------------------------------------
 -- UVM Factory register
 -------------------------------------------------------------------------------*/
-	`uvm_component_utils(linkspeed_speed_degrade_vs_done_test)
+	`uvm_component_utils(linkspeed_done_vs_speed_degrade_test)
 
 /*------------------------------------------------------------------------------
 --new  
 ------------------------------------------------------------------------------*/
-	function  new(string name="linkspeed_speed_degrade_vs_done_test",uvm_component parent=null);
+	function  new(string name="linkspeed_done_vs_speed_degrade_test",uvm_component parent=null);
 			super.new(name,parent);
 	endfunction : new
 
@@ -111,20 +111,21 @@ class linkspeed_speed_degrade_vs_done_test extends  uvm_test;
 		MBTRAIN_RXDESKEW_Vseq 			= MBTRAIN_RXDESKEW_Vsequence::type_id::create("MBTRAIN_RXDESKEW_Vseq");
 		MBTRAIN_DATATRAINCENTER2_Vseq 	= MBTRAIN_DATATRAINCENTER2_Vsequence #(.lanes_result(16'hffff))::type_id::create("MBTRAIN_DATATRAINCENTER2_Vseq");
 		MBTRAIN_LINKSPEED_Vseq 			= MBTRAIN_LINKSPEED_Vsequence #(.lanes_result(16'hffff), .TEST_TYPE(0))::type_id::create("MBTRAIN_LINKSPEED_Vseq");
-		MBTRAIN_LINKSPEED_bad_Vseq 		= MBTRAIN_LINKSPEED_Vsequence #(.lanes_result(16'haffa), .TEST_TYPE(1))::type_id::create("MBTRAIN_LINKSPEED_bad_Vseq");
+		MBTRAIN_LINKSPEED_bad_Vseq 		= MBTRAIN_LINKSPEED_Vsequence #(.lanes_result(16'hffff), .TEST_TYPE(6))::type_id::create("MBTRAIN_LINKSPEED_bad_Vseq");
 
 		
 	endfunction : build_phase
-	/*------------------------------------------------------------------------------
-	--connect phase   
-	------------------------------------------------------------------------------*/
+
+/*------------------------------------------------------------------------------
+--connect phase   
+------------------------------------------------------------------------------*/
 	function void connect_phase(uvm_phase phase);
 		super.connect_phase(phase);
 		$display("inside test in connect_phase ");
 	endfunction : connect_phase
-	/*------------------------------------------------------------------------------
-	--run phase   
-	------------------------------------------------------------------------------*/
+/*------------------------------------------------------------------------------
+--run phase   
+------------------------------------------------------------------------------*/
 	task run_phase(uvm_phase phase);
 		super.run_phase(phase);
 		$display("inside test in run phase");
@@ -178,7 +179,7 @@ class linkspeed_speed_degrade_vs_done_test extends  uvm_test;
 		////////////////////////////////////////////////// MBTRAIN //////////////////////////////////////////////////////////////////
 
 		mbtrain_speed_idle_seq.start(env.SB_agt.sequencer);
-
+		
 		mbtrain_tx_self_cal_seq.start(env.SB_agt.sequencer);
 		
 		mbtrain_rx_clk_cal_seq.start(env.SB_agt.sequencer);
@@ -196,7 +197,8 @@ class linkspeed_speed_degrade_vs_done_test extends  uvm_test;
 		MBTRAIN_DATATRAINCENTER2_Vseq.start(env.V_sqr);
 
 		MBTRAIN_LINKSPEED_Vseq.start(env.V_sqr);
-		#1000000;
+		
+		#100000;
 		phase.drop_objection(this);
 	endtask : run_phase
-endclass : linkspeed_speed_degrade_vs_done_test
+endclass : linkspeed_done_vs_speed_degrade_test

@@ -16,8 +16,8 @@ LTSM_SB_MB LTSM_SB_MB_inst_1 (
 
     ///////////////////////////////////////
     // clocks and resets 
-    .i_pll_mb_clk                     (i_ser_clk_4G),
-    .i_pll_sb_clk                  (i_clk_sb),
+    .i_pll_mb_clk               (i_ser_clk_4G),
+    .i_pll_sb_clk               (i_clk_sb),
     .i_RCKP                     (MB_intf.i_CKP),
     .i_RCKN                     (MB_intf.i_CKN),
     .i_RTRACK                   (MB_intf.i_TRACK),
@@ -154,15 +154,15 @@ initial begin
     fork
     //run_test("PHY_test");
     //run_test("linkspeed_speed_degrade_vs_done_test");
-    // run_test("linkspeed_done_vs_speed_degrade_test");
+    //run_test("linkspeed_done_vs_speed_degrade_test");
     // run_test("linkspeed_done_vs_repair_test");
-    // run_test("linkspeed_done_vs_phyretrain_test");  
+     run_test("linkspeed_done_vs_phyretrain_test");  
     // run_test("linkspeed_repair_vs_done_test");
     // run_test("linkspeed_repair_vs_repair_test");
     // run_test("linkspeed_repair_vs_speed_degrade_test");
     // run_test("linkspeed_repair_vs_phyretrain_test");
     //run_test("linkspeed_speed_degrade_vs_repair_test");
-    run_test("linkspeed_speed_degrade_vs_phyretrain_test");
+    //run_test("linkspeed_speed_degrade_vs_phyretrain_test");
     //run_test("linkspeed_speed_degrade_vs_speed_degrade_test");
     begin
         i_rst_n=0;

@@ -163,14 +163,14 @@ class MB_LFSR_Pattern_sequence extends  uvm_sequence #(MB_sequence_item);
 		//for (int lane = 0; lane < 8; lane++) begin
 		   // string filename;
 		   // $sformat(filename, "PRBS_GM_Lane_%0d.txt", lane);
-		    $readmemh("PRBS_GM_Lane_0.txt", prbs_mem_0);
-		    $readmemh("PRBS_GM_Lane_1.txt", prbs_mem_1);
-		    $readmemh("PRBS_GM_Lane_2.txt", prbs_mem_2);
-		    $readmemh("PRBS_GM_Lane_3.txt", prbs_mem_3);
-		    $readmemh("PRBS_GM_Lane_4.txt", prbs_mem_4);
-		    $readmemh("PRBS_GM_Lane_5.txt", prbs_mem_5);
-		    $readmemh("PRBS_GM_Lane_6.txt", prbs_mem_6);
-		    $readmemh("PRBS_GM_Lane_7.txt", prbs_mem_7);
+		    $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_0.txt", prbs_mem_0);
+		    $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_1.txt", prbs_mem_1);
+		    $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_2.txt", prbs_mem_2);
+		    $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_3.txt", prbs_mem_3);
+		    $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_4.txt", prbs_mem_4);
+		    $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_5.txt", prbs_mem_5);
+		    $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_6.txt", prbs_mem_6);
+		    $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_7.txt", prbs_mem_7);
 
 		    // $display("************************************************************************************************************");
 		    // $display("************************************************************************************************************");

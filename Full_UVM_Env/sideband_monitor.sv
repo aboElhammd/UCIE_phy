@@ -6,6 +6,28 @@ class sideband_monitor extends  uvm_monitor;
 
 	localparam REQ = 5;
 	localparam RESP = 10;
+	localparam TEST = 8;
+
+	typedef enum {
+		DONE_DONE,
+		DONE_REPAIR,
+		DONE_SPEEDDEGRADE,
+		DONE_PHYRETRAIN,
+		REPAIR_DONE,
+		REPAIR_REPAIR,
+		REPAIR_SPEEDDEGRADE,
+		REPAIR_PHYRETRAIN,
+		SPEEDDEGRADE_DONE,
+		SPEEDDEGRADE_REPAIR,
+		SPEEDDEGRADE_SPEEDDEGRADE,
+		SPEEDDEGRADE_PHYRETRAIN,
+		PHYRETRAIN_DONE,
+		PHYRETRAIN_REPAIR,
+		PHYRETRAIN_SPEEDDEGRADE,
+		PHYRETRAIN_PHYRETRAIN
+	} LINKSPEED_test_type_enum;
+
+	LINKSPEED_test_type_enum linkspeed_test_type_e;
 
     virtual sideband_interface vif_monitor;
     sideband_sequence_item old_trans, new_trans;
@@ -16,9 +38,11 @@ class sideband_monitor extends  uvm_monitor;
     sideband_sequence_item data_out_req[$], data_out_resp[$];
     sideband_sequence_item data_packet_in[$], data_packet_out[$];
     sideband_sequence_item data_in_pattern[$], data_out_pattern[$];
+	string error_msgs[$];  // Queue to store error messages (req - resp errors)
+	string encoding_errors[$]; // Queue to store error messages (encoding errors)
 
-    logic [63:0] message_with_data_in[string];  
-    logic [63:0] message_with_data_out[string];      
+    logic [63:0] message_with_data_in[string] [$];  
+    logic [63:0] message_with_data_out[string] [$];      
 
     uvm_analysis_port #(sideband_sequence_item) my_analysis_port;
     int number_of_patterns;
@@ -26,8 +50,15 @@ class sideband_monitor extends  uvm_monitor;
     string successful_checks[$];
     bit sbinit_done;
     bit mbinit_done;
-    int correct_count;
-    int error_count;
+    int pattern_correct_in, Out_of_reset_correct_in;
+    int pattern_correct_out, Out_of_reset_correct_out;
+	int correct_trans , error_trans;
+	int opcode_correct_count, opcode_error_count;
+	int srcid_correct_count, srcid_error_count;
+	int dstid_correct_count, dstid_error_count;
+	int cp_correct_count, cp_error_count;
+	int dp_correct_count, dp_error_count;
+
 	/*------------------------------------------------------------------------------
 	--new  
 	------------------------------------------------------------------------------*/
@@ -54,19 +85,24 @@ class sideband_monitor extends  uvm_monitor;
         	// Create new transaction object
 	    	input_trans = sideband_sequence_item::type_id::create("input_trans", this);
 	    	output_trans = sideband_sequence_item::type_id::create("output_trans", this);
-	    	
+
         	fork
         		begin
         			forever begin
         				// Handle recieving meessages to dut
 	        			@(posedge vif_monitor.de_ser_done);
-	        			`uvm_info(get_type_name(), "De_ser_done is hgih now", UVM_LOW)
+	        			// `uvm_info(get_type_name(), "De_ser_done is hgih now", UVM_LOW)
 	        			// wait_for_bus_change(vif_monitor.deser_data, vif_monitor.de_ser_done);
 	        			capture_transaction(vif_monitor.deser_data, input_trans);
-	        			`uvm_info(get_type_name(), $sformatf("Deser_data %0h",input_trans.data) , UVM_LOW)
+	        			// `uvm_info(get_type_name(), $sformatf("Deser_data %0h",input_trans.data) , UVM_LOW)
 
 	        			// Store Message 
 	        			store_message(input_trans, 1);
+
+						// Check for encoding except pattern
+						if(input_trans.data != {32{2'b10}}) begin
+							check_encoding(input_trans);
+						end 
 	        			
 	        			// Check if this is a message that should be followed by data
 	                    if (is_message_with_data(input_trans)) begin
@@ -79,19 +115,27 @@ class sideband_monitor extends  uvm_monitor;
 	                        // Store Data 
 	                        store_data(message_with_data_header_in, input_trans, 1); // 1 for input direction
 	                    end
+
+						compare_req_resp(data_in_req,data_out_resp,"RX:REQ ---> TX:RESP");
         			end
         		end
         		begin
         			forever begin
         				// Handle sending meessages from dut
 	        			@(posedge vif_monitor.clk_ser_en);
-	        			`uvm_info(get_type_name(), "Clk_ser_en is hgih now", UVM_LOW)
+	        			// `uvm_info(get_type_name(), "Clk_ser_en is hgih now", UVM_LOW)
 	        			// wait_for_bus_change_resp(vif_monitor.fifo_data_out, vif_monitor.clk_ser_en);
 	        			capture_transaction(vif_monitor.fifo_data_out, output_trans);
-	        			`uvm_info(get_type_name(), $sformatf("Fifo_out_data %0h",output_trans.data) , UVM_LOW)
+	        			// `uvm_info(get_type_name(), $sformatf("Fifo_out_data %0h",output_trans.data) , UVM_LOW)
 
 	        			// Store Message 
 	        			store_message(output_trans, 0);
+						my_analysis_port.write(output_trans);
+
+						// Check for encoding except pattern
+						if(output_trans.data != {32{2'b10}}) begin
+							check_encoding(output_trans);
+						end 
 
 	        			// Check if this is a message that should be followed by data
 	                    if (is_message_with_data(output_trans)) begin
@@ -104,15 +148,17 @@ class sideband_monitor extends  uvm_monitor;
 	                        // Store Data 
 	                        store_data(message_with_data_header_out, output_trans, 0); // 0 for output direction
 	                    end
+
+						compare_req_resp(data_out_req,data_in_resp,"TX:REQ ---> RX:RESP");
         			end
         		end
-        		begin 
-        			compare_req_resp(data_in_req,data_out_resp,"RX:REQ ---> TX:RESP");
-				end
-				begin 
+        		// begin 
+        		// 	compare_req_resp(data_in_req,data_out_resp,"RX:REQ ---> TX:RESP");
+				// end
+				// begin 
 
-        			compare_req_resp(data_out_req,data_in_resp,"TX:REQ ---> RX:RESP");
-				end
+        		// 	compare_req_resp(data_out_req,data_in_resp,"TX:REQ ---> RX:RESP");
+				// end
         	join
             // @(posedge vif_monitor.clk_ser_en);
             // detect_and_compare_transactions();
@@ -134,24 +180,54 @@ class sideband_monitor extends  uvm_monitor;
        
     endfunction
 
+	function bit ignore_req(LINKSPEED_test_type_enum test_type);
+		case (test_type)
+			DONE_DONE:	 return 0;
+			SPEEDDEGRADE_DONE:    return 1;
+			SPEEDDEGRADE_REPAIR:    return 1; 
+			SPEEDDEGRADE_PHYRETRAIN:    return 0;   
+			default:       return 0;  
+		endcase
+	endfunction
+
     // Task to store messages in the queue
     task store_message(input sideband_sequence_item header_trans, input bit is_input);
         if (is_input) begin
-            if (header_trans.data == {32{2'b10}} || header_trans.msg_code == 8'h91) begin
+            if (header_trans.data == {32{2'b10}}) begin
                 data_in_pattern.push_back(header_trans);
+				pattern_correct_in++;
             end
-            else if (header_trans.msg_code[3:0] == REQ) begin
-                data_in_req.push_back(header_trans);
+			else if(header_trans.msg_code == 8'h91) begin
+				data_in_pattern.push_back(header_trans);
+				Out_of_reset_correct_in++;
+			end 
+            else if (header_trans.msg_code[3:0] == REQ ) begin
+				if(header_trans.msg_code[7:4] != 4'h8 && (get_message_name(header_trans) != "MBTRAIN_LINKSPEED_ERROR_REQ")) begin
+					if(ignore_req(linkspeed_test_type_e)) begin 
+						linkspeed_test_type_e = DONE_DONE;
+					end 
+					else begin
+						data_in_req.push_back(header_trans);
+					end 
+				end 
+				else begin
+					data_in_req.push_back(header_trans);
+				end 
             end
             else if (header_trans.msg_code[3:0] == RESP) begin
                 data_in_resp.push_back(header_trans);
             end
         end
         else begin
-            if (header_trans.data == {32{2'b10}} || header_trans.msg_code == 8'h91) begin
+            if (header_trans.data == {32{2'b10}}) begin
                 data_out_pattern.push_back(header_trans);
+				pattern_correct_out++;
             end
-            else if (header_trans.msg_code[3:0] == REQ) begin
+			else if (header_trans.msg_code == 8'h91) begin
+				data_out_pattern.push_back(header_trans);
+				Out_of_reset_correct_out++;
+			end 
+            else if (header_trans.msg_code[3:0] == REQ ) begin
                 data_out_req.push_back(header_trans);
             end
             else if (header_trans.msg_code[3:0] == RESP) begin
@@ -164,16 +240,50 @@ class sideband_monitor extends  uvm_monitor;
     task store_data(input sideband_sequence_item header_trans, input sideband_sequence_item data_trans, input bit is_input);
         string msg_name;
         logic[63:0] data;
+		bit dp_valid;
 
         msg_name = get_message_name(header_trans);
         data = data_trans.data;
 
+		// Check for data parity 
+		check_data_parity(data_trans.data, header_trans.dp, dp_valid);
+		if (dp_valid) begin
+			dp_correct_count++;
+		end
+		else begin
+			dp_error_count++;
+		end
+
         if (is_input) begin
-            message_with_data_in[msg_name] = data;
-        end
-        else begin
-            message_with_data_out[msg_name] = data;
-        end
+			message_with_data_in[msg_name].push_back(data); 
+		end
+		else begin
+			message_with_data_out[msg_name].push_back(data); 
+		end
+
+		// Handle different sequences
+		// Care that according to the data of this messages we will take different actions
+		if(is_input) begin 
+			if(get_message_name(header_trans) == "TX_INIT_POINT_TEST_RESULT_RESP" || 
+			   get_message_name(header_trans) == "RX_INIT_RESULT_RESP") begin
+
+				// if("Something detect that valid framing error occur") begin
+					
+				// end 
+				if(data_trans.data[15:0] == 16'hFFFF) begin
+					// Basic scenario all lanes are working
+					linkspeed_test_type_e = DONE_DONE;
+				end 
+				else if(data_trans.data[7:0] == 8'hFF || data_trans.data[15:8] == 8'hFF) begin
+					// Repair scenario
+					linkspeed_test_type_e = REPAIR_DONE;
+				end 
+				else begin
+					linkspeed_test_type_e = SPEEDDEGRADE_DONE; // This applied for two cases SPEEDDEGRADE_DONE and SPEEDDEGRADE_REPAIR
+				end 
+			end 
+		end 
+
     endtask
 
 
@@ -212,24 +322,12 @@ class sideband_monitor extends  uvm_monitor;
 	        input_req = data_in[0];
 	        output_resp = data_out[0];
 	        
-	        if (input_req.msg_code == 8'h91 && output_resp.msg_code == 8'h91) begin
-	        	`uvm_info(get_full_name(), 
-	                     $sformatf("\n  %s  \n  Match found: REQ %s -> RESP %s",
-                     		    order,
-                                get_message_name(input_req),
-                                get_message_name(output_resp)), 
-	                     		UVM_MEDIUM)
-
-	        	data_in.delete(0);
-            	data_out.delete(0);
-	            
-	        end
-	        else if (output_resp.msg_code[8:4] !== input_req.msg_code[8:4] || 
+	        if (output_resp.msg_code[8:4] !== input_req.msg_code[8:4] || 
 	            output_resp.msg_code[3:0] !== (input_req.msg_code[3:0]<<1) || 
 	            output_resp.msg_subcode !== input_req.msg_subcode) begin
 	            
 	            // Detailed mismatch reporting
-	            string msg = "  Mismatch detected:  ";
+	            string msg = "  Mismatch Detected:  ";
 	            
 	            if (output_resp.msg_code[8:4] != input_req.msg_code[8:4]) begin
 	                msg = {msg, $sformatf("\n  MsgCode[8:4] mismatch (REQ: 0x%0h, RESP: 0x%0h)", 
@@ -246,34 +344,37 @@ class sideband_monitor extends  uvm_monitor;
 	                          input_req.msg_subcode, output_resp.msg_subcode, input_req.data, output_resp.data)};
 	            end
 	            
-	            `uvm_error(get_full_name(), 
-	                      $sformatf("\n  %s  \n%s\n  REQ:  %s  (Code:0x%02h, SubCode:0x%02h)\n  RESP: %s (Code:0x%02h, SubCode:0x%02h)",
-	                      	        order,
-	                                msg,
-	                                get_message_name(input_req), 
-	                                input_req.msg_code, 
-	                                input_req.msg_subcode,
-	                                get_message_name(output_resp),
-	                                output_resp.msg_code,
-	                                output_resp.msg_subcode))
+				error_trans++;
+	            //When pushing error messages to the queue:
+				error_msgs.push_back($sformatf("[%0t] | %s\n%s\n  REQ:  %s  (Code:0x%02h, SubCode:0x%02h)\n  RESP: %s (Code:0x%02h, SubCode:0x%02h)",
+											$time,          // Current simulation time
+											order, 
+											msg,
+											get_message_name(input_req), 
+											input_req.msg_code, 
+											input_req.msg_subcode,
+											get_message_name(output_resp),
+											output_resp.msg_code, 
+											output_resp.msg_subcode));
 
 	        	data_in.delete(0);
             	data_out.delete(0);
 	            
 	        end
 	        else begin
-	            	`uvm_info(get_full_name(), 
-	                     $sformatf("\n  %s  \n  REQ:  %s  (Code:0x%02h, SubCode:0x%02h)\n  RESP: %s (Code:0x%02h, SubCode:0x%02h) (Input data %0h , Output data %0h)",
-	                     	        order,
-	                                get_message_name(input_req), 
-	                                input_req.msg_code, 
-	                                input_req.msg_subcode,
-	                                get_message_name(output_resp),
-	                                output_resp.msg_code,
-	                                output_resp.msg_subcode, 
-				                    input_req.data,
-				                    output_resp.data),
-	                     UVM_MEDIUM)
+	            	// `uvm_info(get_full_name(), 
+	                //      $sformatf("\n  %s  \n  REQ:  %s  (Code:0x%02h, SubCode:0x%02h)\n  RESP: %s (Code:0x%02h, SubCode:0x%02h) (Input data %0h , Output data %0h)",
+	                //      	        order,
+	                //                 get_message_name(input_req), 
+	                //                 input_req.msg_code, 
+	                //                 input_req.msg_subcode,
+	                //                 get_message_name(output_resp),
+	                //                 output_resp.msg_code,
+	                //                 output_resp.msg_subcode, 
+				    //                 input_req.data,
+				    //                 output_resp.data),
+	                //      UVM_MEDIUM)
+					correct_trans++;
 
 		            data_in.delete(0);
 	            	data_out.delete(0);
@@ -281,6 +382,123 @@ class sideband_monitor extends  uvm_monitor;
 	        end
 	    end
 	endtask
+
+	/*------------------------------------------------------------------------------
+	-- Checking Tasks  
+	------------------------------------------------------------------------------*/
+	task check_opcode(
+		input sideband_sequence_item trans,  
+		output bit opcode_valid
+	);
+		// Define message types that MUST have data
+		bit [15:0] MSGS_WITH_DATA[] = '{
+			16'h85_01,  // START_TX_INIT_POINT_TEST_REQ
+			16'h8A_03,  // TX_INIT_POINT_TEST_RESULT_RESP
+			16'h85_05,  // START_TX_INIT_EYE_SWEEP_REQ
+			16'h85_07,  // START_RX_INIT_POINT_TEST_REQ
+			16'h85_0A,  // START_RX_INIT_EYE_SWEEP_REQ
+			16'h8A_0B,  // RX_INIT_RESULT_RESP
+			16'hA5_00,  // MBINIT_PARAM_CONFIG_REQ
+			16'hAA_00,  // MBINIT_PARAM_CONFIG_RESP
+			16'hAA_0F   // MBINIT_REVERSALMB_RESULT_RESP
+		};
+
+		bit found = 0;
+		foreach (MSGS_WITH_DATA[i]) begin
+			if ({trans.msg_code, trans.msg_subcode} == MSGS_WITH_DATA[i]) begin
+				found = 1;
+				break;
+			end
+		end
+
+		if (found) begin
+			// Message REQUIRES data 
+			opcode_valid = (trans.opcode == 5'b11011);
+		end else begin
+			// Message DOES NOT require data 
+			opcode_valid = (trans.opcode == 5'b10010);
+		end
+	endtask
+
+	task check_srid(input [2:0] srid, output bit source);
+		if (srid == 3'b010) begin
+			source = 1;
+		end
+		else begin
+			source = 0;
+		end
+	endtask : check_srid
+
+	task check_dstid(input [2:0] dstid, output bit destination);
+		if (dstid == 3'b110) begin
+			destination = 1;
+		end
+		else begin
+			destination = 0;
+		end
+	endtask : check_dstid
+
+	task check_control_parity(input [63:0] packet, output bit correct_cp);
+		if ((~^packet[62:0])) begin
+				correct_cp = 1;
+			end
+			else begin
+				correct_cp = 0;
+			end
+	endtask : check_control_parity
+
+	task check_data_parity(input [63:0] packet, input bit dp, output bit correct_dp);
+		if ((^packet == dp) ) begin
+				correct_dp = 1;
+			end
+		else begin
+			correct_dp = 0;
+		end
+	endtask : check_data_parity
+
+	task check_encoding(input sideband_sequence_item trans);
+		bit opcode, srcid, dstid, cp;
+
+		check_opcode(trans, opcode);
+		check_srid(trans.src_id, srcid);
+		check_dstid(trans.dst_id, dstid);
+		check_control_parity(trans.data, cp);
+
+		if (!opcode) begin
+			opcode_error_count++;
+			encoding_errors.push_back($sformatf("[%0t] Opcode check failed: Message= %s, opcode= %0b",
+											$time, get_message_name(trans), trans.opcode));
+		end
+		else begin
+			opcode_correct_count++;
+		end 
+
+		if (!srcid) begin
+			srcid_error_count++;
+			encoding_errors.push_back($sformatf("[%0t] SRCID check failed: src_id= %0b (expected 010)", $time, trans.src_id));
+		end
+		else begin
+			srcid_correct_count++;
+		end
+
+		if (!dstid) begin
+			dstid_error_count++;
+			encoding_errors.push_back($sformatf("[%0t] DSTID check failed: dst_id= %0b (expected 110)", $time, trans.dst_id));
+		end
+		else begin
+			dstid_correct_count++;
+		end
+		
+		if (!cp) begin
+			cp_error_count++;
+			encoding_errors.push_back($sformatf("[%0t] Control parity check failed: data= %0h", $time, trans.data));
+		end
+		else begin
+			cp_correct_count++;
+		end 
+
+	endtask
+
 
 	/*------------------------------------------------------------------------------
 	-- Message Name Tasks  
@@ -293,16 +511,16 @@ class sideband_monitor extends  uvm_monitor;
 	        case (trans.msg_code)
 	        	8'h85: begin
 	                case (trans.msg_subcode)
-	                    8'h01: return "START_TX_INIT_POINT_TEST_REQ";
+	                    8'h01: return "START_TX_INIT_POINT_TEST_REQ";  // With data
 	                    8'h02: return "LFSR_CLEAR_ERROR_REQ";
 	                    8'h03: return "TX_INIT_POINT_TEST_RESULT_REQ";
 	                    8'h04: return "END_TX_INIT_POINT_TEST_REQ";
-	                    8'h05: return "START_TX_INIT_EYE_SWEEP_REQ";
+	                    8'h05: return "START_TX_INIT_EYE_SWEEP_REQ"; // With data
 	                    8'h06: return "END_TX_INIT_EYE_SWEEP_REQ";
-	                    8'h07: return "START_RX_INIT_POINT_TEST_REQ";
+	                    8'h07: return "START_RX_INIT_POINT_TEST_REQ"; // With data
 	                    8'h08: return "RX_INIT_TX_COUNT_DONE_REQ";
 	                    8'h09: return "END_RX_INIT_POINT_TEST_REQ";
-	                    8'h0A: return "START_RX_INIT_EYE_SWEEP_REQ";
+	                    8'h0A: return "START_RX_INIT_EYE_SWEEP_REQ"; // With data
 	                    8'h0B: return "RX_INIT_RESULT_REQ";
 	                    8'h0C: return "RX_INIT_SWEEP_DONE_WITH_RESULTS_REQ";
 	                    8'h0C: return "END_RX_INIT_EYE_SWEEP_REQ";
@@ -313,7 +531,7 @@ class sideband_monitor extends  uvm_monitor;
 				    case (trans.msg_subcode)
 				        8'h01: return "START_TX_INIT_POINT_TEST_RESP";
 				        8'h02: return "LFSR_CLEAR_ERROR_RESP";
-				        8'h03: return "TX_INIT_POINT_TEST_RESULT_RESP";
+				        8'h03: return "TX_INIT_POINT_TEST_RESULT_RESP"; // With data
 				        8'h04: return "END_TX_INIT_POINT_TEST_RESP";
 				        8'h05: return "START_TX_INIT_EYE_SWEEP_RESP";
 				        8'h06: return "END_TX_INIT_EYE_SWEEP_RESP";
@@ -321,7 +539,7 @@ class sideband_monitor extends  uvm_monitor;
 				        8'h08: return "RX_INIT_TX_COUNT_DONE_RESP";
 				        8'h09: return "END_RX_INIT_POINT_TEST_RESP";
 				        8'h0A: return "START_RX_INIT_EYE_SWEEP_RESP";
-				        8'h0B: return "RX_INIT_RESULT_RESP";
+				        8'h0B: return "RX_INIT_RESULT_RESP";  // With data
 				        8'h0C: return "RX_INIT_SWEEP_DONE_WITH_RESULTS_RESP";
 				        8'h0D: return "END_RX_INIT_EYE_SWEEP_RESP";
 				        default: return "UNKNOWN_TEST_RESP";
@@ -332,7 +550,7 @@ class sideband_monitor extends  uvm_monitor;
 	            8'h9A: return "SBINIT_DONE_RESP";
 	            8'hA5: begin
 	                case (trans.msg_subcode)
-	                    8'h00: return "MBINIT_PARAM_CONFIG_REQ";
+	                    8'h00: return "MBINIT_PARAM_CONFIG_REQ"; // With data
 				        8'h02: return "MBINIT_CAL_DONE_REQ";
 				        8'h03: return "MBINIT_REPAIRCLK_INIT_REQ";
 				        8'h04: return "MBINIT_REPAIRCLK_RESULT_REQ";
@@ -352,7 +570,7 @@ class sideband_monitor extends  uvm_monitor;
 	            end 
 	            8'hAA: begin
 	                case (trans.msg_subcode)
-	                    8'h00: return "MBINIT_PARAM_CONFIG_RESP";
+	                    8'h00: return "MBINIT_PARAM_CONFIG_RESP"; // With data
 				        8'h02: return "MBINIT_CAL_DONE_RESP";
 				        8'h03: return "MBINIT_REPAIRCLK_INIT_RESP";
 				        8'h04: return "MBINIT_REPAIRCLK_RESULT_RESP";
@@ -362,7 +580,7 @@ class sideband_monitor extends  uvm_monitor;
 				        8'h0C: return "MBINIT_REPAIRVAL_DONE_RESP";
 				        8'h0D: return "MBINIT_REVERSALMB_INIT_RESP";
 				        8'h0E: return "MBINIT_REVERSALMB_CLEAR_ERROR_RESP";
-				        8'h0F: return "MBINIT_REVERSALMB_RESULT_RESP";
+				        8'h0F: return "MBINIT_REVERSALMB_RESULT_RESP"; // With data
 				        8'h10: return "MBINIT_REVERSALMB_DONE_RESP";
 				        8'h11: return "MBINIT_REPAIRMB_START_RESP";
 				        8'h13: return "MBINIT_REPAIRMB_END_RESP";
@@ -503,21 +721,82 @@ class sideband_monitor extends  uvm_monitor;
 	function void report_phase(uvm_phase phase);
 	    super.report_phase(phase);
 	    
-	    `uvm_info(get_type_name(), "=== Transaction Report ===", UVM_MEDIUM);
+		// foreach (data_in_req[i]) begin
+		// 	compare_req_resp(data_in_req,data_out_resp,"RX:REQ ---> TX:RESP");
+		// end
+		// foreach (data_out_req[i]) begin
+		// 	compare_req_resp(data_out_req,data_in_resp,"RX:REQ ---> TX:RESP");
+		// end
 
 	    // Print pattern queues
-	    if (data_in_pattern.size() > 0)
-	        print_queue(data_in_pattern, "Input Pattern Transactions");
-	    if (data_out_pattern.size() > 0)
-	        print_queue(data_out_pattern, "Output Pattern Transactions");
+	    // if (data_in_pattern.size() > 0)
+	    //     print_queue(data_in_pattern, "Input Pattern Transactions");
+	    // if (data_out_pattern.size() > 0)
+	    //     print_queue(data_out_pattern, "Output Pattern Transactions");
 	    
 	    // Print handsahke queues 
-	    print_compare_queues(data_in_resp, data_out_req, "REQ Transactions");
-	    print_compare_queues(data_in_req, data_out_resp, "RESP Transactions");
+	    // print_compare_queues(data_in_resp, data_out_req, "REQ Transactions");
+	    // print_compare_queues(data_in_req, data_out_resp, "RESP Transactions");
 
-	    print_assoc_array("Input Messages", message_with_data_in);
-    	print_assoc_array("Output Messages", message_with_data_out);
-	    
+	    // print_assoc_array("Input Messages", message_with_data_in);
+    	// print_assoc_array("Output Messages", message_with_data_out);
+	
+		`uvm_info("SB MONITOR", $sformatf("\n\n============================================ (Detailed Error Transactions) ==============================================="), UVM_MEDIUM)
+		if (error_trans > 0) begin
+            foreach (error_msgs[i]) begin
+                `uvm_error(get_full_name(), {"\n",error_msgs[i]})
+				`uvm_info(get_full_name(), "\n------------------------------------------------------------------------------", UVM_MEDIUM)
+            end
+        end
+		`uvm_info("SB MONITOR", $sformatf("\n\n============================================ (Detailed Error Encoding) ==============================================="), UVM_MEDIUM)
+		if (opcode_error_count > 0 || srcid_error_count > 0 || dstid_error_count > 0 || cp_error_count > 0 || dp_error_count > 0) begin
+            foreach (encoding_errors[i]) begin
+                `uvm_error(get_full_name(), {"\n",encoding_errors[i]})
+				`uvm_info(get_full_name(), "\n------------------------------------------------------------------------------", UVM_MEDIUM)
+            end
+        end
+		`uvm_info("SB MONITOR", $sformatf("\n=========================================================================================================================="), UVM_MEDIUM)
+	
+		`uvm_info("SB MONITOR", $sformatf("===================================================================="), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("                        SIDEBAND MONITOR SUMMARY                    "), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("===================================================================="), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("========================== (Pattern items) ========================="), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Recieved patterns    = %0d                ", pattern_correct_in), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Transmitted patterns = %0d             ",  pattern_correct_out), UVM_MEDIUM)
+
+	    `uvm_info("SB MONITOR", $sformatf("======================= (OUT OF RESET items) ======================="), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Recieved SB_OUT_OF_RESET    = %0d                ", Out_of_reset_correct_in), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Transmitted SB_OUT_OF_RESET = %0d             ", Out_of_reset_correct_out), UVM_MEDIUM)
+
+		`uvm_info("SB MONITOR", $sformatf("======================= (Transactions items) ======================="), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Passed Transactions = %0d            ", correct_trans), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Failed Transactions  = %0d             ", error_trans), UVM_MEDIUM)
+
+		`uvm_info("SB MONITOR", $sformatf("========================== (Opcode items) =========================="), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Passed Encoding = %0d            ", opcode_correct_count), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Failed Encoding  = %0d             ", opcode_error_count), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("===================================================================="), UVM_MEDIUM)
+
+		`uvm_info("SB MONITOR", $sformatf("========================== (Src_ID items) =========================="), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Passed Encoding = %0d            ", srcid_correct_count), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Failed Encoding  = %0d             ", srcid_error_count), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("===================================================================="), UVM_MEDIUM)
+
+		`uvm_info("SB MONITOR", $sformatf("========================== (Dst_ID items) =========================="), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Passed Encoding = %0d            ", dstid_correct_count), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Failed Encoding  = %0d             ", dstid_error_count), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("===================================================================="), UVM_MEDIUM)
+
+		`uvm_info("SB MONITOR", $sformatf("====================== (Control Parity items) ======================"), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Passed Encoding = %0d            ", cp_correct_count), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Failed Encoding  = %0d             ", cp_error_count), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("===================================================================="), UVM_MEDIUM)
+
+		`uvm_info("SB MONITOR", $sformatf("======================= (Data Parity items) ========================"), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Passed Encoding = %0d            ", dp_correct_count), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("   Failed Encoding  = %0d             ", dp_error_count), UVM_MEDIUM)
+		`uvm_info("SB MONITOR", $sformatf("===================================================================="), UVM_MEDIUM)
+
 	endfunction
 
 	// Print two related queues (req vs resp)
@@ -548,7 +827,6 @@ class sideband_monitor extends  uvm_monitor;
 	    out_queue.delete();
 	endtask
 
-	// Print a single queue (for pattern queues)
 	task print_queue(
 	    ref sideband_sequence_item queue[$],
 	    input string label
@@ -562,12 +840,17 @@ class sideband_monitor extends  uvm_monitor;
 	    queue.delete();
 	endtask
 
-	task print_assoc_array(input string name, ref logic [63:0] assoc_array[string]);
-	    string key;
-	    $display("Contents of associative array: %s", name);
-	    foreach (assoc_array[key]) begin
-	        $display("Message: %s, Data: %h", key, assoc_array[key]);
-	    end
+	task print_assoc_array(input string name, ref logic [63:0] assoc_array[string][$]);
+		string key;
+		int i;
+		$display("===== Contents of associative array: %s =====", name);
+		foreach (assoc_array[key]) begin
+			foreach (assoc_array[key][i]) begin
+					$display("Message: %s | Occurrence %0d | Data: %0h", 
+							key, i, assoc_array[key][i]);
+				end
+			end
+		$display("================ End of %s ==================", name);
 	endtask
 
 endclass : sideband_monitor

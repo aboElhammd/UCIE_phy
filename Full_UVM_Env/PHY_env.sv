@@ -6,7 +6,7 @@ class PHY_env extends  uvm_env;
 	// SB
 	sideband_agent SB_agt;
 	sideband_scoreboard scoreboard;
-	sideband_subscriber subscriber;
+	coverage_collector coverage;
 	virtual interface sideband_interface SB_vif_env;
 
 	// MB
@@ -51,7 +51,7 @@ class PHY_env extends  uvm_env;
 		MB_agt 		= MB_agent::type_id::create("MB_agt",this);
 		SB_agt 		= sideband_agent::type_id::create("SB_agt",this);
 		scoreboard 	= sideband_scoreboard::type_id::create("scoreboard",this);
-		subscriber 	= sideband_subscriber::type_id::create("subscriber",this);
+		coverage 	= coverage_collector::type_id::create("coverage",this);
 		V_sqr 		= vsequencer::type_id::create("v_sqr", this);
 	endfunction : build_phase
 
@@ -61,7 +61,7 @@ class PHY_env extends  uvm_env;
 	function void connect_phase(uvm_phase phase);
 		super.connect_phase(phase);
 		SB_agt.my_analysis_port_agt.connect(scoreboard.my_analysis_imp);
-		SB_agt.my_analysis_port_agt.connect(subscriber.analysis_export);
+		SB_agt.my_analysis_port_agt.connect(coverage.Coverage_Collector_port);
 
 		// Setting SQRs handels to Vsqr
 		uvm_config_db#(MB_sequencer)::set(this, "v_sqr", "MB_sqr", MB_agt.sqr);

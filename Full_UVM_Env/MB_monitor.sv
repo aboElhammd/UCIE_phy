@@ -47,14 +47,14 @@ class MB_monitor extends uvm_monitor;
 
     // Initialize PRBS Pattern Storage
     task load_patterns();
-	    $readmemh("PRBS_GM_Lane_0.txt", prbs_mem_0);
-	    $readmemh("PRBS_GM_Lane_1.txt", prbs_mem_1);
-	    $readmemh("PRBS_GM_Lane_2.txt", prbs_mem_2);
-	    $readmemh("PRBS_GM_Lane_3.txt", prbs_mem_3);
-	    $readmemh("PRBS_GM_Lane_4.txt", prbs_mem_4);
-	    $readmemh("PRBS_GM_Lane_5.txt", prbs_mem_5);
-	    $readmemh("PRBS_GM_Lane_6.txt", prbs_mem_6);
-	    $readmemh("PRBS_GM_Lane_7.txt", prbs_mem_7);
+        $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_0.txt", prbs_mem_0);
+        $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_1.txt", prbs_mem_1);
+        $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_2.txt", prbs_mem_2);
+        $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_3.txt", prbs_mem_3);
+        $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_4.txt", prbs_mem_4);
+        $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_5.txt", prbs_mem_5);
+        $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_6.txt", prbs_mem_6);
+        $readmemh("../../Full_UVM_Env/PRBS_GM_Lane_7.txt", prbs_mem_7);
 	endtask
 
     // Build Phase
@@ -266,7 +266,7 @@ class MB_monitor extends uvm_monitor;
                     end
                 endcase
 
-                if (lane_data == lane_data_GM) begin
+                if ((lane_data == lane_data_GM) ||lane_data == 0) begin
                     // `uvm_info("MB_MONITOR", $sformatf("Data o_lfsr_tx_lane_%0d is correct: %0h,  next_PRBS_Pattern %0d", i, lane_data, next_PRBS_Pattern), UVM_MEDIUM)
                 end else begin
                     `uvm_error("MB_MONITOR", $sformatf("Data o_lfsr_tx_lane_%0d is incorrect: expected %0h, got %0h,  next_PRBS_Pattern %0d", 

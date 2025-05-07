@@ -1140,6 +1140,58 @@ class mbtrain_linkspeed_exit_to_phyretrain_resp extends MBTRAIN_base_class;
 			`uvm_info("mbtrain_linkspeed:" , "mbtrain linkspeed exit to phyretrain response packet has been sent",UVM_MEDIUM)
 	endtask : body
 endclass : mbtrain_linkspeed_exit_to_phyretrain_resp
+// /*------------------------------------------------------------------------------
+// -- mbtrain rx_clk_cal hs
+// ------------------------------------------------------------------------------*/
+// class mbtrain_error_and_repair_hs extends MBTRAIN_base_class;
+// 	`uvm_object_utils(mbtrain_error_and_repair_hs)
+// 	task body();
+// 		bit first_time=1;
+// 		bit [15:0] msg_info=16'h0000;
+// 		bit [7:0]msg_subcode=8'h16;
+// 		int count =3;
+// 		bit recieved_last_respone;
+// 		`uvm_info("MBTRAIN sequence : linkspeed exit to repair handshaked" ,
+// 			"
+// 			*************************************************************************************************************************************
+// 			**********************************************linkspeed exit to repair handshaked substate result request has started***************************************
+// 			************************************************************************************************************************************* 
+// 			",UVM_MEDIUM);
+// 		send_sb_message_without_data(8'hB5,8'h16,16'h0000);
+// 		for (int i = 0; i < count; i++) begin
+// 			if( (resp.req_detected) && msg_subcode != 8'h18) begin
+// 				if(msg_subcode==8'h16)
+// 					send_sb_message_without_data(8'hBA,8'h16,16'h0000);
+// 				else 
+// 					send_sb_message_without_data(8'hBA,8'h17,16'h0000,1);
+// 				msg_subcode=msg_subcode+1;
+// 			end else if(resp.resp_detected && first_time) begin
+// 				first_time=0;
+// 				send_sb_message_without_data(8'hB5,8'h17,16'h0000);
+// 			end else if (!resp.resp_detected) begin //case that should never happens
+// 				`uvm_info("MBTRAIN sequence : linkspeed exit to repair handshaked" , "calling the wait for response task ", UVM_MEDIUM);
+// 				wait_for_response();
+// 				count++;
+// 			end else if(!resp.req_detected) begin //condition can also be resp.resp_detected && !first time which means that we reciebved the last response 
+//  				`uvm_info("MBTRAIN sequence : linkspeed exit to repair handshaked" , "calling the wait for request task ", UVM_MEDIUM);				
+// 				wait_for_request();
+// 				count++;
+// 				//the next code is used to store that we have recieved the done response
+// 				//if (first time = 0) then this means that we have send the done request 
+// 				// if we enter this else if so that means that we recieved a response and of coures it's the done 
+// 				// response because if it's the result response then it would enter seconde else if 
+// 					recieved_last_respone=1;
+// 			end
+// 		end
+
+// 		if(recieved_last_respone || resp.resp_detected) begin
+// 				`uvm_info("MBTRAIN sequence : linkspeed exit to repair handshaked" , "linkspeed exit to repair handshaked last response has been recieved and substate has finished", UVM_MEDIUM);
+// 		end else begin
+// 			wait_for_response();
+// 			`uvm_info("MBTRAIN sequence : linkspeed exit to repair handshaked" , "linkspeed exit to repair handshaked last response has been recieved and substate has finished", UVM_MEDIUM);
+// 		end
+// 	endtask : body
+// endclass : mbtrain_error_and_repair_hs
 /*------------------------------------------------------------------------------
 --  mbtrain repair 
 ------------------------------------------------------------------------------*/

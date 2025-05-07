@@ -455,8 +455,8 @@ class MBTRAIN_DATATRAINCENTER2_Vsequence #(parameter lanes_result = 16'hffff) ex
 	/*-------------------------------------------------------------------------------
 	-- Interface, port, fields
 	-------------------------------------------------------------------------------*/
-		mbtrain_datatrain_center_1_init_hs 	mbtrain_datatrain_center_2_init_seq;
-		mbtrain_datatrain_center_1_done_hs 	mbtrain_datatrain_center_2_done_seq;
+		mbtrain_datatrain_center_2_init_hs 	mbtrain_datatrain_center_2_init_seq;
+		mbtrain_datatrain_center_2_done_hs 	mbtrain_datatrain_center_2_done_seq;
 		MB_LFSR_Pattern_sequence 			MB_LFSR_Pattern_seq;
 		///////////////////////////////point test ///////////////////////////////////
 		tx_initiated_point_test_init_handshake_LFSR_pattern 								tx_pt_init_seq_lfsr;
@@ -500,16 +500,31 @@ class MBTRAIN_LINKSPEED_Vsequence #(parameter lanes_result = 16'hffff, parameter
 	/*-------------------------------------------------------------------------------
 	-- Interface, port, fields
 	-------------------------------------------------------------------------------*/
-		mbtrain_linkspeed_init_hs 						mbtrain_linkspeed_init_seq;
-		mbtrain_linkspeed_done_packet_lp 				mbtrain_linkspeed_done_packet_lp_seq;
-		mbtrain_linkspeed_error_resp  					mbtrain_linkspeed_error_resp_seq;
-		mbtrain_linkspeed_exit_to_speed_degrade_resp 	mbtrain_linkspeed_exit_to_speed_degrade_resp_seq;
-		mbtrain_linkspeed_done_hs 						mbtrain_linkspeed_done_seq;
-		mbtrain_linkspeed_exit_to_phyretrain_packets_hp mbtrain_linkspeed_exit_to_phyretrain_packets_hp_seq;
-		phyretrain_hs  									phyretrain_hs_seq;
-		mbtrain_linkspeed_error_hs 						mbtrain_linkspeed_error_hs_seq;
-		mbtrain_linkspeed_exit_to_repair_packet_lp 		mbtrain_linkspeed_exit_to_repair_packet_lp_seq;
-		MB_LFSR_Pattern_sequence 						MB_LFSR_Pattern_seq;
+		mbtrain_linkspeed_init_hs 							mbtrain_linkspeed_init_seq;
+		mbtrain_linkspeed_done_packet_lp 					mbtrain_linkspeed_done_packet_lp_seq;
+		mbtrain_linkspeed_error_resp  						mbtrain_linkspeed_error_resp_seq;
+		mbtrain_linkspeed_exit_to_speed_degrade_resp 		mbtrain_linkspeed_exit_to_speed_degrade_resp_seq;
+		mbtrain_linkspeed_done_hs 							mbtrain_linkspeed_done_seq;
+
+		mbtrain_linkspeed_exit_to_phyretrain_packets_hp 	mbtrain_linkspeed_exit_to_phyretrain_packets_hp_seq;
+		phyretrain_hs  										phyretrain_hs_seq;
+
+		mbtrain_linkspeed_error_hs 							mbtrain_linkspeed_error_hs_seq;
+		mbtrain_linkspeed_exit_to_repair_packet_lp 			mbtrain_linkspeed_exit_to_repair_packet_lp_seq;
+
+		mbtrain_linkspeed_exit_to_speed_degrade_hs 			mbtrain_linkspeed_exit_to_speed_degrade_hs_seq;
+
+		mbtrain_linkspeed_error_packets_hp  				mbtrain_linkspeed_error_seq;
+		mbtrain_linkspeed_repair_packets_hp 				mbtrain_linkspeed_repair_vs_done_seq;
+		mbtrain_repair 										mbtrain_repair_seq;
+
+		mbtrain_linkspeed_exit_to_speed_degrade_packets_hp 	mbtrain_linkspeed_speed_degrade_seq;
+
+		mbtrain_linkspeed_exit_to_repair_resp 				mbtrain_linkspeed_exit_to_repair_resp_seq;
+
+		mbtrain_linkspeed_exit_to_repair_hs 				mbtrain_linkspeed_exit_to_repair_seq;
+
+		MB_LFSR_Pattern_sequence 							MB_LFSR_Pattern_seq;
 		///////////////////////////////point test ///////////////////////////////////
 		tx_initiated_point_test_init_handshake_LFSR_pattern 								tx_pt_init_seq_lfsr;
 		LFSR_CLEAR_handshake 																lfsr_clear_error_req_seq;
@@ -549,15 +564,41 @@ class MBTRAIN_LINKSPEED_Vsequence #(parameter lanes_result = 16'hffff, parameter
 		    	`uvm_do_on(mbtrain_linkspeed_error_resp_seq, SB_sqr)
 		    	`uvm_do_on(mbtrain_linkspeed_exit_to_speed_degrade_resp_seq, SB_sqr)
 		    end	
-		    else if (TEST_TYPE == 2) begin // linkspeed_speed_degrade_vs_phyretrain_test
+		    else if (TEST_TYPE == 2) begin // linkspeed_speed_degrade_vs_phyretrain_test || linkspeed_repair_vs_phyretrain_test
 		    	`uvm_do_on(mbtrain_linkspeed_exit_to_phyretrain_packets_hp_seq, SB_sqr)
 		    	`uvm_do_on(phyretrain_hs_seq, SB_sqr)
 		    end	
-		    else if (TEST_TYPE == 3) begin // linkspeed_speed_degrade_vs_repair_test
+		    else if (TEST_TYPE == 3) begin // linkspeed_speed_degrade_vs_repair_test || linkspeed_done_vs_phyretrain_test
 		    	`uvm_do_on(mbtrain_linkspeed_error_hs_seq, SB_sqr)
 		    	`uvm_do_on(mbtrain_linkspeed_exit_to_repair_packet_lp_seq, SB_sqr)
 		    	`uvm_do_on(mbtrain_linkspeed_exit_to_speed_degrade_resp_seq, SB_sqr)
 		    end	
+		    else if (TEST_TYPE == 4) begin // linkspeed_speed_degrade_vs_speed_degrade_test
+		    	`uvm_do_on(mbtrain_linkspeed_error_hs_seq, SB_sqr)
+		    	`uvm_do_on(mbtrain_linkspeed_exit_to_speed_degrade_hs_seq, SB_sqr)
+		    end
+		    else if (TEST_TYPE == 5) begin // linkspeed_done_vs_repair_test
+		    	`uvm_do_on(mbtrain_linkspeed_error_seq, SB_sqr)
+		    	`uvm_do_on(mbtrain_linkspeed_repair_vs_done_seq, SB_sqr)
+		    	`uvm_do_on(mbtrain_repair_seq, SB_sqr)
+		    end
+		    else if (TEST_TYPE == 6) begin // linkspeed_done_vs_speed_degrade_test
+		    	`uvm_do_on(mbtrain_linkspeed_error_seq, SB_sqr)
+		    	`uvm_do_on(mbtrain_linkspeed_speed_degrade_seq, SB_sqr)
+		    end
+		    else if (TEST_TYPE == 7) begin // linkspeed_repair_vs_done_test
+		    	`uvm_do_on(mbtrain_linkspeed_done_packet_lp_seq, SB_sqr)
+		    	`uvm_do_on(mbtrain_linkspeed_error_resp_seq, SB_sqr)
+		    	`uvm_do_on(mbtrain_linkspeed_exit_to_repair_resp_seq, SB_sqr)
+		    end
+		    else if (TEST_TYPE == 8) begin // linkspeed_repair_vs_repair_test
+		    	`uvm_do_on(mbtrain_linkspeed_error_hs_seq, SB_sqr)
+		    	`uvm_do_on(mbtrain_linkspeed_exit_to_repair_seq, SB_sqr)
+		    end
+		    else if (TEST_TYPE == 9) begin // linkspeed_repair_vs_speed_degrade_test
+		    	`uvm_do_on(mbtrain_linkspeed_error_hs_seq, SB_sqr)
+		    	`uvm_do_on(mbtrain_linkspeed_speed_degrade_seq, SB_sqr)
+		    end
 		    `uvm_info("MBTRAIN_LINKSPEED_Vsequence", "Sequence complete", UVM_HIGH)
 	  endtask 
 
