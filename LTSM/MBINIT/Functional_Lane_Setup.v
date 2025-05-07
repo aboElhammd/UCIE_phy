@@ -19,6 +19,8 @@ always @(posedge CLK or negedge rst_n) begin
                 o_Functional_Lanes <= 2'b10;
             else if (&i_Transmitter_initiated_Data_to_CLK_Result[7:0]) 
                 o_Functional_Lanes <= 2'b01;
+            else 
+                o_Functional_Lanes <= 2'b00;
             done_setup <= 1'b1;
         end
     end
