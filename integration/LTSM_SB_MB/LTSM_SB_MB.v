@@ -276,10 +276,6 @@ wire clock_local_ckp;
 ****************************************/
 wire sb_rx_rdi_msg;
 
-///////////////////////////////////////////// DUMMY //////////////
-reg tx_d2c_lfsr_or_perlane;
-reg tx_d2c_data_or_val;
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////// INSTANTIATIONS ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -446,8 +442,8 @@ tx_initiated_point_test_wrapper tx_d2c_pt_inst (
      * LTSM signals
     ------------------------------------------------------------------------------------------------------------*/
     .i_en                               (tx_d2c_pt_en), 
-    .i_mainband_or_valtrain_test        (tx_d2c_data_or_val),//tx_datatrain_or_valtrain), 
-    .i_lfsr_or_perlane                  (tx_d2c_lfsr_or_perlane),//tx_perlaneid_or_lfsr), 
+    .i_mainband_or_valtrain_test        (tx_datatrain_or_valtrain), 
+    .i_lfsr_or_perlane                  (tx_perlaneid_or_lfsr), 
     .i_falling_edge_busy                (falling_edge_busy),
     .o_valid_result                     (tx_d2c_pt_valid_result),    
     .o_mainband_lanes_result            (tx_d2c_pt_data_results),   
@@ -985,21 +981,5 @@ assign mainband_pattern_generator_cw = ltsm_mainband_pattern_generator_cw | main
 ---------------------------------------*/
 assign mainband_pattern_comparator_cw = ltsm_mainband_pattern_comparator_cw | mainband_pattern_comparator_cw_tx_d2c_pt | mainband_pattern_comparator_cw_rx_d2c_pt;
 
- 
-///////////////////////////////////// DUMMY ///////////////////////////////////////
-always @ (posedge dig_clk) begin
-    if (sb_tx_state == 3) begin
-        tx_d2c_lfsr_or_perlane  <= 1;
-        tx_d2c_data_or_val      <= 0;
-    end
-    else begin
-        tx_d2c_lfsr_or_perlane  <= 0;
-        if (sb_tx_sub_state == 5) begin
-         tx_d2c_data_or_val <= 1;
-        end else begin
-         tx_d2c_data_or_val <= 0;
-        end
-    end
-end
 
 endmodule
