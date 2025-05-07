@@ -7,7 +7,7 @@ module repair_tx (
 	    //communicating with sideband 
 		    input [3:0] i_sideband_message,
 		    input i_busy_negedge_detected,
-			input i_rx_msg_valid,
+			input i_sideband_valid,
 	    //communicating with MBTRAIN
 		    input i_first_8_lanes_are_functional , i_second_8_lanes_are_functional,
 	    //communicating with rx 
@@ -25,8 +25,8 @@ module repair_tx (
 ------------------------------------------------------------------------------*/
 parameter INIT_REQUEST = 4'b0001;
 parameter INIT_RESPONSE = 4'b0010;
-parameter APPLY_DEGRADE_REQUEST = 4'b0011;
-parameter APPLY_DEGRADE_RESPONSE = 4'b0100;
+parameter APPLY_DEGRADE_REQUEST = 4'b0111;
+parameter APPLY_DEGRADE_RESPONSE = 4'b1000;
 parameter END_REQUEST = 4'b0101;
 parameter END_RESPONSE = 4'b0110;
 /*------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ always @(*) begin
 		REPAIR_INIT_REQUEST:begin
 			if(i_en==0) begin
 				ns=IDLE;
-			end else if(i_sideband_message == INIT_RESPONSE && i_rx_msg_valid) begin
+			end else if(i_sideband_message == INIT_RESPONSE && i_sideband_valid) begin
 				ns= REPAIR_APPLY_DEGRADE_REQUEST ;
 			end else begin
 				ns=REPAIR_INIT_REQUEST;

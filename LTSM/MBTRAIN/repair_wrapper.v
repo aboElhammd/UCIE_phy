@@ -9,7 +9,7 @@ module repair_wrapper (
 		    input i_busy,
 			input i_falling_edge_busy,
 			input [2:0]i_sideband_data_lanes_encoding,
-			input i_rx_msg_valid,
+			input i_sideband_valid,
 		//
 			input i_first_8_lanes_are_functional , i_second_8_lanes_are_functional,
 	//outputs 
@@ -57,7 +57,7 @@ repair_tx repair_tx_instance_1(
 	    //communicating with sideband 
 			.i_sideband_message(i_sideband_message),
 			.i_busy_negedge_detected(i_falling_edge_busy),
-			.i_rx_msg_valid(i_rx_msg_valid),
+			.i_sideband_valid(i_sideband_valid),
 	    //communicating with MBTRAIN
 		    .i_first_8_lanes_are_functional(i_first_8_lanes_are_functional) ,
 		    .i_second_8_lanes_are_functional(i_second_8_lanes_are_functional),

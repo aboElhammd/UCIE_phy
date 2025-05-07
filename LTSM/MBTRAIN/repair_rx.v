@@ -25,8 +25,8 @@ module repair_rx (
 ------------------------------------------------------------------------------*/
 parameter INIT_REQUEST = 4'b0001;
 parameter INIT_RESPONSE = 4'b0010;
-parameter APPLY_DEGRADE_REQUEST = 4'b0011;
-parameter APPLY_DEGRADE_RESPONSE = 4'b0100;
+parameter APPLY_DEGRADE_REQUEST = 4'b0111;
+parameter APPLY_DEGRADE_RESPONSE = 4'b1000;
 parameter END_REQUEST = 4'b0101;
 parameter END_RESPONSE = 4'b0110;
 /*------------------------------------------------------------------------------
