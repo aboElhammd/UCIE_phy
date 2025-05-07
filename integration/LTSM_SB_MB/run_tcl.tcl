@@ -1,3 +1,8 @@
+file delete -force ./log_files
+file delete -force ./coverage_files
+file delete -force ./merged_coverage
+file delete -force ./waveforms
+
 # 1. Library setup and compilation
 vlib work
 vlog ./TB_LTSM_SB_MB.sv
@@ -38,40 +43,29 @@ vlog ../../Full_UVM_Env/top.sv
 # 2. Test list configuration
 set test_names {
     "PHY_test"
-    "linkspeed_speed_degrade_vs_done_test"
-    "linkspeed_done_vs_speed_degrade_test"
-    "linkspeed_done_vs_repair_test"
-    "linkspeed_done_vs_phyretrain_test"
-    "linkspeed_repair_vs_done_test"
-    "linkspeed_repair_vs_repair_test"
-    "linkspeed_repair_vs_speed_degrade_test"
-    "linkspeed_repair_vs_phyretrain_test"
-    "linkspeed_speed_degrade_vs_repair_test"
-    "linkspeed_speed_degrade_vs_phyretrain_test"
-    "linkspeed_speed_degrade_vs_speed_degrade_test"
-    
-}
 
-# "linkspeed_done_vs_speed_degrade_test"
-#     "linkspeed_done_vs_repair_test"
-#     "linkspeed_done_vs_phyretrain_test"
-#     "linkspeed_repair_vs_done_test"
-#     "linkspeed_repair_vs_repair_test"
-#     "linkspeed_repair_vs_speed_degrade_test"
-#     "linkspeed_repair_vs_phyretrain_test"
-#     "linkspeed_speed_degrade_vs_repair_test"
-#     "linkspeed_speed_degrade_vs_phyretrain_test"
-#     "linkspeed_speed_degrade_vs_speed_degrade_test"
+}
+    # "linkspeed_speed_degrade_vs_done_test"
+    # "linkspeed_done_vs_speed_degrade_test"
+    # "linkspeed_done_vs_repair_test"
+    # "linkspeed_done_vs_phyretrain_test"
+    # "linkspeed_repair_vs_done_test"
+    # "linkspeed_repair_vs_repair_test"
+    # "linkspeed_repair_vs_speed_degrade_test"
+    # "linkspeed_repair_vs_phyretrain_test"
+    # "linkspeed_speed_degrade_vs_repair_test"
+    # "linkspeed_speed_degrade_vs_phyretrain_test"
+    # "linkspeed_speed_degrade_vs_speed_degrade_test"
 
 # 3. Directory setup
 file mkdir log_files
 file mkdir coverage_files
 file mkdir merged_coverage
-file mkdir tests_bugs
+file mkdir waveforms
 
 # New procedure to extract UVM Report Summary from log files
 proc extract_uvm_summaries {} {
-    set bugs_file [open "tests_bugs.txt" w]
+    set bugs_file [open "log_files/tests_bugs.txt" w]
     puts $bugs_file "UVM Report Summaries for All Tests\n"
     puts $bugs_file "============================================\n"
     
@@ -109,33 +103,59 @@ proc extract_uvm_summaries {} {
 proc run_single_test {test_name} {
     echo "\n============================================"
     echo "Starting test: $test_name"
-    echo "Start time: [clock format [clock seconds] -format {%T on %b %d,%Y}]"
+    set start_time [clock seconds]
+    echo "Start time: [clock format $start_time -format {%T on %b %d,%Y}]"
     
     # Start simulation with coverage
     if {[catch {
         vsim -coverage -voptargs="+acc" -onfinish stop -sv_seed random \
              +UVM_TESTNAME=$test_name work.top \
              +UVM_VERBOSITY=UVM_MEDIUM \
-             -l log_files/${test_name}.log
+             -l "log_files/${test_name}.log" \
+             -wlf "waveforms/${test_name}.wlf"
         
         # Run configuration
         onbreak {resume}
+        
+        # Start timer check in background
+        set timeout 30
+        set timer_id [after [expr {$timeout * 1000}] {
+            echo "\nERROR: Test $test_name exceeded $timeout seconds - possible hang"
+            quit -sim -f
+            return [list "TIMEOUT"]
+        }]
+        
+        do wave_uvm.do
         run -all
         
         # Save coverage data
         coverage save coverage_files/${test_name}.ucdb
+
+        # --- KEY CHANGE: Save waveform data HERE ---
+        if {[file exists "waveforms/${test_name}.wlf"]} {
+            echo "Saving waveform data to waveforms/$test_name.wlf"
+            # Ensure all signals are written to WLF
+            wave zoom full
+            dataset save "waveforms/${test_name}.wlf"
+        }
         
-        # Get simulation results
+        # Cancel timer if we completed normally
+        after cancel $timer_id
+        
+        # Get simulation status
         set status [runStatus]
-        set sim_time [examine sim_time]
         
         # Close simulation
         quit -sim -f
         
-        return [list $status $sim_time]
+        set end_time [clock seconds]
+        set duration [expr {$end_time - $start_time}]
+        echo "Test completed in $duration seconds"
+        
+        return [list $status]
     } error]} {
         echo "ERROR during test $test_name: $error"
-        return [list "ERROR" 0]
+        return [list "ERROR"]
     }
 }
 
@@ -225,3 +245,5 @@ echo "Tests passed:  $passed_tests"
 echo "Tests failed:  $failed_tests"
 echo "Coverage data: merged_coverage/all_tests_merged.ucdb"
 echo "============================================"
+
+quit
