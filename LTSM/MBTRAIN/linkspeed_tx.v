@@ -220,6 +220,8 @@ always @(posedge clk or negedge rst_n) begin : proc_output
         o_phyretrain_error_encoding<=0;
         o_local_first_8_lanes_are_functional<=0;
         o_local_second_8_lanes_are_functional<=0;
+        o_tx_mainband_or_valtrain_test<=1'b0;
+		o_tx_lfsr_or_perlane<=1'b0;
     end else begin
         case (cs)
             IDLE:begin //done
@@ -232,8 +234,11 @@ always @(posedge clk or negedge rst_n) begin : proc_output
 					o_sideband_message<= START_REQ;
 			end
 			LINK_SPEED_REQ:begin //done
-				if(ns==POINT_TEST) 
+				if(ns==POINT_TEST)  begin
 					o_point_test_en<=1'b1;
+					// o_tx_mainband_or_valtrain_test<=1'b0;
+					// o_tx_lfsr_or_perlane<=1'b0;
+				end
 			end
 			POINT_TEST:begin //done
 				if(ns==RESULT_ANALYSIS) 
@@ -254,9 +259,11 @@ always @(posedge clk or negedge rst_n) begin : proc_output
 				//determinig next sideband message 
 					if(ns==PHY_RETRAIN_REQ) begin //done
 						o_sideband_message<= EXIT_TO_PHYRETRAIN_REQ;
+					// missed from the next condituion 	
 					end else if(ns == ERROR_REQ_ST && ~o_phy_retrain_req_was_sent_or_received) begin
 						o_sideband_message <= ERROR_REQ;
 					end else if (ns == END_REQ && ~o_phy_retrain_req_was_sent_or_received && ~ o_error_req_was_sent_or_received)
+					// end else if (ns == END_REQ )
 						o_sideband_message<=DONE_REQ;
 					else begin
 						o_sideband_message<=4'b0000;
@@ -281,6 +288,8 @@ always @(posedge clk or negedge rst_n) begin : proc_output
 						o_sideband_message<=EXIT_TO_REPAIR_REQ;
 					end else if (ns==SPEED_DEGRADE_REQ) begin
 						o_sideband_message<= EXIT_TO_SPEED_DEGRADE_REQ;
+						o_local_first_8_lanes_are_functional <=i_first_8_tx_lanes_are_functional;
+						o_local_second_8_lanes_are_functional<=i_second_8_tx_lanes_are_functional;
 					end
 			end
 			REPAIR_REQ:begin
