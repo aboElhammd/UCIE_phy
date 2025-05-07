@@ -85,6 +85,7 @@ vref_cal_rx  verf_cal_rx_instance(
 		 .i_en(i_en),
 		//communcating with sideband 
 		 .i_decoded_sideband_message(i_decoded_sideband_message) ,
+		 .i_sideband_valid           (i_sideband_valid),
 		//handling_mux_priorities 
 		.i_busy_negedge_detected(i_falling_edge_busy),.i_valid_tx(o_valid_tx),
 		//test configurations 

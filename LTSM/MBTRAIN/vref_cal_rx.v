@@ -5,6 +5,7 @@ module vref_cal_rx  (
 		input i_en,
 		//communcating with sideband 
 		input [3:0]  i_decoded_sideband_message ,
+		input 		 i_sideband_valid,
 		//handling_mux_priorities 
 		input        i_busy_negedge_detected,i_valid_tx,
 		//test configurations 
@@ -65,7 +66,7 @@ always @(*) begin
 			end
 		end
 		WAIT_FOR_START_REQ:begin
-			if (i_decoded_sideband_message==4'b0001) begin
+			if (i_decoded_sideband_message==4'b0001 && i_sideband_valid) begin
 				ns=CAL_ALGO;
 			end else begin
 				ns=WAIT_FOR_START_REQ;
@@ -79,7 +80,7 @@ always @(*) begin
 			end
 		end
 		WAIT_FOR_END_REQ:begin
-			if (i_decoded_sideband_message==4'b0011) begin
+			if (i_decoded_sideband_message==4'b0011 && i_sideband_valid) begin
 				ns=SEND_END_RESPONSE;
 			end else begin
 				ns=WAIT_FOR_END_REQ;
