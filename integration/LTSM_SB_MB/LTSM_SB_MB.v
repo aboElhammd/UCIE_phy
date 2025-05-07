@@ -981,5 +981,5 @@ assign mainband_pattern_generator_cw = ltsm_mainband_pattern_generator_cw | main
 ---------------------------------------*/
 assign mainband_pattern_comparator_cw = ltsm_mainband_pattern_comparator_cw | mainband_pattern_comparator_cw_tx_d2c_pt | mainband_pattern_comparator_cw_rx_d2c_pt;
 
-
+//
 endmodule
