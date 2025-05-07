@@ -158,7 +158,7 @@ module mbtrain_wrapper (
 	assign o_rx_pt_en   =o_pt_en_vref_cal ;
 	assign o_tx_pt_en   =o_pt_en_linkspeed || o_pt_en_train_center_cal;
 	// assign o_tx_mainband_or_valtrain_test = o_tx_mainband_or_valtrain_test_linkspeed || o_tx_mainband_or_valtrain_test_train_center_cal ;
-	assign o_tx_mainband_or_valtrain_test = o_mainband_or_valtrain_test_controller
+	assign o_tx_mainband_or_valtrain_test = o_mainband_or_valtrain_test_controller;
 // self cal enable 
 	assign i_en_selfcal = o_speed_idle_en || o_tx_self_cal_en;
 //vref cal enable 
