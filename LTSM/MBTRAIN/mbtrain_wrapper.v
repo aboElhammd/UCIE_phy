@@ -157,7 +157,8 @@ module mbtrain_wrapper (
 //point teset enables 
 	assign o_rx_pt_en   =o_pt_en_vref_cal ;
 	assign o_tx_pt_en   =o_pt_en_linkspeed || o_pt_en_train_center_cal;
-	assign o_tx_mainband_or_valtrain_test = o_tx_mainband_or_valtrain_test_linkspeed || o_tx_mainband_or_valtrain_test_train_center_cal ;
+	// assign o_tx_mainband_or_valtrain_test = o_tx_mainband_or_valtrain_test_linkspeed || o_tx_mainband_or_valtrain_test_train_center_cal ;
+	assign o_tx_mainband_or_valtrain_test = o_mainband_or_valtrain_test_controller
 // self cal enable 
 	assign i_en_selfcal = o_speed_idle_en || o_tx_self_cal_en;
 //vref cal enable 
@@ -285,6 +286,7 @@ rx_cal_wrapper rx_cal_wrapper_inst( //done
 			.i_en(o_repair_en), 
 		//communicating with sideband 
 		    .i_sideband_message(i_sideband_message),
+			.i_sideband_valid(i_sideband_valid),
 		    .i_busy(i_busy),
 			.i_falling_edge_busy(i_falling_edge_busy),
 			.i_sideband_data_lanes_encoding(i_sideband_data_lanes_encoding),
