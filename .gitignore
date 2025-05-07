@@ -100,3 +100,12 @@ integration/LTSM_SB_MB/run_uvm.do
 integration/LTSM_SB_MB/wave_uvm.do
 integration/LTSM_SB_MB/vsim_stacktrace.vstf
 MB_Blocks/vaild_tx_rx/Valtrain_Controller_new.v
+integration/LTSM_SB_MB/waveforms/PHY_test.wlf
+integration/LTSM_SB_MB/merged_coverage/coverage_report.txt
+integration/LTSM_SB_MB/merged_coverage/coverage_metrics.txt
+integration/LTSM_SB_MB/merged_coverage/all_tests_merged.ucdb
+integration/LTSM_SB_MB/log_files/tests_bugs.txt
+integration/LTSM_SB_MB/log_files/PHY_test.log
+integration/LTSM_SB_MB/coverage_files/PHY_test.ucdb
+integration/LTSM_SB_MB/wave.do
+integration/LTSM_SB_MB/transcript
