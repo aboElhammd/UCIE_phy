@@ -323,6 +323,7 @@ always @(posedge clk or negedge rst_n) begin : proc_output
 				o_data_train_center_1_en     <=0;
 				o_data_train_vref_en         <=0;
 				o_rx_deskew_en               <=0;
+				o_phyretrain_en              <=0;
 				o_data_train_center_2_en     <=0;
 				o_link_speed_en              <=0;
 				o_repair_en                  <=0;
@@ -549,7 +550,7 @@ always @(posedge clk or negedge rst_n) begin : proc_
 		o_second_8_tx_lanes_are_functional <=i_second_8_tx_lanes_are_functional_mbinit;
 		o_first_8_rx_lanes_are_functional  <=i_first_8_rx_lanes_are_functional_mbinit;
 		o_second_8_rx_lanes_are_functional <=i_second_8_rx_lanes_are_functional_mbinit;
-	end else if(cs==LINKSPEED && ns!=LINKSPEED) begin 
+	end else if(cs==LINKSPEED && ns!=LINKSPEED && (i_first_8_tx_lanes_are_functional_linkspeed || i_second_8_tx_lanes_are_functional_linkspeed)) begin 
 		//in here we decide the tx results as we know it after the point test results so we know now the functional
 		//lanes that we can send data on them and this result will no be changed after repair as in the repair i am only 
 		//telling the remote partner which lanse will i send data on  
