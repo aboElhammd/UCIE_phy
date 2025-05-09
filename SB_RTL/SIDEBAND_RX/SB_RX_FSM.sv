@@ -241,7 +241,7 @@ end
 ------------------------------------------------------------------------------*/
 always @(*) begin 
     // Default values
-    o_rx_sb_start_pattern_reg = 0;
+    // o_rx_sb_start_pattern_reg = 0;
     o_rx_sb_pattern_samp_done_reg = 0;
     o_msg_valid_reg = 0;
     o_header_enable_reg = 0;
@@ -252,11 +252,14 @@ always @(*) begin
     o_adapter_enable_reg = 0;
 
     case (cs)
-        IDLE: begin
-            if (ns == PATTERN_DETECT && i_state == RESET) begin
-                o_rx_sb_start_pattern_reg = 1;
-            end
-        end 
+        // IDLE: begin
+        //     if (ns == PATTERN_DETECT && i_state == RESET) begin
+        //         o_rx_sb_start_pattern_reg = 1;
+        //     end
+        //     else begin
+        //         o_rx_sb_start_pattern_reg = 0;
+        //     end
+        // end 
 
         PATTERN_DETECT: begin
             if (ns == GENERAL_DECODE) begin
@@ -273,6 +276,7 @@ always @(*) begin
                     o_rdi_enable_reg = 1;
                 end
                 else if (ns == HEADER_DECODE) begin
+                    // o_rx_sb_start_pattern_reg = 0;
                     o_header_enable_reg = 1;
                     if (MsgCode_part_2 == 10) begin
                         o_rx_rsp_delivered_reg = 1;
@@ -320,7 +324,7 @@ end
 ------------------------------------------------------------------------------*/ 
 always @(posedge i_clk or negedge i_rst_n) begin
     if (~i_rst_n) begin
-        o_rx_sb_start_pattern <= 0;
+        // o_rx_sb_start_pattern <= 0;
         o_rx_sb_pattern_samp_done <= 0; 
         o_msg_valid <= 0;                
         o_header_enable <= 0;            
@@ -331,7 +335,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
         o_adapter_enable <= 0;
     end 
     else begin
-        o_rx_sb_start_pattern <= o_rx_sb_start_pattern_reg;
+        // o_rx_sb_start_pattern <= o_rx_sb_start_pattern_reg;
         o_rx_sb_pattern_samp_done <= o_rx_sb_pattern_samp_done_reg; 
         o_msg_valid <= o_msg_valid_reg;                
         o_header_enable <= o_header_enable_reg;            
@@ -340,6 +344,19 @@ always @(posedge i_clk or negedge i_rst_n) begin
         o_parity_error <= o_parity_error_reg;
         o_rx_rsp_delivered <= o_rx_rsp_delivered_reg;
         o_adapter_enable <= o_adapter_enable_reg;
+    end
+end
+
+
+always @(posedge i_clk or negedge i_rst_n) begin
+    if (~i_rst_n) begin
+        o_rx_sb_start_pattern       <= 0;
+    end 
+    else if (ns == PATTERN_DETECT && i_state == RESET) begin
+        o_rx_sb_start_pattern      <= 1;
+    end
+    else if (cs == GENERAL_DECODE && ns == HEADER_DECODE) begin
+        o_rx_sb_start_pattern       <= 0;
     end
 end
 
