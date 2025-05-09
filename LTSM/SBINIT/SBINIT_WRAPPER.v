@@ -52,6 +52,7 @@ TX_SBINIT  #(
     .i_start_pattern_done   (i_start_pattern_done),
     .i_decoded_SB_msg       (i_decoded_SB_msg),
     .i_falling_edge_busy    (i_falling_edge_busy),
+    .i_sb_busy              (i_SB_Busy),
     .i_rx_valid             (wp_rx_valid),
     .o_start_pattern_req    (o_start_pattern_req),
     .o_encoded_SB_msg_tx    (wp_tx_encoded_SB_msg),

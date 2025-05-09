@@ -6,6 +6,7 @@ module TX_SBINIT #(
 	input										i_SBINIT_en, 			// eli gyaly mn module el LTSM 34an abd2 asasn di el enable bta3t this module
 	input										i_start_pattern_done, 	// gyaly mn el SB lma ykhls el 64UI pattern
 	input  										i_rx_msg_valid,
+	input 										i_sb_busy,
 	input   									i_falling_edge_busy,	// gayly mn elSB 34an y2olii enu khalas ba3t el data bta3te fa anzl el valid
 	input 										i_rx_valid,				// 34an 23rf lw el rx byb3t dlwi2ty wala laa 34an lw byb3t afdl ana a hold 3alvalue bta3tee
 	input			[SB_MSG_WIDTH-1:0]			i_decoded_SB_msg, 		// gyaly mn el SB b3d my3ml decode ll msg eli gyalo mn el partner w yb3tli el crossponding format liha 
@@ -31,8 +32,9 @@ wire send_pattern_req, send_out_of_reset, send_done_req, send_sbinit_end;
 localparam [2:0] IDLE 						= 0;
 localparam [2:0] START_SB_PATTERN 			= 1;
 localparam [2:0] SBINIT_OUT_OF_RESET 		= 2;
-localparam [2:0] SBINIT_DONE_REQ			= 3;
-localparam [2:0] SBINIT_END					= 4;
+localparam [2:0] WAIT_FOR_SB_BUSY	 		= 3;
+localparam [2:0] SBINIT_DONE_REQ			= 4;
+localparam [2:0] SBINIT_END					= 5;
 
 /////////////////////////////////////////
 ///////////// SB messages ///////////////
@@ -48,8 +50,8 @@ localparam SBINIT_done_resp_msg		= 2;
 
 //assign o_current_state = CS;
 assign send_pattern_req  = (CS == IDLE && NS == START_SB_PATTERN);
-assign send_out_of_reset = (CS == START_SB_PATTERN && NS == SBINIT_OUT_OF_RESET);
-assign send_done_req	 = (CS == SBINIT_OUT_OF_RESET && NS == SBINIT_DONE_REQ);
+assign send_out_of_reset = (CS == SBINIT_OUT_OF_RESET);
+assign send_done_req	 = (CS == WAIT_FOR_SB_BUSY && NS == SBINIT_DONE_REQ);
 assign send_sbinit_end	 = (CS == SBINIT_DONE_REQ && NS == SBINIT_END);
 
 /////////////////////////////////
@@ -97,8 +99,8 @@ always @ (*) begin
 *-----------------------------------------------------------------------------*/
 		SBINIT_OUT_OF_RESET: begin
 			if (i_SBINIT_en) begin	
-				if (i_decoded_SB_msg == SBINIT_Out_of_Reset_msg && !o_valid_tx && i_rx_msg_valid) begin // && !o_valid_tx 34an 2t2kd eni b3t nafs el msg ana kaman 2abl m3ml transition
-					NS = SBINIT_DONE_REQ;
+				if ((i_decoded_SB_msg == SBINIT_Out_of_Reset_msg && i_rx_msg_valid)) begin 
+					NS = WAIT_FOR_SB_BUSY;
 				end 
 				else begin
 					NS = SBINIT_OUT_OF_RESET;
@@ -106,6 +108,19 @@ always @ (*) begin
 			end	else begin
 				NS = IDLE;
 			end	
+		end
+/*-----------------------------------------------------------------------------
+* WAIT_FOR_SB_BUSY
+*-----------------------------------------------------------------------------*/
+		WAIT_FOR_SB_BUSY: begin
+			if (~i_SBINIT_en) begin
+				NS = IDLE;
+			end else if (~i_sb_busy) begin
+				NS = SBINIT_DONE_REQ;
+			end else begin
+				NS = WAIT_FOR_SB_BUSY;
+			end
+			
 		end
 /*-----------------------------------------------------------------------------
 * SBINIT_DONE_REQ
@@ -186,7 +201,7 @@ always @(posedge i_clk or negedge i_rst_n) begin
 		if (send_out_of_reset || send_done_req) begin
 			o_valid_tx <= 1;
 		end
-		else if (i_falling_edge_busy && !i_rx_valid) begin
+		else if (((i_falling_edge_busy && !i_rx_valid) && CS !=SBINIT_OUT_OF_RESET)) begin
 			o_valid_tx <= 0;
 		end 
 	end
