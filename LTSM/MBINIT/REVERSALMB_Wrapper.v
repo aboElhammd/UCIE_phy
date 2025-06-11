@@ -1,103 +1,166 @@
 module REVERSALMB_Wrapper (
-    input wire          CLK,
-    input wire          rst_n,
-    input wire          i_REPAIRVAL_end,
-    input wire          i_REVERSAL_done,
+/*************************************************************************
+ * INPUTS
+*************************************************************************/
+// clock and reset
+    input               i_clk,
+    input               i_rst_n,
+
+// LTSM related signals
+    input               i_REVERSAL_EN,
     input               i_LaneID_Pattern_done,
-    input wire          i_falling_edge_busy,
-    input wire [3:0]    i_Rx_SbMessage,
+    input               i_falling_edge_busy,
+    input               i_ltsm_in_reset,
+
+// sideband related signals
     input               i_msg_valid,
-    // input wire          i_Busy_SideBand,
-    input wire [15:0]   i_REVERSAL_Result_logged_RXSB,
-    input wire [15:0]   i_REVERSAL_Result_logged_COMB,
-    // input wire          i_valid_REVERSAL_Pattern_result_logged,
+    input  [3:0]        i_Rx_SbMessage,
+    input  [15:0]       i_REVERSAL_Result_logged_RXSB, // results for us
+    input  [15:0]       i_REVERSAL_Result_logged_COMB, // results to send to partner
+    input               i_SB_Busy,
 
-    // output reg          o_MBINIT_REVERSALMB_ValidFraming_En,
-    output   [1:0]    o_MBINIT_REVERSALMB_LaneID_Pattern_En,
-    output            o_MBINIT_REVERSALMB_ApplyReversal_En,
-    output            o_MBINIT_REVERSALMB_end,
-    output   [3:0]    o_TX_SbMessage,
-    // output            o_MBINIT_REVERSAL_Pattern_Detection_En,
-    output   [1:0]    o_Clear_Pattern_Comparator,
-    output   [15:0]   o_REVERSAL_Pattern_Result_logged,
-    output            o_ValidOutDatatREVERSALMB,
-    output            o_ValidDataFieldParameters,
-    output            o_train_error_req_reversalmb
+/*************************************************************************
+ * OUTPUTS   
+*************************************************************************/
+// MB generator related signals
+    output   [1:0]      o_MBINIT_REVERSALMB_LaneID_Pattern_En,
+    output              o_MBINIT_REVERSALMB_ApplyReversal_En,
+    output   [1:0]      o_CW_Pattern_Comparator,
+
+// LTSM related signlas
+    output              o_REVERSAL_DONE,
+    output              o_train_error_req_reversalmb,
+
+// sideband related signals
+    output  reg [3:0]   o_TX_SbMessage,
+    output      [15:0]  o_REVERSAL_Pattern_Result_logged, // results to send to partner (data bus)
+    output              o_tx_msg_valid, 
+    output              o_tx_data_valid,
+    output              o_reversalmb_stop_timeout_counter
 
 );
 
-wire ValidOutDatat_Module;
-wire ValidOutDatat_ModulePartner;
-wire ValidDataFieldParameters_modulePartner;
-wire [3:0] TX_SbMessage_Module;
-wire [3:0] TX_SbMessage_ModulePartner;
-wire MBINIT_REVERSALMB_Module_end;
-wire MBINIT_REVERSALMB_ModulePartner_end;
-wire [1:0] MBINIT_REVERSALMB_LaneID_Pattern_En;
-// wire MBINIT_REVERSALMB_ValidFraming_En;
-wire MBINIT_REVERSALMB_ApplyReversal_En;
-wire MBINIT_REVERSAL_Pattern_Detection_En;
-wire [15:0] REVERSAL_Pattern_Result_logged;
-wire [1:0]  Clear_Pattern_Comparator;
-wire train_error_req;
+/////////////////////////////////////////
+//////////// Internal signals ///////////
+/////////////////////////////////////////
+    wire tx_reversalmb_done;
+    wire rx_reversalmb_done;
+    wire [3:0] encoded_SB_msg_tx;
+    wire [3:0] encoded_SB_msg_rx;
+    wire o_valid_tx;
+    wire o_valid_rx;
+    wire current_die_repeating_reversalmb;
 
-wire [3:0]    o_TX_SbMessage_comb;
-wire          o_MBINIT_REVERSALMB_end_comb;
-wire          o_valid_REVERSALMB_comb;
-wire          o_ValidDataFieldParameters_comb;
+/////////////////////////////////////////
+////////// Assign statements ////////////
+/////////////////////////////////////////
+    assign o_REVERSAL_DONE    = tx_reversalmb_done & rx_reversalmb_done;
+    assign o_tx_msg_valid     =  o_valid_tx | o_valid_rx;
 
+/////////////////////////////////////////
+//////////// Instantsiations ////////////
+///////////////////////////////////////// 
 
-// Instantiate REVERSALMB_Module
-REVERSALMB_Module u1 (
-    .CLK(CLK),
-    .rst_n(rst_n),
-    .i_REPAIRVAL_end(i_REPAIRVAL_end),
-    .i_REVERSAL_done(i_REVERSAL_done),
-    .i_Rx_SbMessage(i_Rx_SbMessage),
-    .i_Busy_SideBand(ValidOutDatat_ModulePartner),
-    .i_LaneID_Pattern_done(i_LaneID_Pattern_done),
-    .i_falling_edge_busy(i_falling_edge_busy),
-    .i_REVERSAL_Result_logged(i_REVERSAL_Result_logged_RXSB),
-    .i_msg_valid(i_msg_valid),
+/************************************************************************************
+* TX  
+************************************************************************************/
+    REVERSALMB_Module REVERSALMB_Module_inst(   
+    /* -------------------------------------------------------------------------- */
+    /*                               clock and reset                              */
+    /* -------------------------------------------------------------------------- */
+        .i_clk                              (i_clk),
+        .i_rst_n                            (i_rst_n),
+    /* -------------------------------------------------------------------------- */
+    /*                            LTSM related signals                            */
+    /* -------------------------------------------------------------------------- */
+        .i_REVERSAL_EN                      (i_REVERSAL_EN), 
+        .i_ltsm_in_reset                    (i_ltsm_in_reset),
+        .o_tx_reversalmb_done               (tx_reversalmb_done),
+        .o_train_error_req_reversalmb       (o_train_error_req_reversalmb),
+    /* -------------------------------------------------------------------------- */
+    /*                          sideband related signals                          */
+    /* -------------------------------------------------------------------------- */
+        .i_rx_msg_valid                     (i_msg_valid),
+        .i_decoded_SB_msg                   (i_Rx_SbMessage),
+        .i_rx_data_bus                      (i_REVERSAL_Result_logged_RXSB), 
+        .i_falling_edge_busy                (i_falling_edge_busy), 
+        .o_encoded_SB_msg_tx                (encoded_SB_msg_tx),
+        .o_valid_tx                         (o_valid_tx),        
+        .o_reversalmb_stop_timeout_counter  (o_reversalmb_stop_timeout_counter),
+    /* -------------------------------------------------------------------------- */
+    /*                               wrapper signals                              */
+    /* -------------------------------------------------------------------------- */
+        .i_rx_wrapper_valid                 (o_valid_rx),
+        .o_current_die_repeating_reversalmb (current_die_repeating_reversalmb),
+    /* -------------------------------------------------------------------------- */
+    /*                         MB generator related signal                        */
+    /* -------------------------------------------------------------------------- */
+        .i_pattern_finished                 (i_LaneID_Pattern_done),
+        .o_mainband_pattern_generator_cw    (o_MBINIT_REVERSALMB_LaneID_Pattern_En),
+        .o_ApplyReversal_En                 (o_MBINIT_REVERSALMB_ApplyReversal_En)
+    );
 
-    .o_MBINIT_REVERSALMB_LaneID_Pattern_En(MBINIT_REVERSALMB_LaneID_Pattern_En),
-    // .o_MBINIT_REVERSALMB_ValidFraming_En(MBINIT_REVERSALMB_ValidFraming_En),
-    .o_MBINIT_REVERSALMB_ApplyReversal_En(MBINIT_REVERSALMB_ApplyReversal_En),
-    .o_MBINIT_REVERSALMB_Module_end(MBINIT_REVERSALMB_Module_end),
-    .o_TX_SbMessage(TX_SbMessage_Module),
-    .o_ValidOutDatat_Module(ValidOutDatat_Module),
-    .o_train_error_req_reversalmb(o_train_error_req_reversalmb)
+/************************************************************************************
+* RX  
+************************************************************************************/
+
+REVERSALMB_ModulePartner REVERSALMB_ModulePartner_inst(
+/* -------------------------------------------------------------------------- */
+/*                               clock and reset                              */
+/* -------------------------------------------------------------------------- */
+    .i_clk                                          (i_clk),
+    .i_rst_n                                        (i_rst_n),
+/* -------------------------------------------------------------------------- */
+/*                            LTSM related signals                            */
+/* -------------------------------------------------------------------------- */
+    .i_REVERSAL_EN                                  (i_REVERSAL_EN),
+    .i_falling_edge_busy                            (i_falling_edge_busy), 
+    .o_rx_reversalmb_done                           (rx_reversalmb_done),
+/* -------------------------------------------------------------------------- */
+/*                          sideband related signals                          */
+/* -------------------------------------------------------------------------- */
+    .i_rx_msg_valid                                 (i_msg_valid),
+    .i_decoded_SB_msg                               (i_Rx_SbMessage),
+    .i_SB_Busy                                      (i_SB_Busy), 
+    .o_encoded_SB_msg_rx                            (encoded_SB_msg_rx),
+    .o_tx_data_bus                                  (o_REVERSAL_Pattern_Result_logged),
+    .o_tx_data_valid                                (o_tx_data_valid),
+/* -------------------------------------------------------------------------- */
+/*                               wrapper signals                              */
+/* -------------------------------------------------------------------------- */
+    .i_tx_wrapper_valid                             (o_valid_tx), 
+    .i_current_die_repeating_reversalmb             (current_die_repeating_reversalmb),
+    .o_valid_rx                                     (o_valid_rx),
+/* -------------------------------------------------------------------------- */
+/*                            MB compartor related                            */
+/* -------------------------------------------------------------------------- */
+    .i_REVERSAL_Pattern_Result_logged_for_partner   (i_REVERSAL_Result_logged_COMB), 
+    .o_mainband_pattern_comparator_cw               (o_CW_Pattern_Comparator)
+
 );
 
-// Instantiate REVERSALMB_ModulePartner
-REVERSALMB_ModulePartner u2 (
-    .CLK(CLK),
-    .rst_n(rst_n),
-    .i_REPAIRVAL_end(i_REPAIRVAL_end),
-    .i_REVERSAL_Pattern_Result_logged(i_REVERSAL_Result_logged_COMB),
-    .i_Rx_SbMessage(i_Rx_SbMessage),
-    .i_falling_edge_busy(i_falling_edge_busy),
-    .i_Busy_SideBand(ValidOutDatat_Module),
-    .i_msg_valid(i_msg_valid),
+/////////////////////////////////////////
+//// Handling SB encoded priorities /////
+///////////////////////////////////////// 
 
-    // .i_valid_REVERSAL_Pattern_result_logged(i_valid_REVERSAL_Pattern_result_logged),
-    // .o_MBINIT_REVERSAL_Pattern_Detection_En(MBINIT_REVERSAL_Pattern_Detection_En),
-    .o_REVERSAL_Pattern_Result_logged(REVERSAL_Pattern_Result_logged),
-    .o_TX_SbMessage(TX_SbMessage_ModulePartner),
-    .o_Clear_Pattern_Comparator(Clear_Pattern_Comparator), 
-    .o_MBINIT_REVERSALMB_ModulePartner_end(MBINIT_REVERSALMB_ModulePartner_end),
-    .o_ValidOutDatat_ModulePartner(ValidOutDatat_ModulePartner),
-    .o_ValidDataFieldParameters_modulePartner(ValidDataFieldParameters_modulePartner)
-);
+always @ (*) begin
+    case ({o_valid_tx, o_valid_rx})
+        2'b00: begin
+            o_TX_SbMessage = 4'b0000;
+        end
+        2'b01: begin
+            o_TX_SbMessage = encoded_SB_msg_rx;
+        end
+        2'b10: begin
+            o_TX_SbMessage = encoded_SB_msg_tx;
+        end
+        2'b11: begin
+            o_TX_SbMessage = encoded_SB_msg_rx;
+        end
+        default: begin
+            o_TX_SbMessage = 4'b0000;
+        end
+    endcase
+end
 
-// Combinational output logic
-assign o_TX_SbMessage                          = ValidOutDatat_ModulePartner ? TX_SbMessage_ModulePartner :
-                                                 ValidOutDatat_Module ? TX_SbMessage_Module : 4'b0000;
-assign o_MBINIT_REVERSALMB_end                 = MBINIT_REVERSALMB_Module_end && MBINIT_REVERSALMB_ModulePartner_end;
-assign o_ValidOutDatatREVERSALMB               = ValidOutDatat_ModulePartner || ValidOutDatat_Module;
-assign o_ValidDataFieldParameters              = ValidDataFieldParameters_modulePartner;
-assign o_MBINIT_REVERSALMB_LaneID_Pattern_En   = MBINIT_REVERSALMB_LaneID_Pattern_En;
-assign o_MBINIT_REVERSALMB_ApplyReversal_En    = MBINIT_REVERSALMB_ApplyReversal_En;
-assign o_Clear_Pattern_Comparator              = Clear_Pattern_Comparator  ;
-assign o_REVERSAL_Pattern_Result_logged        = REVERSAL_Pattern_Result_logged;
-endmodule
+endmodule 

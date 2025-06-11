@@ -1,260 +1,354 @@
-////////////////////////////////////////////////////////////////////////////////
-// REVERSALMB_Module
-// Author: Ayman Sayed
-// Date: 19/2/2025
-// Version: 1.0
-//
-// This module implements a state machine for a lane reversal process in a digital
-// system. The module interfaces with sideband messages to coordinate the 
-// lane reversal process and signals when the process is complete.
-//
-// Inputs:
-// - CLK: Clock signal
-// - rst_n: Active low reset signal
-// - i_REPAIRVAL_end: Signal indicating the end of the REPAIRVAL process
-// - i_REVERSAL_done: Signal indicating the reversal process is done
-// - i_Rx_SbMessage: 4-bit input sideband message
-// - i_Busy_SideBand: Signal indicating if the sideband is busy
-// - i_LaneID_Pattern_done: Signal indicating the lane ID pattern is done
-// - i_train_error_req: Signal indicating a training error request
-// - i_REVERSAL_Result_logged: 16-bit signal indicating the reversal result is logged
-//
-// Outputs:
-// 
-// - o_MBINIT_REVERSALMB_LaneID_Pattern_En: Signal enabling the lane ID pattern
-// - o_MBINIT_REVERSALMB_ValidFraming_En: Signal enabling valid framing
-// - o_MBINIT_REVERSALMB_ApplyReversal_En: Signal enabling the application of reversal
-// - o_MBINIT_REVERSALMB_Module_end: Signal indicating the end of the reversal process
-// - o_TX_SbMessage: 4-bit output sideband message
-// - o_ValidOutDatat_Module: Signal indicating if the module is valid
-//
-// The state machine has several states:
-// - IDLE: Initial state, waiting for the REPAIRVAL end signal
-// - REVERSALMB_INIT_REQ: State indicating a lane reversal initialization request
-// - REVERSALMB_CLEAR_ERROR_REQ: State indicating a clear error request
-// - REVERSALMB_LANEID_PATTER: State indicating the lane ID pattern generation
-// - REVERSALMB_RESULT_REQ: State indicating a lane reversal result request
-// - REVERSALMB_CHECK_RESULT: State checking the lane reversal result
-// - REVERSALMB_APPLY_REVERSAL: State applying the lane reversal
-// - REVERSALMB_DONE_REQ: State indicating a lane reversal done request
-// - REVERSALMB_DONE: State indicating the lane reversal process is complete
-//
-// The state transitions are based on the input signals and the current state.
-// The output signals are driven based on the current state.
-////////////////////////////////////////////////////////////////////////////////
 module REVERSALMB_Module (   
-    input               CLK,
-    input               rst_n,
-    input               i_REPAIRVAL_end,
-    input               i_REVERSAL_done,
-    input [3:0]         i_Rx_SbMessage,
-    input               i_Busy_SideBand,
-    input               i_msg_valid,
-    input               i_LaneID_Pattern_done,
-    input               i_falling_edge_busy, 
-    input [15:0]        i_REVERSAL_Result_logged, //from rx_sb when it responed with resp on result on i_Rx_SbMessage
+/*************************************************************************
+ * INPUTS
+*************************************************************************/
+// clock and reset
+    input               i_clk,
+    input               i_rst_n,
 
-    output reg [1:0]    o_MBINIT_REVERSALMB_LaneID_Pattern_En,
-    // output reg          o_MBINIT_REVERSALMB_ValidFraming_En, 
-    output reg          o_MBINIT_REVERSALMB_ApplyReversal_En,       
-    output reg          o_MBINIT_REVERSALMB_Module_end,
-    output reg [3:0]    o_TX_SbMessage,
-    output reg          o_ValidOutDatat_Module,
-    output              o_train_error_req_reversalmb
+// LTSM related signals
+    input               i_REVERSAL_EN, // from MBINIT.v
+    input               i_ltsm_in_reset,
+
+// sideband related signals
+    input               i_rx_msg_valid,
+    input [3:0]         i_decoded_SB_msg,
+    input [15:0]        i_rx_data_bus, //from rx_sb when it responed with resp on result on i_Rx_SbMessage
+    input               i_falling_edge_busy, 
+    
+// wrapper signals
+    input               i_rx_wrapper_valid,
+
+// MB generator related signal
+    input               i_pattern_finished,
+
+/*************************************************************************
+ * OUTPUTS
+*************************************************************************/
+// sideband related signals
+    output reg [3:0]    o_encoded_SB_msg_tx,
+    output reg          o_valid_tx,
+    output reg          o_reversalmb_stop_timeout_counter,
+
+// LTSM related signals
+    output reg          o_tx_reversalmb_done,
+    output reg          o_train_error_req_reversalmb,
+
+// MB generator related signal
+    output reg [1:0]    o_mainband_pattern_generator_cw,
+    output reg          o_ApplyReversal_En,
+
+// wrapper signals 
+    output              o_current_die_repeating_reversalmb
+
 );
 
-integer  i;
-reg [15:0] one_count;
-reg DONE_CHECK;
-reg [3:0] CS, NS;   // CS current state, NS next state
-reg handle_error_req;
 
-////////////////////////////////////////////////////////////////////////////////
-// Sideband messages
-////////////////////////////////////////////////////////////////////////////////
+/*******************************************************************************
+ * Sideband messages
+*******************************************************************************/
+    localparam MBINIT_REVERSALMB_init_req           = 4'b0001;
+    localparam MBINIT_REVERSALMB_init_resp          = 4'b0010;
+    localparam MBINIT_REVERSALMB_clear_error_req    = 4'b0011;
+    localparam MBINIT_REVERSALMB_clear_error_resp   = 4'b0100;
+    localparam MBINIT_REVERSALMB_result_req         = 4'b0101;
+    localparam MBINIT_REVERSALMB_result_resp        = 4'b0110;
+    localparam MBINIT_REVERSALMB_done_req           = 4'b0111;
+    localparam MBINIT_REVERSALMB_done_resp          = 4'b1000;
 
-localparam MBINI_REVERSALMB_init_req            = 4'b0001;
-localparam MBINIT_REVERSALMB_init_resp          = 4'b0010;
-localparam MBINIT_REVERSALMB_clear_error_req    = 4'b0011;
-localparam MBINIT_REVERSALMB_clear_error_resp   = 4'b0100;
-localparam MBINIT_REVERSALMB_result_req         = 4'b0101;
-localparam MBINIT_REVERSALMB_result_resp        = 4'b0110;
-localparam MBINIT_REVERSALMB_done_req           = 4'b0111;
-localparam MBINIT_REVERSALMB_done_resp          = 4'b1000;
+/*******************************************************************************
+ * State machine states
+*******************************************************************************/
+    localparam [3:0] IDLE 						= 0;
+    localparam [3:0] WAIT_FOR_RX_TO_RESP        = 1;
+    localparam [3:0] START_REQ         			= 2;
+    localparam [3:0] LFSR_CLEAR_REQ    			= 3;
+    localparam [3:0] SEND_PATTERN 				= 4;
+    localparam [3:0] RESULT_REQ   				= 5;
+    localparam [3:0] RESLOVING                  = 6;
+    localparam [3:0] END_REQ                    = 7;
+    localparam [3:0] TEST_FINISHED              = 8;
 
-////////////////////////////////////////////////////////////////////////////////
-// State machine states
-////////////////////////////////////////////////////////////////////////////////
-localparam IDLE                         = 0;
-localparam REVERSALMB_INIT_REQ          = 1;
-localparam REVERSALMB_CLEAR_ERROR_REQ   = 2;
-localparam REVERSALMB_LANEID_PATTER     = 3;
-localparam REVERSALMB_RESULT_REQ        = 4;
-localparam REVERSALMB_CHECK_RESULT      = 5;
-localparam REVERSALMB_APPLY_REVERSAL    = 6;
-localparam REVERSALMB_DONE_REQ          = 7;
-localparam REVERSALMB_DONE              = 8;
-localparam REVERSALMB_HANDLE_VALID      = 9;
-localparam REVERSALMB_CHECK_BUSY_CLEAR  = 10;
-localparam REVERSALMB_CHECK_BUSY_RESULT = 11;
-localparam REVERSALMB_CHECK_BUSY_DONE   = 12;
+/*******************************************************************************
+ * Internal signals
+*******************************************************************************/
+    integer i; // unused registers will be removed by default by synthesis tool
+    reg [3:0] CS, NS;
+    reg repeat_reversal_mb;
+    reg possibility_for_trainerror;
+    reg [4:0] sum;
 
-assign o_train_error_req_reversalmb = (CS == REVERSALMB_CHECK_RESULT && one_count < 8 && DONE_CHECK && handle_error_req);
+/*******************************************************************************
+ * Assign/wire statments
+*******************************************************************************/
+    wire send_start_req                          = ((CS == IDLE && NS == START_REQ) || (CS == WAIT_FOR_RX_TO_RESP && NS == START_REQ));
+    /* -------------------------------------------------------------------------------------------------------------------------- */
+    wire send_lfsr_clear_req_and_reset_generator = ((CS == START_REQ && NS == LFSR_CLEAR_REQ)           || // normal flow
+                                                    (CS == WAIT_FOR_RX_TO_RESP && NS == LFSR_CLEAR_REQ) || // partner req reversal
+                                                    (CS == RESLOVING && NS == LFSR_CLEAR_REQ));            // we req reversal
+    /* -------------------------------------------------------------------------------------------------------------------------- */
+    wire send_pattern                            = (CS == LFSR_CLEAR_REQ && NS == SEND_PATTERN);
+    /* -------------------------------------------------------------------------------------------------------------------------- */
+    wire send_result_req                         = (CS == SEND_PATTERN && NS == RESULT_REQ);
+    /* -------------------------------------------------------------------------------------------------------------------------- */
+    wire send_end_req                            = (CS == RESLOVING && NS == END_REQ);
+    /* -------------------------------------------------------------------------------------------------------------------------- */
+    wire finish_test                             = (CS == END_REQ && NS == TEST_FINISHED);
+    /* -------------------------------------------------------------------------------------------------------------------------- */
+    assign o_current_die_repeating_reversalmb    = possibility_for_trainerror;
 
-////////////////////////////////////////////////////////////////////////////////
-// State machine logic for the REVERSALMB_Module
-////////////////////////////////////////////////////////////////////////////////
-always @(posedge CLK or negedge rst_n) begin
-    if (!rst_n) begin
-        CS <= IDLE;
-    end else begin
-        CS <= NS;
+/*******************************************************************************
+ * State Memory
+*******************************************************************************/
+    always @ (posedge i_clk or negedge i_rst_n) begin
+        if (!i_rst_n) begin
+            CS <= IDLE;
+        end else begin
+            CS <= NS;
+        end
     end
-end
 
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Next state logic for the REPAIR_CLK_Module
-////////////////////////////////////////////////////////////////////////////////
-always @(*) begin
-    NS = CS; // Default to hold state
-    case (CS)
-        IDLE: begin
-            if (i_REPAIRVAL_end && ~i_Busy_SideBand) NS = REVERSALMB_INIT_REQ;
-        end
-        REVERSALMB_INIT_REQ: begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REVERSALMB_HANDLE_VALID;
-        end
-        REVERSALMB_HANDLE_VALID: begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_Rx_SbMessage == MBINIT_REVERSALMB_init_resp && i_msg_valid) NS = REVERSALMB_CHECK_BUSY_CLEAR;
-            else if (i_Rx_SbMessage == MBINIT_REVERSALMB_clear_error_resp && i_msg_valid) NS = REVERSALMB_LANEID_PATTER;            
-            else if (i_Rx_SbMessage == MBINIT_REVERSALMB_result_resp && i_msg_valid) NS = REVERSALMB_CHECK_RESULT;
-            else if (i_Rx_SbMessage == MBINIT_REVERSALMB_done_resp && i_msg_valid)  NS=REVERSALMB_DONE;
-        end
-
-        REVERSALMB_CHECK_BUSY_CLEAR: begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (~i_Busy_SideBand) NS = REVERSALMB_CLEAR_ERROR_REQ;
-        end
-        
-        REVERSALMB_CLEAR_ERROR_REQ: begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REVERSALMB_HANDLE_VALID;
-        end
-
-        REVERSALMB_LANEID_PATTER: begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_LaneID_Pattern_done) NS = REVERSALMB_CHECK_BUSY_RESULT;            
-        end
-        
-        REVERSALMB_CHECK_BUSY_RESULT : begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (~i_Busy_SideBand) NS = REVERSALMB_RESULT_REQ;
-        end
-        
-        REVERSALMB_RESULT_REQ: begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REVERSALMB_HANDLE_VALID;     
-        end
-
-        REVERSALMB_CHECK_RESULT: begin
-            if (~i_REPAIRVAL_end) NS = IDLE; 
-            else if (one_count >= 8 && DONE_CHECK) NS = REVERSALMB_CHECK_BUSY_DONE;
-            else if (one_count < 8 && DONE_CHECK && !handle_error_req) NS = REVERSALMB_APPLY_REVERSAL;
-        end
-
-        REVERSALMB_CHECK_BUSY_DONE: begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (~i_Busy_SideBand) NS = REVERSALMB_DONE_REQ;
-        end
-        REVERSALMB_APPLY_REVERSAL: begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_REVERSAL_done) NS = REVERSALMB_CHECK_BUSY_CLEAR;
-        end
-
-        REVERSALMB_DONE_REQ: begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-            else if (i_falling_edge_busy && ~i_Busy_SideBand) NS = REVERSALMB_HANDLE_VALID; 
-        end
-
-        REVERSALMB_DONE: begin
-            if (~i_REPAIRVAL_end) NS = IDLE;
-        end
-
-        default: begin
-            NS = IDLE;
-        end
-    endcase
-end
-
-always @(*) begin
-    one_count = 0;  //initialize count variable.
-    for (i = 0; i < 16; i = i + 1) begin
-        //for all the bits.
-        one_count = one_count + i_REVERSAL_Result_logged[i]; //Add the bit to the count. 
-        if (i == 15) DONE_CHECK = 1;
-        else DONE_CHECK = 0;
-    end   
-end
-
-////////////////////////////////////////////////////////////////////////////////
-// Registered output logic for the REVERSALMB_Module
-////////////////////////////////////////////////////////////////////////////////
-always @(posedge CLK or negedge rst_n) begin
-    if (!rst_n) begin
-        o_MBINIT_REVERSALMB_LaneID_Pattern_En <= 0;
-        // o_MBINIT_REVERSALMB_ValidFraming_En   <= 0;
-        o_MBINIT_REVERSALMB_ApplyReversal_En  <= 0;
-        o_MBINIT_REVERSALMB_Module_end        <= 0;
-        o_TX_SbMessage                        <= 4'b0000;
-        o_ValidOutDatat_Module                <= 0;
-        handle_error_req                      <= 0;
-    end else begin
-        o_MBINIT_REVERSALMB_LaneID_Pattern_En <= 0;
-        // o_MBINIT_REVERSALMB_ValidFraming_En   <= 0;
-        o_MBINIT_REVERSALMB_ApplyReversal_En  <= 0;
-        o_MBINIT_REVERSALMB_Module_end        <= 0;
-        o_TX_SbMessage                        <= 4'b0000;
-        o_ValidOutDatat_Module                <= 0;
-        case (NS)
-            REVERSALMB_INIT_REQ: begin
-                o_ValidOutDatat_Module <= 1'b1;
-                o_TX_SbMessage <= MBINI_REVERSALMB_init_req;
+/*******************************************************************************
+ * Next state logic
+*******************************************************************************/
+    always @ (*) begin
+        case (CS) 
+    /*-----------------------------------------------------------------------------
+    * IDLE
+    *-----------------------------------------------------------------------------*/
+            IDLE: begin
+                if (i_REVERSAL_EN && i_decoded_SB_msg != MBINIT_REVERSALMB_init_req) begin
+                    NS = START_REQ;
+                end else if (i_REVERSAL_EN && i_decoded_SB_msg == MBINIT_REVERSALMB_init_req && i_rx_msg_valid) begin
+                    NS = WAIT_FOR_RX_TO_RESP;
+                end else begin
+                    NS = IDLE;
+                end
             end
-            REVERSALMB_CLEAR_ERROR_REQ: begin
-                o_ValidOutDatat_Module <= 1'b1;
-                o_TX_SbMessage <= MBINIT_REVERSALMB_clear_error_req;
-            end       
-            REVERSALMB_LANEID_PATTER: begin
-                o_MBINIT_REVERSALMB_LaneID_Pattern_En <= 2'b11; // PERLANE
+    /*-----------------------------------------------------------------------------
+    * WAIT_FOR_RX_TO_RESP
+    ------------------------------------------------------------------------------*/
+            WAIT_FOR_RX_TO_RESP: begin
+                if (i_REVERSAL_EN) begin
+                    if (i_falling_edge_busy && i_rx_wrapper_valid) begin
+                        if (repeat_reversal_mb) begin
+                            NS = LFSR_CLEAR_REQ;
+                        end else begin
+                            NS = START_REQ;
+                        end
+                    end else begin
+                        NS = WAIT_FOR_RX_TO_RESP;
+                    end
+                end else begin
+                    NS = IDLE;
+                end
             end
-            REVERSALMB_RESULT_REQ: begin
-                o_ValidOutDatat_Module <= 1'b1;
-                o_TX_SbMessage <= MBINIT_REVERSALMB_result_req;
+    /*-----------------------------------------------------------------------------
+    * START_REQ
+    ------------------------------------------------------------------------------*/
+            START_REQ: begin
+                if (i_REVERSAL_EN) begin
+                    if (i_decoded_SB_msg == MBINIT_REVERSALMB_init_resp && i_rx_msg_valid) begin
+                        NS = LFSR_CLEAR_REQ;
+                    end else begin
+                        NS = START_REQ;
+                    end
+                end else begin
+                    NS = IDLE;
+                end
+            end 
+    /*-----------------------------------------------------------------------------
+    * LFSR_CLEAR_REQ
+    ------------------------------------------------------------------------------*/
+            LFSR_CLEAR_REQ: begin
+                if (i_REVERSAL_EN) begin
+                    if (i_decoded_SB_msg == MBINIT_REVERSALMB_clear_error_resp && i_rx_msg_valid) begin
+                        NS = SEND_PATTERN;
+                    end else begin
+                        NS = LFSR_CLEAR_REQ;
+                    end
+                end else begin
+                    NS = IDLE;
+                end
+            end 
+    /*-----------------------------------------------------------------------------
+    * SEND_PATTERN
+    ------------------------------------------------------------------------------*/
+            SEND_PATTERN: begin
+                if (i_REVERSAL_EN) begin
+                    if (i_pattern_finished) begin
+                        NS = RESULT_REQ;
+                    end else begin
+                        NS = SEND_PATTERN;
+                    end
+                end else begin
+                    NS = IDLE;
+                end
             end
-            REVERSALMB_APPLY_REVERSAL: begin
-                o_MBINIT_REVERSALMB_ApplyReversal_En <= 1'b1;
-                handle_error_req <= 1;
+    /*-----------------------------------------------------------------------------
+    * RESULT_REQ
+    ------------------------------------------------------------------------------*/
+            RESULT_REQ: begin
+                if (i_REVERSAL_EN) begin
+                    if (i_decoded_SB_msg == MBINIT_REVERSALMB_result_resp && i_rx_msg_valid) begin
+                        NS = RESLOVING;
+                    end else begin
+                        NS = RESULT_REQ;
+                    end
+                end else begin
+                    NS = IDLE;
+                end
             end
-            REVERSALMB_DONE_REQ: begin
-                o_ValidOutDatat_Module <= 1'b1;
-                o_TX_SbMessage <= MBINIT_REVERSALMB_done_req;
+    /*-----------------------------------------------------------------------------
+    * RESLOVING
+    ------------------------------------------------------------------------------*/
+            RESLOVING: begin
+                if (i_REVERSAL_EN) begin
+                    sum = 0;
+                    for (i = 0 ; i <= 15 ; i = i+1) begin
+                        sum = sum + i_rx_data_bus [i];
+                    end
+                    if (sum <= 8) begin
+                        if (possibility_for_trainerror) begin
+                            NS = RESLOVING; // khalik fi nafs el state w khalas l7d ma el LTSM t2fl el enable 3ala el block w t3ml trainerror handshake
+                        end else begin
+                            NS = LFSR_CLEAR_REQ; // lw awel mara nkhush hena e3ml reversal w repeat first
+                        end
+                    end else begin // lw get hena yb2a msh 3ayz te3ml reversal asasn
+                        NS = END_REQ;
+                    end
+                end else begin
+                    NS = IDLE;
+                end
             end
-            REVERSALMB_DONE: begin
-                o_MBINIT_REVERSALMB_Module_end <= 1;
+    /*-----------------------------------------------------------------------------
+    * END_REQ
+    ------------------------------------------------------------------------------*/
+            END_REQ: begin
+                if (i_REVERSAL_EN) begin
+                    if (i_decoded_SB_msg == MBINIT_REVERSALMB_clear_error_req && i_rx_msg_valid) begin
+                        NS = WAIT_FOR_RX_TO_RESP;
+                    end else if (i_decoded_SB_msg == MBINIT_REVERSALMB_done_resp && i_rx_msg_valid) begin
+                        NS = TEST_FINISHED;
+                    end else begin
+                        NS = END_REQ;
+                    end
+                end else begin
+                    NS = IDLE;
+                end
             end
-            default: begin
-                o_MBINIT_REVERSALMB_LaneID_Pattern_En <= 0;
-                // o_MBINIT_REVERSALMB_ValidFraming_En   <= 0;
-                o_MBINIT_REVERSALMB_ApplyReversal_En  <= 0;
-                o_MBINIT_REVERSALMB_Module_end        <= 0;
-                o_TX_SbMessage                        <= 4'b0000;
-                o_ValidOutDatat_Module                <= 0;    
+    /*-----------------------------------------------------------------------------
+    * TEST_FINISHED
+    ------------------------------------------------------------------------------*/
+            TEST_FINISHED: begin
+                if (!i_REVERSAL_EN) begin
+                    NS = IDLE;
+                end else begin
+                    NS = TEST_FINISHED;
+                end
             end
-        endcase
+            default: NS = IDLE;
+        endcase 
+    end 
+
+/*******************************************************************************
+ * Output Logic
+*******************************************************************************/
+    always @(posedge i_clk or negedge i_rst_n) begin
+        if (!i_rst_n) begin
+            o_mainband_pattern_generator_cw   <= 0;
+            repeat_reversal_mb                <= 0;
+            o_reversalmb_stop_timeout_counter <= 0;
+            o_encoded_SB_msg_tx               <= 0;  
+            possibility_for_trainerror        <= 0;
+            o_train_error_req_reversalmb      <= 0;
+            o_ApplyReversal_En                <= 0;
+            o_tx_reversalmb_done              <= 0;
+        end else begin
+            /*=========================================================================================
+            * IDLE registers reseting 
+            ==========================================================================================*/
+            if (CS == IDLE) begin
+                o_mainband_pattern_generator_cw <= 0;
+                o_train_error_req_reversalmb    <= 0;
+                possibility_for_trainerror      <= 0;
+                o_encoded_SB_msg_tx             <= 0;
+                repeat_reversal_mb              <= 0;
+                o_tx_reversalmb_done            <= 0;
+            end 
+            /*=========================================================================================
+             * registering clear_error_req if the partner wants to repeat test after applying reversal
+            ==========================================================================================*/
+                if ((i_decoded_SB_msg == MBINIT_REVERSALMB_clear_error_req && i_rx_msg_valid) && (CS == END_REQ)) begin
+                    repeat_reversal_mb <= 1;
+                    o_reversalmb_stop_timeout_counter <= 1; // stop sideband timeout counter on the done req message
+                end else begin
+                    o_reversalmb_stop_timeout_counter <=0; // pulse
+                end
+
+            /*=========================================================================================
+             * see if we should req trainerror incase reversal is not working 
+            ==========================================================================================*/
+                if (CS == RESLOVING && NS == LFSR_CLEAR_REQ) begin
+                    possibility_for_trainerror <= 1;
+                    o_ApplyReversal_En         <= 1;
+                end else if (CS == RESLOVING && NS == RESLOVING) begin
+                    o_train_error_req_reversalmb <= 1;
+                    o_ApplyReversal_En           <= 0;
+                end
+                if (i_ltsm_in_reset) begin
+                    o_ApplyReversal_En <= 0;
+                end
+                // el sater eli foo2 dh 34an lw kona 3amleen reversal w khalna training w data transfer w 3ayzeen n initiate new training
+                // lazm nbd2 mn el awel without reversal, w lw e3tmdt 3ala eni arg3 el idle fana kdh hanzl el reversal_en fi wst el current 
+                // training w dh mynf34 ana lazm akml el training kolo reversed w dh l2n ashour mo3tmd 3ala enha level signal not a pulse
+            
+            /*=========================================================================================
+             * Normal flow
+            ==========================================================================================*/
+            if (send_start_req) begin
+                o_encoded_SB_msg_tx  <= MBINIT_REVERSALMB_init_req;
+            end
+
+
+            if (send_lfsr_clear_req_and_reset_generator) begin
+                o_encoded_SB_msg_tx <= MBINIT_REVERSALMB_clear_error_req;
+                o_mainband_pattern_generator_cw <= 2'b01; // CLEAR_LFSR     
+            end
+
+            if (send_pattern) begin
+                o_mainband_pattern_generator_cw <= 2'b11; // perlane id pattern
+            end 
+
+            if (send_result_req) begin
+                o_encoded_SB_msg_tx  <= MBINIT_REVERSALMB_result_req;
+                o_mainband_pattern_generator_cw <= 2'b00;
+            end
+
+            if (send_end_req) begin
+                o_encoded_SB_msg_tx  <= MBINIT_REVERSALMB_done_req;
+            end
+
+            if (finish_test) begin
+                o_tx_reversalmb_done <= 1;
+            end
+        end
     end
-end
-endmodule
+
+/*******************************************************************************
+ * Valid Logic
+*******************************************************************************/
+    always @(posedge i_clk or negedge i_rst_n) begin
+        if (!i_rst_n) begin
+            o_valid_tx <= 0;
+        end else begin
+            if (send_start_req || send_lfsr_clear_req_and_reset_generator || send_result_req || send_end_req) begin
+                o_valid_tx <= 1;
+            end
+            else if (i_falling_edge_busy && !i_rx_wrapper_valid) begin
+                o_valid_tx <= 0;
+            end 
+        end
+    end
+
+endmodule 
