@@ -12,6 +12,7 @@ module MBINIT (
     input               i_CLK_Track_done,
     input               i_VAL_Pattern_done,
     input               i_LaneID_Pattern_done,              //from REVERSALMB_Wrapper
+    input               i_ltsm_in_reset,
     input   [2:0]       i_logged_clk_result,                // i_Clock_track_result_logged from comparator after detection clk pattern
     input               i_logged_val_result,                // i_VAL_Result_logged from comparator after detection val pattern
     input   [15:0]      i_logged_lane_id_result,            // i_REVERSAL_Result_logged from comparator after detection reversal pattern
@@ -39,7 +40,8 @@ module MBINIT (
     output              o_train_error_req,
     output              o_enable_cons, //for ashour valid detection
     output              o_clear_clk_detection,// for clk_detection to clear its result for detect another one
-    output              o_Finish_MBINIT
+    output              o_Finish_MBINIT,
+    output              o_reversalmb_stop_timeout_counter
 );
 
     wire o_tx_msg_valid_param;
@@ -215,26 +217,27 @@ module MBINIT (
     // Instantiate REVERSALMB_Wrapper       
     ////////////////////////////////////////////////
     REVERSALMB_Wrapper REVERSALMB_Wrapper_inst (
-        .CLK(CLK),
-        .rst_n(rst_n),
-        .i_REPAIRVAL_end(reversalmb_start),
-        .i_Rx_SbMessage(i_rx_msg_no),   
-        // .i_Busy_SideBand(i_rx_busy),
-        .i_falling_edge_busy(i_falling_edge_busy),
-        .i_REVERSAL_done(i_REVERSAL_done),
-        .i_msg_valid(i_msg_valid),
-        .i_LaneID_Pattern_done(i_LaneID_Pattern_done),
-        .i_REVERSAL_Result_logged_RXSB(i_rx_data_bus),
-        .i_REVERSAL_Result_logged_COMB(i_logged_lane_id_result),        
-        .o_MBINIT_REVERSALMB_LaneID_Pattern_En(o_MBINIT_REVERSALMB_LaneID_Pattern_En),
-        .o_MBINIT_REVERSALMB_ApplyReversal_En(o_MBINIT_REVERSALMB_ApplyReversal_En),
-        .o_MBINIT_REVERSALMB_end(MBINIT_REVERSALMB_Module_end),
-        .o_TX_SbMessage(o_tx_msg_no_reversalmb),
-        .o_Clear_Pattern_Comparator(o_Clear_Pattern_Comparator),
-        .o_REVERSAL_Pattern_Result_logged(o_tx_data_bus_reversalmb),
-        .o_ValidOutDatatREVERSALMB(o_tx_msg_valid_REVERSALMB),
-        .o_ValidDataFieldParameters(o_tx_data_valid_reversalmb),
-        .o_train_error_req_reversalmb(o_train_error_req_reversalmb)
+        .i_clk                                  (CLK),
+        .i_rst_n                                (rst_n),
+        .i_REVERSAL_EN                          (reversalmb_start),
+        .i_ltsm_in_reset                        (i_ltsm_in_reset),
+        .i_Rx_SbMessage                         (i_rx_msg_no),   
+        .i_LaneID_Pattern_done                  (i_LaneID_Pattern_done),
+        .i_falling_edge_busy                    (i_falling_edge_busy),
+        .i_SB_Busy                              (i_rx_busy),
+        .i_msg_valid                            (i_msg_valid),
+        .i_REVERSAL_Result_logged_RXSB          (i_rx_data_bus),
+        .i_REVERSAL_Result_logged_COMB          (i_logged_lane_id_result),        
+        .o_MBINIT_REVERSALMB_LaneID_Pattern_En  (o_MBINIT_REVERSALMB_LaneID_Pattern_En),
+        .o_MBINIT_REVERSALMB_ApplyReversal_En   (o_MBINIT_REVERSALMB_ApplyReversal_En),
+        .o_REVERSAL_DONE                        (MBINIT_REVERSALMB_Module_end),
+        .o_TX_SbMessage                         (o_tx_msg_no_reversalmb),
+        .o_CW_Pattern_Comparator                (o_Clear_Pattern_Comparator),
+        .o_REVERSAL_Pattern_Result_logged       (o_tx_data_bus_reversalmb),
+        .o_tx_msg_valid                         (o_tx_msg_valid_REVERSALMB),
+        .o_tx_data_valid                        (o_tx_data_valid_reversalmb),
+        .o_train_error_req_reversalmb           (o_train_error_req_reversalmb),
+        .o_reversalmb_stop_timeout_counter      (o_reversalmb_stop_timeout_counter)
     );
 
 

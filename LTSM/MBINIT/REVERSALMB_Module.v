@@ -39,7 +39,7 @@ module REVERSALMB_Module (
     output reg          o_ApplyReversal_En,
 
 // wrapper signals 
-    output              o_current_die_repeating_reversalmb
+    output reg          o_current_die_repeating_reversalmb
 
 );
 
@@ -95,7 +95,6 @@ module REVERSALMB_Module (
     /* -------------------------------------------------------------------------------------------------------------------------- */
     wire finish_test                             = (CS == END_REQ && NS == TEST_FINISHED);
     /* -------------------------------------------------------------------------------------------------------------------------- */
-    assign o_current_die_repeating_reversalmb    = possibility_for_trainerror;
 
 /*******************************************************************************
  * State Memory
@@ -264,6 +263,7 @@ module REVERSALMB_Module (
             o_train_error_req_reversalmb      <= 0;
             o_ApplyReversal_En                <= 0;
             o_tx_reversalmb_done              <= 0;
+            o_current_die_repeating_reversalmb <= 0;
         end else begin
             /*=========================================================================================
             * IDLE registers reseting 
@@ -275,6 +275,7 @@ module REVERSALMB_Module (
                 o_encoded_SB_msg_tx             <= 0;
                 repeat_reversal_mb              <= 0;
                 o_tx_reversalmb_done            <= 0;
+                o_current_die_repeating_reversalmb <= 0;
             end 
             /*=========================================================================================
              * registering clear_error_req if the partner wants to repeat test after applying reversal
@@ -291,10 +292,13 @@ module REVERSALMB_Module (
             ==========================================================================================*/
                 if (CS == RESLOVING && NS == LFSR_CLEAR_REQ) begin
                     possibility_for_trainerror <= 1;
+                    o_current_die_repeating_reversalmb <= 1;
                     o_ApplyReversal_En         <= 1;
                 end else if (CS == RESLOVING && NS == RESLOVING) begin
                     o_train_error_req_reversalmb <= 1;
                     o_ApplyReversal_En           <= 0;
+                end else if (CS == LFSR_CLEAR_REQ) begin
+                    o_current_die_repeating_reversalmb <= 0;
                 end
                 if (i_ltsm_in_reset) begin
                     o_ApplyReversal_En <= 0;
