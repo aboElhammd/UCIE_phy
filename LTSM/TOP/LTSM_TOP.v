@@ -122,6 +122,7 @@ wire        MBINIT_lfsr_or_perlane_Transmitter_initiated_Data_to_CLK;
 wire [3:0]  MBINIT_Vref; // will be driven in PARAM state after receiving partner TX voltage swing
 wire [2:0]  MBINIT_highest_common_speed;
 wire [1:0]  MBINIT_REVERSALMB_LaneID_Pattern_En;
+wire        reversalmb_stop_timeout_counter;
 
 /**************************************************
 * MBTRAIN Internal signals
@@ -133,6 +134,7 @@ wire        MBTRAIN_Transmitter_initiated_Data_to_CLK_en;
 wire        MBTRAIN_mainband_or_valtrain_Transmitter_initiated_Data_to_CLK;
 wire        MBTRAIN_lfsr_or_perlane_Transmitter_initiated_Data_to_CLK;
 wire [3:0]  MBTRAIN_Vref;
+wire        MBTRAIN_timeout_disable;
 
 /**************************************************
 * PHYRETRAIN Internal signals
@@ -236,6 +238,7 @@ MBINIT MBINIT_inst (
     .i_CLK_Track_done                             (i_CLK_Track_done),
     .i_VAL_Pattern_done                           (i_VAL_Pattern_done),
     .i_LaneID_Pattern_done                        (i_pattern_generation_done),
+    .i_ltsm_in_reset                              (~|CS),
     .i_logged_clk_result                          (i_logged_clk_result),
     .i_logged_val_result                          (i_logged_val_result),
     .i_logged_lane_id_result                      (i_comparsion_results),
@@ -263,7 +266,8 @@ MBINIT MBINIT_inst (
     .o_train_error_req                            (go_to_trainerror_MBINIT),
     .o_enable_cons                                (o_MBINIT_enable_cons), 
     .o_clear_clk_detection                        (o_MBINIT_clear_clk_detection),
-    .o_Finish_MBINIT                              (MBINIT_DONE)
+    .o_Finish_MBINIT                              (MBINIT_DONE),
+    .o_reversalmb_stop_timeout_counter            (reversalmb_stop_timeout_counter)
 );
 /****************************************
 * MBTRAIN
@@ -295,7 +299,7 @@ mbtrain_wrapper MBTRAIN_inst (
     .o_sideband_substate                        (sub_state_MBTRAIN),     
     .o_sideband_message                         (encoded_SB_msg_MBTRAIN),       
     .o_sideband_data_lanes_encoding             (msg_info_MBTRAIN),              
-    .o_timeout_disable                          (o_MBTRAIN_timeout_disable),        
+    .o_timeout_disable                          (MBTRAIN_timeout_disable),        
     .o_valid                                    (msg_valid_MBTRAIN),                  
     .o_reciever_ref_voltage                     (MBTRAIN_Vref),   
     .o_tx_mainband_or_valtrain_test             (MBTRAIN_mainband_or_valtrain_Transmitter_initiated_Data_to_CLK), 
@@ -392,6 +396,7 @@ wire trainerror_req_sampled = (&i_decoded_SB_msg & i_rx_msg_valid);
 wire trainerror_condition   = (i_time_out || trainerror_req_sampled || i_start_training_DVSEC || state_timeout || i_lp_linkerror); // if (i_time_out) --> module iniates trainerror, if (i_decoded_SB_msg == 14) --> partner iniates trainerror, if bit [10] on DVSEC is set in any state rather than reset go to trainerror
 wire reset_state_timeout_counter  = (CS == RESET || CS == FINISH_RESET || CS == ACTIVE || CS == L1_L2 || CS == TRAINERROR || CS == TRAINERROR_HS || CS != NS); // reset the counter if state is transitioning (CS!=NS) or if we are in the stated states dont count
 assign o_falling_edge_busy = falling_edge_busy;
+assign o_MBTRAIN_timeout_disable = MBTRAIN_timeout_disable | reversalmb_stop_timeout_counter;
 
 /////////////////////////////////
 ///// RESET COUNTER (4 ms) //////
